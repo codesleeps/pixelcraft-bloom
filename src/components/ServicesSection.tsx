@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   Search, 
   Megaphone, 
@@ -95,9 +96,11 @@ const ServicesSection = () => {
         
         {/* CTA */}
         <div className="text-center">
-          <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
-            Get Custom Strategy
-            <ArrowRight className="ml-2" />
+          <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" asChild>
+            <Link to="/strategy-session">
+              Get Custom Strategy
+              <ArrowRight className="ml-2" />
+            </Link>
           </Button>
         </div>
       </div>
