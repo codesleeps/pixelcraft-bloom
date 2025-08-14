@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ContactSection = () => {
   return (
@@ -106,9 +107,11 @@ const ContactSection = () => {
                 </div>
               </div>
               
-              <Button variant="premium" size="lg" className="w-full text-lg py-6 h-auto">
-                Get My Free Strategy Session
-              </Button>
+              <Link to="/strategy-session">
+                <Button variant="premium" size="lg" className="w-full text-lg py-6 h-auto">
+                  Get My Free Strategy Session
+                </Button>
+              </Link>
               
               <p className="text-xs text-center text-gray-500">
                 No spam, ever. We respect your privacy and will only send you relevant updates.

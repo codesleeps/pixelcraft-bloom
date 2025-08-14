@@ -72,15 +72,17 @@ const HeroSection = () => {
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button 
-              variant="glass" 
-              size="lg" 
-              className="text-lg px-8 py-6 h-auto"
-              aria-label="Start your digital marketing journey with PixelCraft"
-            >
-              Start Your Growth Journey
-              <ArrowRight className="ml-2" aria-hidden="true" />
-            </Button>
+            <Link to="/strategy-session">
+              <Button 
+                variant="glass" 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto"
+                aria-label="Start your digital marketing journey with PixelCraft"
+              >
+                Start Your Growth Journey
+                <ArrowRight className="ml-2" aria-hidden="true" />
+              </Button>
+            </Link>
             <Button 
               variant="ghost" 
               size="lg" 
