@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Target, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const achievements = [
   {
@@ -68,9 +69,11 @@ const AboutSection = () => {
               </div>
             </div>
             
-            <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
-              Partner With Us
-            </Button>
+            <Link to="/partnership">
+              <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
+                Partner With Us
+              </Button>
+            </Link>
           </div>
           
           {/* Right Content - Achievement Cards */}
