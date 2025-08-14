@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
 import { 
   CheckCircle, 
-  Calendar, 
   Clock, 
   Users, 
   TrendingUp, 
