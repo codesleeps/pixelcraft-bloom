@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-marketing.jpg";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const HeroSection = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <section className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Elements */}
@@ -12,6 +16,32 @@ const HeroSection = () => {
         style={{ backgroundImage: `url(${heroImage})` }}
       />
       
+      {/* Auth Navigation */}
+      <div className="absolute top-6 right-6 z-20">
+        {user ? (
+          <div className="flex items-center gap-4">
+            <span className="text-white text-sm">
+              Welcome, {user.email}!
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => signOut()}
+              className="text-white hover:bg-white/10"
+            >
+              Sign Out
+            </Button>
+          </div>
+        ) : (
+          <Link to="/auth">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </Button>
+          </Link>
+        )}
+      </div>
+
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 pt-20 pb-32">
         <div className="max-w-4xl mx-auto text-center text-white">
