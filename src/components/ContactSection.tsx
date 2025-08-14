@@ -107,17 +107,11 @@ const ContactSection = () => {
                 </div>
               </div>
               
-              <Button 
-                variant="premium" 
-                size="lg" 
-                className="w-full text-lg py-6 h-auto"
-                onClick={() => {
-                  console.log('Button clicked - navigating to strategy session');
-                  window.location.href = '/strategy-session';
-                }}
-              >
-                Get My Free Strategy Session
-              </Button>
+              <Link to="/strategy-session">
+                <Button variant="premium" size="lg" className="w-full text-lg py-6 h-auto">
+                  Get My Free Strategy Session
+                </Button>
+              </Link>
               
               <p className="text-xs text-center text-gray-500">
                 No spam, ever. We respect your privacy and will only send you relevant updates.

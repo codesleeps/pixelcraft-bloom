@@ -78,7 +78,6 @@ const HeroSection = () => {
                 size="lg" 
                 className="text-lg px-8 py-6 h-auto"
                 aria-label="Start your digital marketing journey with PixelCraft"
-                onClick={() => console.log('Hero CTA button clicked')}
               >
                 Start Your Growth Journey
                 <ArrowRight className="ml-2" aria-hidden="true" />
