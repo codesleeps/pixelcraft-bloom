@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { 
-  CheckCircle, 
+  CheckCircle,
   Clock, 
   Users, 
   TrendingUp, 
@@ -415,6 +416,7 @@ const StrategySession = () => {
             </div>
           </div>
         </main>
+        <BackToTopButton />
       </div>
     </>
   );

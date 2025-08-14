@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { useState } from 'react';
 import { 
   CheckCircle, 
@@ -415,6 +416,7 @@ const Partnership = () => {
             </div>
           </section>
         </main>
+        <BackToTopButton />
       </div>
     </>
   );

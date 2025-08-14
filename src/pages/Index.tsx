@@ -4,6 +4,7 @@ import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
 import SEOHead from "@/components/SEOHead";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
+import { BackToTopButton } from "@/components/BackToTopButton";
 
 const Index = () => {
   const organizationSchema = {
@@ -47,6 +48,7 @@ const Index = () => {
         <AboutSection />
         <ContactSection />
       </main>
+      <BackToTopButton />
     </>
   );
 };
