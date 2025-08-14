@@ -1,3 +1,17 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://pixelcraft.lovable.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Disallow admin or private areas (if any)
+# Disallow: /admin/
+# Disallow: /private/
+
+# Specific bot instructions
 User-agent: Googlebot
 Allow: /
 
@@ -8,7 +22,4 @@ User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /
