@@ -4,6 +4,12 @@
 
 **URL**: https://lovable.dev/projects/f1718176-4080-4bf5-9910-b3d5b66f3fb7
 
+## Backend API
+
+This repository now includes a Python FastAPI backend scaffold located in the `backend/` directory. The backend provides AI-powered automation using AgentScope and local Ollama LLMs, and persists data to Supabase.
+
+See `backend/README.md` for setup, configuration, and usage instructions.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
@@ -59,6 +65,14 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+
+Backend:
+
+- FastAPI (Python)
+- AgentScope (Agent orchestration)
+- Ollama (local LLMs, e.g., llama3)
+- Supabase (Postgres) for persistence
+
 
 ## How can I deploy this project?
 
