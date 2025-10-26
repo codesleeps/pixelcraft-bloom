@@ -14,6 +14,312 @@ export type Database = {
   }
   public: {
     Tables: {
+      leads: {
+        Row: {
+          id: string
+          email: string
+          first_name: string | null
+          last_name: string | null
+          company: string | null
+          phone: string | null
+          website: string | null
+          lead_score: number | null
+          lead_status: 'new' | 'contacted' | 'qualified' | 'opportunity' | 'customer' | 'lost'
+          source: string
+          services_interested: string[] | null
+          budget_range: string | null
+          timeline: string | null
+          notes: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          first_name?: string | null
+          last_name?: string | null
+          company?: string | null
+          phone?: string | null
+          website?: string | null
+          lead_score?: number | null
+          lead_status?: 'new' | 'contacted' | 'qualified' | 'opportunity' | 'customer' | 'lost'
+          source: string
+          services_interested?: string[] | null
+          budget_range?: string | null
+          timeline?: string | null
+          notes?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          first_name?: string | null
+          last_name?: string | null
+          company?: string | null
+          phone?: string | null
+          website?: string | null
+          lead_score?: number | null
+          lead_status?: 'new' | 'contacted' | 'qualified' | 'opportunity' | 'customer' | 'lost'
+          source?: string
+          services_interested?: string[] | null
+          budget_range?: string | null
+          timeline?: string | null
+          notes?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          id: string
+          lead_id: string
+          session_id: string
+          user_id: string | null
+          status: 'active' | 'paused' | 'completed' | 'archived'
+          channel: 'chat' | 'email' | 'phone' | 'web' | 'other'
+          metadata: Json
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          session_id: string
+          user_id?: string | null
+          status?: 'active' | 'paused' | 'completed' | 'archived'
+          channel: 'chat' | 'email' | 'phone' | 'web' | 'other'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          session_id?: string
+          user_id?: string | null
+          status?: 'active' | 'paused' | 'completed' | 'archived'
+          channel?: 'chat' | 'email' | 'phone' | 'web' | 'other'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [{ foreignKeyName: "conversations_lead_id_fkey", columns: ["lead_id"], referencedRelation: "leads", referencedColumns: ["id"] }]
+      }
+      messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          role: 'user' | 'assistant' | 'system'
+          content: string
+          agent_type: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          role: 'user' | 'assistant' | 'system'
+          content: string
+          agent_type?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          role?: 'user' | 'assistant' | 'system'
+          content?: string
+          agent_type?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [{ foreignKeyName: "messages_conversation_id_fkey", columns: ["conversation_id"], referencedRelation: "conversations", referencedColumns: ["id"] }]
+      }
+      agent_logs: {
+        Row: {
+          id: string
+          conversation_id: string | null
+          agent_type: string
+          action: string
+          input_data: Json
+          output_data: Json
+          execution_time_ms: number | null
+          status: 'success' | 'error' | 'timeout'
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id?: string | null
+          agent_type: string
+          action: string
+          input_data?: Json
+          output_data?: Json
+          execution_time_ms?: number | null
+          status: 'success' | 'error' | 'timeout'
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string | null
+          agent_type?: string
+          action?: string
+          input_data?: Json
+          output_data?: Json
+          execution_time_ms?: number | null
+          status?: 'success' | 'error' | 'timeout'
+          error_message?: string | null
+          created_at?: string
+        }
+        Relationships: [{ foreignKeyName: "agent_logs_conversation_id_fkey", columns: ["conversation_id"], referencedRelation: "conversations", referencedColumns: ["id"] }]
+      }
+      appointments: {
+        Row: {
+          id: string
+          lead_id: string
+          conversation_id: string | null
+          appointment_type: string
+          scheduled_at: string
+          duration_minutes: number
+          status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+          meeting_link: string | null
+          notes: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          conversation_id?: string | null
+          appointment_type: string
+          scheduled_at: string
+          duration_minutes: number
+          status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+          meeting_link?: string | null
+          notes?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          conversation_id?: string | null
+          appointment_type?: string
+          scheduled_at?: string
+          duration_minutes?: number
+          status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+          meeting_link?: string | null
+          notes?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          { foreignKeyName: "appointments_lead_id_fkey", columns: ["lead_id"], referencedRelation: "leads", referencedColumns: ["id"] },
+          { foreignKeyName: "appointments_conversation_id_fkey", columns: ["conversation_id"], referencedRelation: "conversations", referencedColumns: ["id"] }
+        ]
+      }
+      service_recommendations: {
+        Row: {
+          id: string
+          lead_id: string
+          conversation_id: string | null
+          service_name: string
+          confidence_score: number | null
+          reasoning: string | null
+          priority: 'high' | 'medium' | 'low' | null
+          status: 'suggested' | 'accepted' | 'rejected'
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          lead_id: string
+          conversation_id?: string | null
+          service_name: string
+          confidence_score?: number | null
+          reasoning?: string | null
+          priority?: 'high' | 'medium' | 'low' | null
+          status?: 'suggested' | 'accepted' | 'rejected'
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          lead_id?: string
+          conversation_id?: string | null
+          service_name?: string
+          confidence_score?: number | null
+          reasoning?: string | null
+          priority?: 'high' | 'medium' | 'low' | null
+          status?: 'suggested' | 'accepted' | 'rejected'
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "service_recommendations_lead_id_fkey", columns: ["lead_id"], referencedRelation: "leads", referencedColumns: ["id"] },
+          { foreignKeyName: "service_recommendations_conversation_id_fkey", columns: ["conversation_id"], referencedRelation: "conversations", referencedColumns: ["id"] }
+        ]
+      }
+      generated_content: {
+        Row: {
+          id: string
+          lead_id: string | null
+          content_type: string
+          title: string
+          content: string
+          agent_type: string
+          status: 'draft' | 'review' | 'approved' | 'published' | 'archived'
+          metadata: Json
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          lead_id?: string | null
+          content_type: string
+          title: string
+          content: string
+          agent_type: string
+          status?: 'draft' | 'review' | 'approved' | 'published' | 'archived'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          lead_id?: string | null
+          content_type?: string
+          title?: string
+          content?: string
+          agent_type?: string
+          status?: 'draft' | 'review' | 'approved' | 'published' | 'archived'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [{ foreignKeyName: "generated_content_lead_id_fkey", columns: ["lead_id"], referencedRelation: "leads", referencedColumns: ["id"] }]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

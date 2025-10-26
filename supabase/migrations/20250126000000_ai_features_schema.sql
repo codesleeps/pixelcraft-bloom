@@ -55,7 +55,7 @@ create table conversations (
   id uuid primary key default gen_random_uuid(),
   lead_id uuid references leads(id) on delete cascade,
   session_id text not null unique,
-  user_id text,
+  user_id uuid references auth.users(id),
   status text check (status in ('active', 'paused', 'completed', 'archived')) default 'active',
   channel text not null check (channel in ('chat', 'email', 'phone', 'web', 'other')),
   metadata jsonb default '{}'::jsonb,
@@ -352,7 +352,7 @@ begin
             'test-session-001',
             'chat',
             'active',
-            test_user_id::text
+            test_user_id
         ) returning id into test_conversation_id;
 
         -- Insert test message
