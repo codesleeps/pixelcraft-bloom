@@ -1,8 +1,15 @@
+import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import ServicesSection from "@/components/ServicesSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import TrustSection from "@/components/TrustSection";
+import FAQSection from "@/components/FAQSection";
+import ROICalculator from "@/components/ROICalculator";
+import DemoPreview from "@/components/DemoPreview";
 import PricingSection from "@/components/PricingSection";
 import AboutSection from "@/components/AboutSection";
 import ContactSection from "@/components/ContactSection";
+import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
 import { BackToTopButton } from "@/components/BackToTopButton";
@@ -43,13 +50,20 @@ const Index = () => {
         schema={organizationSchema}
       />
       <PerformanceOptimizer />
+      <Navigation />
       <main className="min-h-screen">
         <HeroSection />
         <ServicesSection />
+        <TestimonialsSection />
+        <TrustSection />
+        <FAQSection />
+        <ROICalculator />
+        <DemoPreview />
         <PricingSection />
         <AboutSection />
         <ContactSection />
       </main>
+      <Footer />
       <BackToTopButton />
     </>
   );

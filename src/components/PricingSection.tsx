@@ -65,9 +65,141 @@ const PricingSection = () => {
 
       if (error) throw error;
 
-      setPackages(data || []);
+      // If no data, use fallback data
+      if (!data || data.length === 0) {
+        console.log('No pricing data found, using fallback data');
+        const fallbackPackages: PricingPackage[] = [
+          {
+            id: '1',
+            name: 'Starter',
+            description: 'Perfect for small businesses and startups',
+            price_monthly: 99,
+            price_yearly: 990,
+            features: [
+              { name: '1 Project', included: true },
+              { name: '5 Team Members', included: true },
+              { name: 'Basic AI Agents', included: true },
+              { name: 'Email Support', included: true },
+              { name: 'Analytics Dashboard', included: true },
+              { name: 'API Access', included: false },
+              { name: 'Custom Integrations', included: false }
+            ],
+            max_projects: 1,
+            max_team_members: 5,
+            priority: 1,
+            is_active: true
+          },
+          {
+            id: '2',
+            name: 'Professional',
+            description: 'Ideal for growing businesses',
+            price_monthly: 299,
+            price_yearly: 2990,
+            features: [
+              { name: '5 Projects', included: true },
+              { name: '20 Team Members', included: true },
+              { name: 'Advanced AI Agents', included: true },
+              { name: 'Priority Support', included: true },
+              { name: 'Advanced Analytics', included: true },
+              { name: 'API Access', included: true },
+              { name: 'Custom Integrations', included: false }
+            ],
+            max_projects: 5,
+            max_team_members: 20,
+            priority: 2,
+            is_active: true
+          },
+          {
+            id: '3',
+            name: 'Enterprise',
+            description: 'For large organizations and enterprises',
+            price_monthly: 599,
+            price_yearly: 5990,
+            features: [
+              { name: 'Unlimited Projects', included: true },
+              { name: 'Unlimited Team Members', included: true },
+              { name: 'Custom AI Models', included: true },
+              { name: 'Dedicated Support', included: true },
+              { name: 'Enterprise Analytics', included: true },
+              { name: 'API Access', included: true },
+              { name: 'Custom Integrations', included: true }
+            ],
+            max_projects: null,
+            max_team_members: null,
+            priority: 3,
+            is_active: true
+          }
+        ];
+        setPackages(fallbackPackages);
+      } else {
+        setPackages(data);
+      }
     } catch (error) {
       console.error('Error fetching packages:', error);
+      // Use fallback data on error
+      const fallbackPackages: PricingPackage[] = [
+        {
+          id: '1',
+          name: 'Starter',
+          description: 'Perfect for small businesses and startups',
+          price_monthly: 99,
+          price_yearly: 990,
+          features: [
+            { name: '1 Project', included: true },
+            { name: '5 Team Members', included: true },
+            { name: 'Basic AI Agents', included: true },
+            { name: 'Email Support', included: true },
+            { name: 'Analytics Dashboard', included: true },
+            { name: 'API Access', included: false },
+            { name: 'Custom Integrations', included: false }
+          ],
+          max_projects: 1,
+          max_team_members: 5,
+          priority: 1,
+          is_active: true
+        },
+        {
+          id: '2',
+          name: 'Professional',
+          description: 'Ideal for growing businesses',
+          price_monthly: 299,
+          price_yearly: 2990,
+          features: [
+            { name: '5 Projects', included: true },
+            { name: '20 Team Members', included: true },
+            { name: 'Advanced AI Agents', included: true },
+            { name: 'Priority Support', included: true },
+            { name: 'Advanced Analytics', included: true },
+            { name: 'API Access', included: true },
+            { name: 'Custom Integrations', included: false }
+          ],
+          max_projects: 5,
+          max_team_members: 20,
+          priority: 2,
+          is_active: true
+        },
+        {
+          id: '3',
+          name: 'Enterprise',
+          description: 'For large organizations and enterprises',
+          price_monthly: 599,
+          price_yearly: 5990,
+          features: [
+            { name: 'Unlimited Projects', included: true },
+            { name: 'Unlimited Team Members', included: true },
+            { name: 'Custom AI Models', included: true },
+            { name: 'Dedicated Support', included: true },
+            { name: 'Enterprise Analytics', included: true },
+            { name: 'API Access', included: true },
+            { name: 'Custom Integrations', included: true }
+          ],
+          max_projects: null,
+          max_team_members: null,
+          priority: 3,
+          is_active: true
+        }
+      ];
+      setPackages(fallbackPackages);
     } finally {
       setLoading(false);
     }

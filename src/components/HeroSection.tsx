@@ -21,33 +21,6 @@ const HeroSection = () => {
         />
       </div>
 
-      {/* Auth Navigation */}
-      <div className="absolute top-6 right-6 z-20">
-        {user ? (
-          <div className="flex items-center gap-4">
-            <span className="text-white text-sm">Welcome, {user.email}!</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut()}
-              className="text-white hover:bg-white/10"
-            >
-              Sign Out
-            </Button>
-          </div>
-        ) : (
-          <Link to="/auth">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/10"
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </Button>
-          </Link>
-        )}
-      </div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 pt-20 pb-32">
