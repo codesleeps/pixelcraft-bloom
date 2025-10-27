@@ -116,7 +116,7 @@ const ROICalculator = () => {
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="revenue">Monthly Revenue ($)</Label>
+                    <Label htmlFor="revenue">Monthly Revenue (£)</Label>
                     <Input
                       id="revenue"
                       type="number"
@@ -168,7 +168,7 @@ const ROICalculator = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="spend">Current Monthly Marketing Spend ($)</Label>
+                  <Label htmlFor="spend">Current Monthly Marketing Spend (£)</Label>
                   <Input
                     id="spend"
                     type="number"
@@ -220,7 +220,7 @@ const ROICalculator = () => {
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="text-center">
                           <div className="text-2xl font-bold text-green-600">
-                            +${results.metrics.revenueIncrease.toLocaleString()}
+                            +£{results.metrics.revenueIncrease.toLocaleString()}
                           </div>
                           <div className="text-sm text-muted-foreground">Monthly Revenue Increase</div>
                         </div>
@@ -235,11 +235,11 @@ const ROICalculator = () => {
                       <div className="pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-sm">New Monthly Investment:</span>
-                          <span className="font-medium">${results.metrics.newSpend.toLocaleString()}</span>
+                          <span className="font-medium">£{results.metrics.newSpend.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Net Monthly Profit:</span>
-                          <span className="font-medium text-green-600">+${results.metrics.netProfit.toLocaleString()}</span>
+                          <span className="font-medium text-green-600">+£{results.metrics.netProfit.toLocaleString()}</span>
                         </div>
                       </div>
                     </CardContent>

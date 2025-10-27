@@ -354,7 +354,7 @@ const PricingSection = () => {
                 {discountCalc.campaign_name} Applied!
               </p>
               <p className="text-green-600 text-sm">
-                {discountCalc.discount_percentage}% discount - Save ${discountCalc.discount_amount}
+                {discountCalc.discount_percentage}% discount - Save £{discountCalc.discount_amount}
               </p>
             </div>
           )}
@@ -383,7 +383,7 @@ const PricingSection = () => {
                   <div className="mt-6">
                     <div className="flex items-baseline justify-center">
                       <span className="text-4xl font-bold">
-                        ${finalPrice || 0}
+                        £{finalPrice || 0}
                       </span>
                       <span className="text-muted-foreground ml-1">
                         /{billingCycle === 'yearly' ? 'year' : 'month'}
@@ -392,7 +392,7 @@ const PricingSection = () => {
 
                     {discountCalc && originalPrice !== finalPrice && (
                       <div className="text-sm text-muted-foreground line-through">
-                        ${originalPrice}
+                        £{originalPrice}
                       </div>
                     )}
 

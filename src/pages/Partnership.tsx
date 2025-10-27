@@ -376,11 +376,11 @@ const Partnership = () => {
                         className="w-full p-3 border border-gray-200 rounded-md"
                       >
                         <option value="">Select Range (Optional)</option>
-                        <option value="under-10k">Under $10K</option>
-                        <option value="10k-50k">$10K - $50K</option>
-                        <option value="50k-100k">$50K - $100K</option>
-                        <option value="100k-500k">$100K - $500K</option>
-                        <option value="500k+">$500K+</option>
+                        <option value="under-10k">Under £10K</option>
+                        <option value="10k-50k">£10K - £50K</option>
+                        <option value="50k-100k">£50K - £100K</option>
+                        <option value="100k-500k">£100K - £500K</option>
+                        <option value="500k+">£500K+</option>
                       </select>
                     </div>
 

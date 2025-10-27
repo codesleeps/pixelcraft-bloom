@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     question: "How much do your services cost?",
-    answer: "Our pricing starts at $99/month for basic services and goes up to $599/month for enterprise solutions. We also offer custom packages and one-time projects. Check our pricing section for detailed breakdowns and current promotions."
+    answer: "Our pricing starts at £99/month for basic services and goes up to £599/month for enterprise solutions. We also offer custom packages and one-time projects. Check our pricing section for detailed breakdowns and current promotions."
   },
   {
     question: "Do you provide ongoing support and optimization?",

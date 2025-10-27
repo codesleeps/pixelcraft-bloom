@@ -23,7 +23,7 @@ const trustElements = [
     icon: Award,
     title: 'Award Winning',
     description: 'Recognized by industry leaders and peers',
-    badge: '2024 Winner'
+    badge: '2023 Winner'
   },
   {
     icon: Users,
@@ -126,7 +126,7 @@ const TrustSection = () => {
               <div className="text-sm text-muted-foreground">Happy Clients</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-primary mb-2">$50M+</div>
+              <div className="text-4xl font-bold text-primary mb-2">£50M+</div>
               <div className="text-sm text-muted-foreground">Revenue Generated</div>
             </div>
             <div>
