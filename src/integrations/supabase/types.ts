@@ -440,6 +440,145 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_packages: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          price_monthly: number | null
+          price_yearly: number | null
+          features: Json
+          max_projects: number | null
+          max_team_members: number | null
+          priority: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
+          features?: Json
+          max_projects?: number | null
+          max_team_members?: number | null
+          priority?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
+          features?: Json
+          max_projects?: number | null
+          max_team_members?: number | null
+          priority?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_campaigns: {
+        Row: {
+          id: string
+          name: string
+          code: string | null
+          discount_type: string
+          discount_value: number
+          max_uses: number | null
+          used_count: number
+          start_date: string | null
+          end_date: string | null
+          applicable_packages: string[] | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          code?: string | null
+          discount_type: string
+          discount_value: number
+          max_uses?: number | null
+          used_count?: number
+          start_date?: string | null
+          end_date?: string | null
+          applicable_packages?: string[] | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          code?: string | null
+          discount_type?: string
+          discount_value?: number
+          max_uses?: number | null
+          used_count?: number
+          start_date?: string | null
+          end_date?: string | null
+          applicable_packages?: string[] | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          id: string
+          user_id: string | null
+          package_id: string | null
+          campaign_id: string | null
+          status: string
+          start_date: string | null
+          end_date: string | null
+          original_price: number | null
+          discount_amount: number
+          final_price: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          package_id?: string | null
+          campaign_id?: string | null
+          status: string
+          start_date?: string | null
+          end_date?: string | null
+          original_price?: number | null
+          discount_amount?: number
+          final_price?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          package_id?: string | null
+          campaign_id?: string | null
+          status?: string
+          start_date?: string | null
+          end_date?: string | null
+          original_price?: number | null
+          discount_amount?: number
+          final_price?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "user_subscriptions_user_id_fkey", columns: ["user_id"], referencedRelation: "users", referencedColumns: ["id"] },
+          { foreignKeyName: "user_subscriptions_package_id_fkey", columns: ["package_id"], referencedRelation: "pricing_packages", referencedColumns: ["id"] },
+          { foreignKeyName: "user_subscriptions_campaign_id_fkey", columns: ["campaign_id"], referencedRelation: "pricing_campaigns", referencedColumns: ["id"] }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
