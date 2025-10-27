@@ -40,12 +40,13 @@ export class ModelManager {
     }
   }
 
-  private async checkCache(modelName: string, prompt: string): Promise<string | null> {
+  private async checkCache(modelName: string, prompt: string, taskType: string): Promise<string | null> {
     try {
       const { data, error } = await supabase
         .from('model_response_cache')
         .select('response')
         .eq('model_name', modelName)
+        .eq('task_type', taskType)
         .eq('prompt_hash', await this.hashPrompt(prompt))
         .single();
 
@@ -61,7 +62,8 @@ export class ModelManager {
     modelName: string,
     prompt: string,
     response: string,
-    tokensUsed: number
+    tokensUsed: number,
+    taskType: string
   ) {
     try {
       const expiryTime = new Date();
@@ -69,6 +71,7 @@ export class ModelManager {
 
       await supabase.from('model_response_cache').insert({
         model_name: modelName,
+        task_type: taskType,
         prompt_hash: await this.hashPrompt(prompt),
         prompt,
         response,
@@ -105,7 +108,7 @@ export class ModelManager {
 
     try {
       // Check cache first
-      response = await this.checkCache(modelName, prompt);
+      response = await this.checkCache(modelName, prompt, 'completion');
       
       if (response) {
         cacheHit = true;
@@ -150,7 +153,7 @@ export class ModelManager {
           success = true;
 
           // Cache successful response
-          await this.cacheResponse(modelName, prompt, response, tokensUsed);
+          await this.cacheResponse(modelName, prompt, response, tokensUsed, 'completion');
         }
       }
 
@@ -214,7 +217,7 @@ export class ModelManager {
       }).join('');
 
       // Check cache for exact conversation
-      response = await this.checkCache(modelName, prompt);
+      response = await this.checkCache(modelName, prompt, 'chat');
       
       if (response) {
         success = true;
@@ -267,7 +270,7 @@ export class ModelManager {
         success = true;
 
         // Cache successful response
-        await this.cacheResponse(modelName, prompt, response, tokensUsed);
+        await this.cacheResponse(modelName, prompt, response, tokensUsed, 'chat');
       }
 
       // Track usage

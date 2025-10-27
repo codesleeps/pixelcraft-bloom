@@ -4,7 +4,6 @@ python-dotenv>=1.0.0
 
 # AgentScope & Ollama (open-source LLM integration)
 agentscope[ollama]>=1.0.0
-agentscope-runtime>=1.0.0
 
 # Supabase and caching
 supabase>=2.9.0

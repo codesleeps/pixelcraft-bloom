@@ -23,7 +23,7 @@ export default function ModelTester() {
     try {
       setLoading(true);
       const result = await modelManager.generateCompletion(selectedModel, prompt);
-      setResponse(result || 'No response generated');
+      setResponse((result as string) || 'No response generated');
     } catch (error) {
       setResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     } finally {
@@ -44,7 +44,7 @@ export default function ModelTester() {
           content: prompt
         }
       ]);
-      setResponse(result || 'No response generated');
+      setResponse((result as string) || 'No response generated');
     } catch (error) {
       setResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     } finally {

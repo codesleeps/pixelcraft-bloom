@@ -6,18 +6,6 @@ import logging
 
 logger = logging.getLogger("pixelcraft.agents.lead")
 
-
-class LeadQualificationAgent(BaseAgent):
-    def __init__(self, cfg: BaseAgentConfig):
-        super().__init__(cfg)
-
-    async def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-"""Lead qualification agent.
-
-This agent analyzes leads and conversations to calculate qualification scores
-and provide insights for sales follow-up. Uses both heuristic scoring and AI analysis.
-"""
-
 from typing import Any, Dict, List, Optional
 import json
 import re
@@ -56,46 +44,6 @@ TIMELINE_SCORES = {
     "6-12_months": 5,
     "unknown": 0,
 }
-
-def create_lead_qualification_agent() -> 'LeadQualificationAgent':
-    """Factory function to create a LeadQualificationAgent instance."""
-    config = BaseAgentConfig(
-        agent_id="lead_qualification",
-        name="Lead Qualification Specialist",
-        description="Expert system for analyzing and scoring leads",
-        default_model="llama2",
-        temperature=0.3,  # Lower temperature for more consistent analysis
-        max_tokens=2000,
-        system_prompt="""You are an expert lead qualification specialist for PixelCraft digital agency.
-        Analyze leads based on their information and conversation history to:
-        1. Determine their potential value and likelihood to convert
-        2. Identify key business needs and pain points
-        3. Recommend most suitable services
-        4. Suggest next actions for sales team
-        
-        Provide analysis in JSON format with:
-        - score (0-100)
-        - confidence (0-100)
-        - reasoning (string)
-        - recommended_services (array of strings)
-        - key_insights (array of strings)
-        - suggested_actions (array of strings)
-        - priority (high/medium/low)
-        - estimated_value (number in USD)
-        
-        Focus on objective factors like budget, timeline, company size, and specific needs.
-        Be conservative in scoring - high scores should be justified by clear indicators.""",
-        capabilities=[
-            "Lead scoring and qualification",
-            "Budget analysis",
-            "Timeline assessment",
-            "Service matching",
-            "Conversation analysis",
-            "Action planning"
-        ]
-    )
-    return LeadQualificationAgent(config)
-
 
 class LeadQualificationAgent(BaseAgent):
     """Agent for qualifying and scoring leads based on available information."""
@@ -274,57 +222,4 @@ class LeadQualificationAgent(BaseAgent):
                 output_data={},
                 error_message=str(e)
             )
-            raise        # Basic heuristic scoring
-        score = 50
-        reasons = []
-        if lead.get("budget_range"):
-            score += 20
-            reasons.append("budget provided")
-        if lead.get("company"):
-            score += 10
-            reasons.append("company provided")
-        if len(lead.get("message", "")) > 100:
-            score += 10
-            reasons.append("detailed message")
-
-        # Clamp
-        score = max(0, min(100, score))
-
-        # If Ollama available, ask model for a short analysis to enrich insights
-        insights = []
-        recommended = []
-        try:
-            model = get_ollama_client()
-            prompt = f"Analyze this lead and return a short summary, recommended services and a score between 0 and 100. Lead data:\n{lead}"
-            if hasattr(model, "chat"):
-                resp = model.chat([{"role": "system", "content": "You are an expert lead qualifier."}, {"role": "user", "content": prompt}])
-                text = resp.get("response") if isinstance(resp, dict) else str(resp)
-            elif hasattr(model, "generate"):
-                gen = model.generate(prompt)
-                text = getattr(gen, "text", str(gen))
-            else:
-                text = ""
-
-            if text:
-                insights.append(text)
-                recommended = [s.strip() for s in (lead.get("services_interested") or [])]
-        except Exception as exc:
-            logger.debug("Ollama not available for lead analysis: %s", exc)
-
-        analysis = {
-            "score": score,
-            "confidence": 0.7,
-            "factors": {"heuristics": len(reasons)},
-            "priority": "high" if score > 70 else "medium" if score > 40 else "low",
-            "insights": insights,
-            "recommended_services": recommended,
-        }
-
-        # Persist analysis to agent_logs table if present
-        try:
-            sb = get_supabase_client()
-            sb.table("agent_logs").insert({"type": "lead_analysis", "lead": lead, "analysis": analysis}).execute()
-        except Exception:
-            pass
-
-        return analysis
+            raise

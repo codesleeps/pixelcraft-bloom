@@ -1,63 +1,4 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { vi } from 'vitest';
-import CountdownTimer from '../CountdownTimer';
-
-describe('CountdownTimer', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('counts down after start', () => {
-    render(<CountdownTimer initialSeconds={3} />);
-
-    const startBtn = screen.getByRole('button', { name: /start countdown/i });
-    fireEvent.click(startBtn);
-
-    // advance 1 second
-    vi.advanceTimersByTime(1000);
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('2 seconds remaining');
-
-    // advance another 2 seconds to hit zero
-    vi.advanceTimersByTime(2000);
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('0 seconds remaining');
-  });
-
-  it('pauses the countdown', () => {
-    render(<CountdownTimer initialSeconds={5} />);
-
-    const startBtn = screen.getByRole('button', { name: /start countdown/i });
-    const pauseBtn = screen.getByRole('button', { name: /pause countdown/i });
-
-    fireEvent.click(startBtn);
-    vi.advanceTimersByTime(1000);
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('4 seconds remaining');
-
-    fireEvent.click(pauseBtn);
-    vi.advanceTimersByTime(2000);
-    // should remain the same after pausing
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('4 seconds remaining');
-  });
-
-  it('resets the countdown', () => {
-    render(<CountdownTimer initialSeconds={10} />);
-
-    const startBtn = screen.getByRole('button', { name: /start countdown/i });
-    const resetBtn = screen.getByRole('button', { name: /reset countdown/i });
-
-    fireEvent.click(startBtn);
-    vi.advanceTimersByTime(3000);
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('7 seconds remaining');
-
-    fireEvent.click(resetBtn);
-    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('10 seconds remaining');
-  });
-});
-import React from 'react';
+import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import CountdownTimer from '../CountdownTimer';
@@ -75,7 +16,7 @@ describe('CountdownTimer', () => {
     render(<CountdownTimer initialSeconds={5} />);
 
     const startBtn = screen.getByRole('button', { name: /Start countdown/i });
-    expect(screen.getByText(/5 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('5 seconds remaining');
 
     fireEvent.click(startBtn);
 
@@ -83,7 +24,7 @@ describe('CountdownTimer', () => {
       vi.advanceTimersByTime(2000);
     });
 
-    expect(screen.getByText(/3 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('3 seconds remaining');
   });
 
   it('pauses when Pause is clicked', () => {
@@ -99,7 +40,7 @@ describe('CountdownTimer', () => {
     });
 
     // Should be at 3
-    expect(screen.getByText(/3 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('3 seconds remaining');
 
     fireEvent.click(pauseBtn);
 
@@ -108,11 +49,13 @@ describe('CountdownTimer', () => {
     });
 
     // Still at 3 after pause
-    expect(screen.getByText(/3 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('3 seconds remaining');
   });
 
   it('resets to initialSeconds when Reset is clicked', () => {
     render(<CountdownTimer initialSeconds={5} />);
+
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('5 seconds remaining');
 
     const startBtn = screen.getByRole('button', { name: /Start countdown/i });
     const resetBtn = screen.getByRole('button', { name: /Reset countdown/i });
@@ -124,10 +67,10 @@ describe('CountdownTimer', () => {
     });
 
     // Should be at 3
-    expect(screen.getByText(/3 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('3 seconds remaining');
 
     fireEvent.click(resetBtn);
 
-    expect(screen.getByText(/5 seconds remaining/i)).toBeInTheDocument();
+    expect(screen.getByTestId('countdown-heading')).toHaveTextContent('5 seconds remaining');
   });
 });

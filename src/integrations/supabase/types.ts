@@ -350,12 +350,128 @@ export type Database = {
         }
         Relationships: []
       }
+      model_response_cache: {
+        Row: {
+          id: string
+          model_name: string
+          task_type: string
+          prompt_hash: string
+          prompt: string
+          response: string
+          tokens_used: number | null
+          execution_time_ms: number | null
+          created_at: string
+          expires_at: string | null
+        }
+        Insert: {
+          id?: string
+          model_name: string
+          task_type: string
+          prompt_hash: string
+          prompt: string
+          response: string
+          tokens_used?: number | null
+          execution_time_ms?: number | null
+          created_at?: string
+          expires_at?: string | null
+        }
+        Update: {
+          id?: string
+          model_name?: string
+          task_type?: string
+          prompt_hash?: string
+          prompt?: string
+          response?: string
+          tokens_used?: number | null
+          execution_time_ms?: number | null
+          created_at?: string
+          expires_at?: string | null
+        }
+        Relationships: []
+      }
+      model_performance_metrics: {
+        Row: {
+          id: string
+          model_name: string
+          task_type: string
+          total_requests: number
+          successful_requests: number
+          failed_requests: number
+          total_tokens: number
+          avg_response_time: number
+          cache_hits: number
+          cache_misses: number
+          last_error: string | null
+          last_error_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          model_name: string
+          task_type: string
+          total_requests?: number
+          successful_requests?: number
+          failed_requests?: number
+          total_tokens?: number
+          avg_response_time?: number
+          cache_hits?: number
+          cache_misses?: number
+          last_error?: string | null
+          last_error_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          model_name?: string
+          task_type?: string
+          total_requests?: number
+          successful_requests?: number
+          failed_requests?: number
+          total_tokens?: number
+          avg_response_time?: number
+          cache_hits?: number
+          cache_misses?: number
+          last_error?: string | null
+          last_error_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_model_performance_metrics: {
+        Args: {
+          start_date?: string | null
+          end_date?: string | null
+        }
+        Returns: {
+          model_name: string
+          task_type: string
+          success_rate: number
+          avg_response_time: number
+          cache_hit_rate: number
+          total_requests: number
+          total_tokens: number
+        }[]
+      }
+      update_model_metrics: {
+        Args: {
+          p_model_name: string
+          p_task_type: string
+          p_success: boolean
+          p_response_time: number
+          p_tokens_used: number | null
+          p_cache_hit: boolean
+          p_error_message?: string | null
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
