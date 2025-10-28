@@ -110,21 +110,10 @@ const TrustSection = () => {
             {certifications.filter(cert => cert.visible).map((cert, index) => (
               <div key={index} className="flex items-center justify-center h-16 group">
                 <div className="text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300">
-                    <img
-                      src={cert.logo}
-                      alt={cert.name}
-                      className="w-8 h-8 object-contain"
-                      onError={(e) => {
-                        // Hide broken images and show text fallback
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'block';
-                      }}
-                    />
-                    <div className="hidden text-xs font-bold text-gray-700">
+                  <div className="w-16 h-16 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300">
+                    <span className="text-lg font-bold text-gray-700">
                       {cert.name.split(' ')[0]}
-                    </div>
+                    </span>
                   </div>
                   <div className="text-xs text-muted-foreground font-medium">
                     {cert.name}
