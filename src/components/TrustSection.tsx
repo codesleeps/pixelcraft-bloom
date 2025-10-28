@@ -53,12 +53,12 @@ const trustElements = [
 ];
 
 const certifications = [
-  { name: 'Google Partner', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg', visible: true },
-  { name: 'Meta Business Partner', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-original.svg', visible: true },
-  { name: 'HubSpot Certified', logo: 'https://logos-world.net/wp-content/uploads/2020/12/HubSpot-Logo.png', visible: true },
-  { name: 'AWS Certified', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg', visible: true },
-  { name: 'ISO 27001', logo: 'https://img.shields.io/badge/ISO-27001-blue.svg', visible: true },
-  { name: 'GDPR Compliant', logo: 'https://img.shields.io/badge/GDPR-Compliant-green.svg', visible: true }
+  { name: 'Google Partner', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
+  { name: 'Meta Business Partner', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iIzE4NzdmZiIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
+  { name: 'HubSpot Certified', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iI2ZmN2E1MCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
+  { name: 'AWS Certified', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iI2ZmOTkwMCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
+  { name: 'ISO 27001', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNTQTwvdGV4dD4KPHN2Zz4K', visible: true },
+  { name: 'GDPR Compliant', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzI1OGI1ZSIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R0RQUjwvdGV4dD4KPHN2Zz4K', visible: true }
 ];
 
 const TrustSection = () => {
@@ -109,15 +109,22 @@ const TrustSection = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
             {certifications.filter(cert => cert.visible).map((cert, index) => (
               <div key={index} className="flex items-center justify-center h-16 group">
-                <img
-                  src={cert.logo}
-                  alt={cert.name}
-                  className="max-h-12 max-w-24 object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
-                  onError={(e) => {
-                    // Hide broken images
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                <div className="text-center">
+                  <img
+                    src={cert.logo}
+                    alt={cert.name}
+                    className="max-h-8 max-w-20 mx-auto object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                    onError={(e) => {
+                      // Hide broken images and show text fallback
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'block';
+                    }}
+                  />
+                  <div className="hidden text-xs text-muted-foreground mt-1 font-medium">
+                    {cert.name}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
