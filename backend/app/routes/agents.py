@@ -13,7 +13,7 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 async def list_agents():
     agents = []
     for agent_id, agent in orchestrator.registry.items():
-        info = AgentInfo(agent_id=agent_id, name=getattr(agent.cfg, "name", agent_id), type=getattr(agent.cfg, "agent_id", ""), description=getattr(agent.cfg, "description", ""), capabilities=getattr(agent.cfg, "capabilities", []), status="active")
+        info = AgentInfo(agent_id=agent_id, name=getattr(agent.config, "name", agent_id), type=getattr(agent.config, "agent_id", ""), description=getattr(agent.config, "description", ""), capabilities=getattr(agent.config, "capabilities", []), status="active")
         agents.append(info)
     return AgentListResponse(agents=agents, total=len(agents))
 
@@ -23,7 +23,7 @@ async def get_agent(agent_type: str):
     agent = orchestrator.get(agent_type)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    info = AgentInfo(agent_id=agent_type, name=getattr(agent.cfg, "name", agent_type), type=getattr(agent.cfg, "agent_id", agent_type), description=getattr(agent.cfg, "description", ""), capabilities=getattr(agent.cfg, "capabilities", []), status="active")
+    info = AgentInfo(agent_id=agent_type, name=getattr(agent.config, "name", agent_type), type=getattr(agent.config, "agent_id", agent_type), description=getattr(agent.config, "description", ""), capabilities=getattr(agent.config, "capabilities", []), status="active")
     return info
 
 

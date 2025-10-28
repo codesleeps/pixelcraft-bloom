@@ -32,3 +32,8 @@ backend/.env
 backend/.env.local
 backend/*.log
 backend/.pytest_cache/
+
+# Coverage
+coverage/
+.nyc_output/
+coverage.json

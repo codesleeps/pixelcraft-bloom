@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -112,12 +113,16 @@ const DemoPreview = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
-                        <Play className="w-4 h-4 mr-2" />
-                        Start Live Demo
+                      <Button className="bg-gradient-primary hover:bg-gradient-primary/90" asChild>
+                        <Link to="/strategy-session">
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Live Demo
+                        </Link>
                       </Button>
-                      <Button variant="outline">
-                        Schedule Demo Call
+                      <Button variant="outline" asChild>
+                        <Link to="/strategy-session">
+                          Schedule Demo Call
+                        </Link>
                       </Button>
                     </div>
                   </div>
@@ -126,7 +131,7 @@ const DemoPreview = () => {
                   <div className="relative">
                     <Card className="border-0 bg-gray-900 text-white overflow-hidden">
                       <div className="absolute top-4 right-4">
-                        <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                        <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/30">
                           Live Demo
                         </Badge>
                       </div>
@@ -160,6 +165,19 @@ const DemoPreview = () => {
                               <span>Confidence: 95%</span>
                             </div>
                           </div>
+
+                          {/* Service Agent Badges */}
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-700">
+                            <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 text-xs hover:bg-green-500/30">
+                              SEO Agent
+                            </Badge>
+                            <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs hover:bg-blue-500/30">
+                              E-commerce Agent
+                            </Badge>
+                            <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs hover:bg-purple-500/30">
+                              Analytics Agent
+                            </Badge>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -183,12 +201,16 @@ const DemoPreview = () => {
               Book a personalized demo today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
-                <Play className="w-4 h-4 mr-2" />
-                Schedule Live Demo
+              <Button className="bg-gradient-primary hover:bg-gradient-primary/90" asChild>
+                <Link to="/strategy-session">
+                  <Play className="w-4 h-4 mr-2" />
+                  Schedule Live Demo
+                </Link>
               </Button>
-              <Button variant="outline">
-                View Case Studies
+              <Button variant="outline" asChild>
+                <Link to="/strategy-session">
+                  View Case Studies
+                </Link>
               </Button>
             </div>
           </div>

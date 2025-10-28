@@ -14,6 +14,12 @@ from .base import BaseAgent, AgentResponse
 from .chat_agent import create_chat_agent
 from .lead_agent import create_lead_qualification_agent
 from .recommendation_agent import create_recommendation_agent
+from .web_development_agent import create_web_development_agent
+from .digital_marketing_agent import create_digital_marketing_agent
+from .brand_design_agent import create_brand_design_agent
+from .ecommerce_solutions_agent import create_ecommerce_solutions_agent
+from .content_creation_agent import create_content_creation_agent
+from .analytics_consulting_agent import create_analytics_consulting_agent
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.orchestrator")
@@ -107,6 +113,30 @@ class AgentOrchestrator:
             "service_recommendation": [
                 "recommend", "suggestion", "service", "which service",
                 "what service", "best option", "solution"
+            ],
+            "web_development": [
+                "website", "web development", "frontend", "backend",
+                "react", "vue", "angular", "full-stack", "cms"
+            ],
+            "digital_marketing": [
+                "marketing", "seo", "advertising", "campaign",
+                "social media", "content marketing", "ppc", "roi"
+            ],
+            "brand_design": [
+                "brand", "logo", "design", "visual identity",
+                "branding", "creative", "packaging"
+            ],
+            "ecommerce_solutions": [
+                "ecommerce", "shopify", "woocommerce", "online store",
+                "shopping cart", "payment", "inventory"
+            ],
+            "content_creation": [
+                "content", "writing", "blog", "copywriting",
+                "social media content", "video", "newsletter"
+            ],
+            "analytics_consulting": [
+                "analytics", "data", "tracking", "metrics",
+                "google analytics", "reporting", "insights"
             ]
         }
 
@@ -206,11 +236,23 @@ def initialize_agents() -> None:
         chat_agent = create_chat_agent()
         lead_agent = create_lead_qualification_agent()
         rec_agent = create_recommendation_agent()
+        web_dev_agent = create_web_development_agent()
+        digital_marketing_agent = create_digital_marketing_agent()
+        brand_design_agent = create_brand_design_agent()
+        ecommerce_agent = create_ecommerce_solutions_agent()
+        content_creation_agent = create_content_creation_agent()
+        analytics_agent = create_analytics_consulting_agent()
 
         # Register agents
         orchestrator.register("chat", chat_agent)
         orchestrator.register("lead_qualification", lead_agent)
         orchestrator.register("service_recommendation", rec_agent)
+        orchestrator.register("web_development", web_dev_agent)
+        orchestrator.register("digital_marketing", digital_marketing_agent)
+        orchestrator.register("brand_design", brand_design_agent)
+        orchestrator.register("ecommerce_solutions", ecommerce_agent)
+        orchestrator.register("content_creation", content_creation_agent)
+        orchestrator.register("analytics_consulting", analytics_agent)
 
         logger.info("Successfully initialized all agents")
 

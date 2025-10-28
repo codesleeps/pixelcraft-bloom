@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -90,7 +91,7 @@ const TrustSection = () => {
                     <IconComponent className="w-8 h-8 text-primary" />
                   </div>
                   <div>
-                    <Badge variant="secondary" className="mb-2">
+                    <Badge variant="secondary" className="mb-2 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
                       {element.badge}
                     </Badge>
                     <h3 className="font-semibold text-lg mb-2">{element.title}</h3>
@@ -150,12 +151,12 @@ const TrustSection = () => {
               Get your free strategy session today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-gradient-primary/90 transition-colors font-medium">
+              <Link to="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-gradient-primary/90 transition-colors font-medium">
                 Get Free Strategy Session
-              </a>
-              <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+              </Link>
+              <Link to="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                 Schedule a Call
-              </a>
+              </Link>
             </div>
           </div>
         </div>
