@@ -18,6 +18,21 @@ const Navigation = () => {
     { name: 'Dashboard', href: '/dashboard' },
   ];
 
+  const handleSmoothScroll = (href: string, event?: React.MouseEvent) => {
+    if (href.startsWith('#')) {
+      const id = href.slice(1);
+      const element = document.getElementById(id);
+      if (element) {
+        event?.preventDefault();
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Update URL hash without triggering additional scroll
+        window.history.replaceState(null, '', `#${id}`);
+      }
+    }
+    // Close mobile menu if open
+    if (isOpen) setIsOpen(false);
+  };
+
   const isActive = (href: string) => {
     if (href.startsWith('#')) {
       return location.hash === href;
@@ -44,7 +59,8 @@ const Navigation = () => {
             {navItems.map((item) => (
               <Link
                 key={item.name}
-                to={item.href}
+                to={item.href.startsWith('#') ? `/${item.href}` : item.href}
+                onClick={(e) => handleSmoothScroll(item.href, e)}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   isActive(item.href)
                     ? 'text-primary'
@@ -100,13 +116,13 @@ const Navigation = () => {
               {navItems.map((item) => (
                 <Link
                   key={item.name}
-                  to={item.href}
+                  to={item.href.startsWith('#') ? `/${item.href}` : item.href}
+                  onClick={(e) => handleSmoothScroll(item.href, e)}
                   className={`text-sm font-medium transition-colors hover:text-primary ${
                     isActive(item.href)
                       ? 'text-primary'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
-                  onClick={() => setIsOpen(false)}
                 >
                   {item.name}
                 </Link>
