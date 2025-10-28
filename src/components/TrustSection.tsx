@@ -53,12 +53,12 @@ const trustElements = [
 ];
 
 const certifications = [
-  { name: 'Google Partner', logo: 'https://logos-world.net/wp-content/uploads/2020/12/Google-Logo.png' },
-  { name: 'Meta Business Partner', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/600px-Facebook_Logo_%282019%29.png' },
-  { name: 'HubSpot Certified', logo: 'https://logos-world.net/wp-content/uploads/2020/12/HubSpot-Logo.png' },
-  { name: 'AWS Certified', logo: 'https://logos-world.net/wp-content/uploads/2020/12/Amazon-Web-Services-AWS-Logo.png' },
-  { name: 'ISO 27001', logo: 'https://www.iso.org/files/live/sites/isoorg/files/store/en/PUB100090.png' },
-  { name: 'GDPR Compliant', logo: 'https://www.eugdpr.org/images/gdpr-logo.png' }
+  { name: 'Google Partner', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg', visible: true },
+  { name: 'Meta Business Partner', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-original.svg', visible: true },
+  { name: 'HubSpot Certified', logo: 'https://logos-world.net/wp-content/uploads/2020/12/HubSpot-Logo.png', visible: true },
+  { name: 'AWS Certified', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original.svg', visible: true },
+  { name: 'ISO 27001', logo: 'https://img.shields.io/badge/ISO-27001-blue.svg', visible: true },
+  { name: 'GDPR Compliant', logo: 'https://img.shields.io/badge/GDPR-Compliant-green.svg', visible: true }
 ];
 
 const TrustSection = () => {
@@ -106,13 +106,17 @@ const TrustSection = () => {
         {/* Certifications */}
         <div className="text-center mb-16">
           <h3 className="text-2xl font-bold mb-8">Certified & Recognized By</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center opacity-60 hover:opacity-100 transition-opacity">
-            {certifications.map((cert, index) => (
-              <div key={index} className="flex items-center justify-center h-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
+            {certifications.filter(cert => cert.visible).map((cert, index) => (
+              <div key={index} className="flex items-center justify-center h-16 group">
                 <img
                   src={cert.logo}
                   alt={cert.name}
-                  className="max-h-12 max-w-24 object-contain filter grayscale hover:grayscale-0 transition-all"
+                  className="max-h-12 max-w-24 object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                  onError={(e) => {
+                    // Hide broken images
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             ))}
