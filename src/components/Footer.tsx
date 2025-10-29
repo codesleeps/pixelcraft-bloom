@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { HashLink as Link } from 'react-router-hash-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -39,18 +39,26 @@ const Footer = () => {
               SEO, social media, and data-driven growth solutions.
             </p>
             <div className="flex space-x-4">
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
-                <Facebook className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
-                <Twitter className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
-                <Instagram className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
-                <Linkedin className="w-4 h-4" />
-              </Button>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
+                  <Facebook className="w-4 h-4" />
+                </Button>
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
+                  <Twitter className="w-4 h-4" />
+                </Button>
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
+                  <Instagram className="w-4 h-4" />
+                </Button>
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white p-2">
+                  <Linkedin className="w-4 h-4" />
+                </Button>
+              </a>
             </div>
           </div>
 
@@ -58,19 +66,19 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Services</h3>
             <div className="space-y-2">
-              <Link to="#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 SEO & Search Marketing
               </Link>
-              <Link to="#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Social Media Marketing
               </Link>
-              <Link to="#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Web Design & Development
               </Link>
-              <Link to="#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Analytics & Insights
               </Link>
-              <Link to="#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#services" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Content Marketing
               </Link>
             </div>
@@ -80,10 +88,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Company</h3>
             <div className="space-y-2">
-              <Link to="#about" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#about" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 About Us
               </Link>
-              <Link to="#contact" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#contact" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Contact
               </Link>
               <Link to="/dashboard" className="block text-gray-300 hover:text-white text-sm transition-colors">
@@ -92,7 +100,7 @@ const Footer = () => {
               <Link to="/strategy-session" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Strategy Session
               </Link>
-              <Link to="/pricing" className="block text-gray-300 hover:text-white text-sm transition-colors">
+              <Link smooth to="/#pricing" className="block text-gray-300 hover:text-white text-sm transition-colors">
                 Pricing
               </Link>
             </div>
