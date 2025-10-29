@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import List, Optional
 from pydantic import AnyHttpUrl, Field, validator
 from pydantic_settings import BaseSettings
+import logging
 
 
 class OllamaConfig(BaseSettings):
@@ -16,6 +17,7 @@ class SupabaseConfig(BaseSettings):
     url: AnyHttpUrl
     key: str
     jwt_secret: Optional[str] = None
+    jwt_algorithm: str = Field("HS256", description="JWT algorithm for decoding")
 
 
 class AppConfig(BaseSettings):
@@ -50,6 +52,9 @@ def get_settings() -> AppConfig:
 
     if environ.get("SUPABASE_URL") and environ.get("SUPABASE_KEY"):
         settings.supabase = SupabaseConfig(url=environ.get("SUPABASE_URL"), key=environ.get("SUPABASE_KEY"), jwt_secret=environ.get("SUPABASE_JWT_SECRET"))
+
+    if settings.supabase and settings.supabase.jwt_secret is None:
+        logging.warning("SUPABASE_JWT_SECRET is not set. JWT authentication will not work properly.")
 
     # Redis optional
     settings.redis_url = environ.get("REDIS_URL")

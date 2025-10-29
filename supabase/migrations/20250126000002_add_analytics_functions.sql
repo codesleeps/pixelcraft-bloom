@@ -3,7 +3,8 @@
 -- Function to get lead conversion metrics
 create or replace function get_lead_conversion_metrics(
     start_date timestamptz default '-infinity',
-    end_date timestamptz default 'infinity'
+    end_date timestamptz default 'infinity',
+    user_uuid uuid default null
 )
 returns table (
     total_leads bigint,
@@ -13,22 +14,24 @@ returns table (
 ) as $$
 begin
     return query
-    select 
+    select
         count(*) as total_leads,
         count(*) filter (where lead_status = 'qualified') as qualified_leads,
-        (count(*) filter (where lead_status = 'qualified')::numeric / 
+        (count(*) filter (where lead_status = 'qualified')::numeric /
          nullif(count(*), 0)::numeric * 100) as conversion_rate,
         avg(lead_score)::numeric as avg_lead_score
     from leads
     where created_at between start_date and end_date
-    and deleted_at is null;
+    and deleted_at is null
+    and (user_uuid is null or user_id = user_uuid);
 end;
 $$ language plpgsql security definer;
 
 -- Function to get conversation analytics
 create or replace function get_conversation_analytics(
     start_date timestamptz default '-infinity',
-    end_date timestamptz default 'infinity'
+    end_date timestamptz default 'infinity',
+    user_uuid uuid default null
 )
 returns table (
     total_conversations bigint,
@@ -39,12 +42,13 @@ returns table (
 begin
     return query
     with conversation_stats as (
-        select 
+        select
             c.id,
             count(m.id) as message_count
         from conversations c
         left join messages m on c.id = m.conversation_id
         where c.created_at between start_date and end_date
+        and (user_uuid is null or c.user_id = user_uuid)
         group by c.id
     )
     select
@@ -55,7 +59,8 @@ begin
     from conversations c
     left join conversation_stats cs on c.id = cs.id
     where c.created_at between start_date and end_date
-    and c.deleted_at is null;
+    and c.deleted_at is null
+    and (user_uuid is null or c.user_id = user_uuid);
 end;
 $$ language plpgsql security definer;
 
@@ -78,6 +83,32 @@ begin
          nullif(count(*), 0)::numeric * 100) as acceptance_rate,
         avg(confidence_score)::numeric as avg_confidence
     from service_recommendations sr
+    group by sr.service_name
+    order by total_recommendations desc;
+end;
+$$ language plpgsql security definer;
+
+-- Function to get service recommendation insights for user
+create or replace function get_service_recommendations_insights_for_user(user_uuid uuid)
+returns table (
+    service_name text,
+    total_recommendations bigint,
+    accepted_count bigint,
+    acceptance_rate numeric,
+    avg_confidence numeric
+) as $$
+begin
+    return query
+    select
+        sr.service_name,
+        count(*)::bigint as total_recommendations,
+        count(*) filter (where sr.status = 'accepted')::bigint as accepted_count,
+        (count(*) filter (where sr.status = 'accepted')::numeric /
+         nullif(count(*), 0)::numeric * 100) as acceptance_rate,
+        avg(sr.confidence_score)::numeric as avg_confidence
+    from service_recommendations sr
+    join leads l on sr.lead_id = l.id
+    where l.user_id = user_uuid
     group by sr.service_name
     order by total_recommendations desc;
 end;
