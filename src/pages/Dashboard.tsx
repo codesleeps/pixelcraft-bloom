@@ -1,3 +1,5 @@
+import { useAnalytics } from '@/hooks/useAnalytics';
+
 import React from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +9,7 @@ import { Users, MessageSquare, TrendingUp, DollarSign } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, role } = useAuth();
+  const { data: analyticsData, loading: analyticsLoading, error: analyticsError } = useAnalytics();
 
   const displayName = user?.user_metadata?.display_name || user?.email;
 
@@ -24,8 +27,8 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,234</div>
-              <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+              <div className="text-2xl font-bold">{analyticsData?.totalLeads?.value ?? 'N/A'}</div>
+              <p className="text-xs text-muted-foreground">{analyticsData?.totalLeads?.change ?? '-'}% from last month</p>
             </CardContent>
           </Card>
 
@@ -35,8 +38,8 @@ export default function Dashboard() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">567</div>
-              <p className="text-xs text-muted-foreground">+15.3% from last month</p>
+              <div className="text-2xl font-bold">{analyticsData?.activeConversations?.value ?? 'N/A'}</div>
+              <p className="text-xs text-muted-foreground">{analyticsData?.activeConversations?.change ?? '-'}% from last month</p>
             </CardContent>
           </Card>
 
@@ -46,8 +49,8 @@ export default function Dashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12.5%</div>
-              <p className="text-xs text-muted-foreground">+2.1% from last month</p>
+              <div className="text-2xl font-bold">{analyticsData?.conversionRate?.value ?? 'N/A'}%</div>
+              <p className="text-xs text-muted-foreground">{analyticsData?.conversionRate?.change ?? '-'}% from last month</p>
             </CardContent>
           </Card>
 
@@ -57,8 +60,8 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231</div>
-              <p className="text-xs text-muted-foreground">+8.2% from last month</p>
+              <div className="text-2xl font-bold">${analyticsData?.revenue?.value ?? 'N/A'}</div>
+              <p className="text-xs text-muted-foreground">{analyticsData?.revenue?.change ?? '-'}% from last month</p>
             </CardContent>
           </Card>
         </div>
