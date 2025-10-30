@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -8,15 +8,23 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useLeadTrends, useConversationTrends, useServiceRecommendations, useAgentPerformance } from '@/hooks/useAnalyticsTrends';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { format } from 'date-fns';
-import { Users, MessageSquare, TrendingUp, DollarSign, MessageSquare as MessageSquareIcon, Calendar } from 'lucide-react';
+import { Users, MessageSquare, TrendingUp, DollarSign, MessageSquare as MessageSquareIcon, Calendar, Wifi, WifiOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const { user, role } = useAuth();
   const { data: analyticsData, loading: analyticsLoading, error: analyticsError } = useAnalytics();
+  const { isConnected: wsConnected, error: wsError } = useWebSocket();
+  useEffect(() => {
+    if (wsError) {
+      toast.error(wsError);
+    }
+  }, [wsError]);
   const [timeRange, setTimeRange] = useState('30d');
 
   const getTimeRangeParams = (range: string) => {
@@ -97,6 +105,12 @@ export default function Dashboard() {
               <SelectItem value="30d">Last 30 Days</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Badge variant={wsConnected ? "default" : wsError ? "destructive" : "secondary"}>
+            {wsConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />} {wsConnected ? "Live" : wsError ? "Error" : "Offline"}
+          </Badge>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

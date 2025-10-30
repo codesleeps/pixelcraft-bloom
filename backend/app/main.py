@@ -10,9 +10,11 @@ from .routes import agents as agents_routes
 from .routes import leads as leads_routes
 from .routes import pricing as pricing_routes
 from .routes import analytics as analytics_routes
+from .routes import websocket as websocket_routes
 
 from .utils.ollama_client import test_ollama_connection, list_available_models, get_ollama_client
 from .utils.supabase_client import get_supabase_client, test_connection as test_supabase_connection
+from .utils.redis_client import get_redis_client, test_redis_connection
 
 logger = logging.getLogger("pixelcraft.backend")
 
@@ -36,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(leads_routes.router, prefix="/api")
     app.include_router(pricing_routes.router, prefix="/api")
     app.include_router(analytics_routes.router, prefix="/api")
+    app.include_router(websocket_routes.router, prefix="/api")
 
     @app.on_event("startup")
     async def startup_event():
@@ -59,6 +62,14 @@ def create_app() -> FastAPI:
         except Exception as exc:
             logger.exception("Supabase initialization error: %s", exc)
 
+        # Initialize Redis client and test connection
+        try:
+            _ = get_redis_client()
+            redis_ok = test_redis_connection()
+            logger.info("Redis connectivity: %s", redis_ok)
+        except Exception as exc:
+            logger.exception("Redis initialization error: %s", exc)
+
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Shutting down PixelCraft AI Backend")
@@ -72,6 +83,7 @@ def create_app() -> FastAPI:
             "env": settings.app_env,
             "ollama_available": test_ollama_connection(),
             "supabase": test_supabase_connection(),
+            "redis": test_redis_connection(),
         }
 
     @app.get("/", tags=["root"])

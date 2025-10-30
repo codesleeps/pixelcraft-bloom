@@ -18,6 +18,7 @@ from ..models.pricing import (
     PricingResponse
 )
 from ..utils.supabase_client import get_supabase_client
+from ..utils.redis_client import publish_analytics_event
 
 router = APIRouter()
 supabase: Client = get_supabase_client()
@@ -158,6 +159,15 @@ async def create_subscription(subscription: UserSubscriptionCreate):
         })
 
         result = supabase.table("user_subscriptions").insert(subscription_data).execute()
+        subscription_id = result.data[0]["id"]
+        try:
+            publish_analytics_event("analytics:revenue", "subscription_created", {
+                "subscription_id": subscription_id,
+                "user_id": subscription.user_id,
+                "package_id": subscription.package_id
+            })
+        except Exception as e:
+            logger.warning("Failed to publish subscription creation event: %s", e)
         return result.data[0]
 
     except HTTPException:
@@ -187,6 +197,14 @@ async def cancel_subscription(subscription_id: str):
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Subscription not found")
+
+        try:
+            publish_analytics_event("analytics:revenue", "subscription_updated", {
+                "subscription_id": subscription_id,
+                "status": "cancelled"
+            })
+        except Exception as e:
+            logger.warning("Failed to publish subscription cancellation event: %s", e)
 
         return {"message": "Subscription cancelled successfully"}
     except HTTPException:

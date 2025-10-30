@@ -7,6 +7,7 @@ import time
 from ..models.chat import ChatRequest, ChatResponse, ChatStreamChunk, ChatMessage
 from ..config import settings
 from ..utils.supabase_client import get_supabase_client
+from ..utils.redis_client import publish_analytics_event
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -23,6 +24,10 @@ async def post_message(req: ChatRequest):
         sb = get_supabase_client()
         # Soft attempt to insert message (table schema to be created in DB)
         _ = sb.table("conversations").insert({"conversation_id": conversation_id, "role": "user", "content": req.message}).execute()
+        try:
+            publish_analytics_event("analytics:conversations", "message_created", {"conversation_id": conversation_id})
+        except Exception:
+            pass
     except Exception:
         # Suppress DB errors for now; real errors should be logged
         pass
@@ -68,6 +73,10 @@ async def delete_history(conversation_id: str):
         sb = get_supabase_client()
         # Soft delete: set deleted_at timestamp (client SQL must have deleted_at column)
         _ = sb.table("conversations").update({"deleted_at": "now()"}).eq("conversation_id", conversation_id).execute()
+        try:
+            publish_analytics_event("analytics:conversations", "conversation_deleted", {"conversation_id": conversation_id})
+        except Exception:
+            pass
         return JSONResponse(status_code=200, content={"deleted": True})
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to delete history")

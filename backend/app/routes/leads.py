@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from ..models.lead import LeadRequest, LeadResponse, LeadAnalysis, LeadScore
 from ..utils.supabase_client import get_supabase_client
+from ..utils.redis_client import publish_analytics_event
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -18,6 +19,13 @@ async def submit_lead(req: LeadRequest):
     except Exception:
         # Fail gracefully but raise for now
         raise HTTPException(status_code=500, detail="Failed to store lead")
+
+    # Publish analytics event for lead creation
+    try:
+        publish_analytics_event("analytics:leads", "lead_created", {"lead_id": lead_id, "user_id": req.lead_data.dict().get("user_id")})
+    except Exception:
+        # Log warning but don't fail the request if Redis is unavailable
+        pass
 
     analysis = None
     if req.analyze:
@@ -78,6 +86,13 @@ async def analyze_lead(lead_id: str):
         _ = sb.table("agent_logs").insert({"lead_id": lead_id, "analysis": analysis.dict()}).execute()
     except Exception:
         # Ignore persistence errors for now
+        pass
+
+    # Publish analytics event for lead analysis
+    try:
+        publish_analytics_event("analytics:leads", "lead_analyzed", {"lead_id": lead_id})
+    except Exception:
+        # Log warning but don't fail the request if Redis is unavailable
         pass
 
     return analysis

@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 
+// This hook fetches analytics data and automatically updates when real-time events are received via WebSocket (see useWebSocket hook)
+// The WebSocket connection invalidates the React Query cache, triggering automatic refetches
+
 // Define types for the analytics data
 export interface AnalyticsData {
   total_leads: { value: number; change: number };
@@ -36,6 +39,11 @@ const getTimeRanges = (periodDays: number = 30) => {
     current: { start_date: currentStart, end_date: currentEnd },
     previous: { start_date: previousStart, end_date: previousEnd },
   };
+};
+
+// Helper function for safe numeric parsing
+const safeParseFloat = (value: any, defaultValue: number = 0): number => {
+  return value != null ? parseFloat(value) : defaultValue;
 };
 
 // Function to fetch analytics data
@@ -83,15 +91,28 @@ const fetchAnalyticsData = async (token: string | undefined, timeRange: ReturnTy
       active_conversations: { value: currentConv.active_conversations, change: calculatePercentageChange(currentConv.active_conversations, previousConv.active_conversations) },
       completed_conversations: { value: currentConv.completed_conversations, change: calculatePercentageChange(currentConv.completed_conversations, previousConv.completed_conversations) },
       avg_messages_per_conversation: { value: currentConv.avg_messages_per_conversation, change: calculatePercentageChange(currentConv.avg_messages_per_conversation, previousConv.avg_messages_per_conversation) },
-      mrr: { value: parseFloat(currentRev.mrr), change: calculatePercentageChange(parseFloat(currentRev.mrr), parseFloat(previousRev.mrr)) },
-      arr: { value: parseFloat(currentRev.arr), change: calculatePercentageChange(parseFloat(currentRev.arr), parseFloat(previousRev.arr)) },
-      total_revenue: { value: parseFloat(currentRev.total_revenue), change: calculatePercentageChange(parseFloat(currentRev.total_revenue), parseFloat(previousRev.total_revenue)) },
-      active_subscriptions: { value: currentRev.active_subscriptions, change: calculatePercentageChange(currentRev.active_subscriptions, previousRev.active_subscriptions) },
-      cancelled_subscriptions: { value: currentRev.cancelled_subscriptions, change: calculatePercentageChange(currentRev.cancelled_subscriptions, previousRev.cancelled_subscriptions) },
-      churn_rate: { value: currentRev.churn_rate, change: calculatePercentageChange(currentRev.churn_rate, previousRev.churn_rate) },
+      mrr: { value: safeParseFloat(currentRev.mrr), change: calculatePercentageChange(safeParseFloat(currentRev.mrr), safeParseFloat(previousRev.mrr)) },
+      arr: { value: safeParseFloat(currentRev.arr), change: calculatePercentageChange(safeParseFloat(currentRev.arr), safeParseFloat(previousRev.arr)) },
+      total_revenue: { value: safeParseFloat(currentRev.total_revenue), change: calculatePercentageChange(safeParseFloat(currentRev.total_revenue), safeParseFloat(previousRev.total_revenue)) },
+      active_subscriptions: { value: safeParseFloat(currentRev.active_subscriptions), change: calculatePercentageChange(safeParseFloat(currentRev.active_subscriptions), safeParseFloat(previousRev.active_subscriptions)) },
+      cancelled_subscriptions: { value: safeParseFloat(currentRev.cancelled_subscriptions), change: calculatePercentageChange(safeParseFloat(currentRev.cancelled_subscriptions), safeParseFloat(previousRev.cancelled_subscriptions)) },
+      churn_rate: { value: safeParseFloat(currentRev.churn_rate), change: calculatePercentageChange(safeParseFloat(currentRev.churn_rate), safeParseFloat(previousRev.churn_rate)) },
     } as AnalyticsData;
   } catch (error) {
-    throw new Error(`Failed to fetch analytics data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    let errorType = 'Unknown error';
+    let endpointContext = '';
+    if (error instanceof Error) {
+      if (error.message.includes('HTTP error! status: 401')) {
+        errorType = 'Authentication error';
+      } else if (error.message.includes('HTTP error! status:')) {
+        errorType = 'Network error';
+        const match = error.message.match(/for (\/api\/analytics\/[^)]+)/);
+        endpointContext = match ? ` on endpoint ${match[1]}` : '';
+      } else {
+        errorType = 'Data parsing error';
+      }
+    }
+    throw new Error(`Failed to fetch analytics data (${errorType}${endpointContext}): ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -107,6 +128,8 @@ export const useAnalytics = () => {
     queryFn: () => fetchAnalyticsData(session?.access_token, timeRange),
     enabled: !!user && !!session, // Only run if user is authenticated and session exists
     retry: 3, // Use React Query's built-in retry for transient errors
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    refetchInterval: 60000, // Refresh every 60 seconds as fallback when WebSocket is disconnected
   });
 
   return { data, error, loading };

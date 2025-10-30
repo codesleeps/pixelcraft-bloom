@@ -61,6 +61,8 @@ end;
 $$ language plpgsql security definer;
 
 -- Function to get subscription trends over time
+-- Note: Cancellations are tracked using updated_at as a proxy for cancellation time.
+-- For more accurate tracking, consider adding a cancelled_at timestamp column in a future migration.
 create or replace function get_subscription_trends(
     start_date timestamptz,
     end_date timestamptz,
@@ -76,33 +78,45 @@ returns table (
 ) as $$
 begin
     return query
-    with trends as (
+    with new_subs as (
+        -- Count new subscriptions grouped by creation period
         select
             date_trunc(case when aggregation = 'weekly' then 'week' else 'day' end, us.created_at) as period,
-            count(*) filter (where us.created_at is not null) as new_subs,
-            count(*) filter (where us.status = 'cancelled' and us.updated_at is not null) as cancelled_subs
+            count(*)::bigint as new_subscriptions
         from user_subscriptions us
         where us.created_at between start_date and end_date
         and (user_uuid is null or us.user_id = user_uuid)
         group by date_trunc(case when aggregation = 'weekly' then 'week' else 'day' end, us.created_at)
-        order by period
     ),
-    net_changes as (
+    cancelled_subs as (
+        -- Count cancelled subscriptions grouped by cancellation period (using updated_at as proxy)
         select
-            period,
-            coalesce(new_subs, 0)::bigint as new_subscriptions,
-            coalesce(cancelled_subs, 0)::bigint as cancelled_subscriptions,
-            coalesce(new_subs, 0)::bigint - coalesce(cancelled_subs, 0)::bigint as net_change
-        from trends
+            date_trunc(case when aggregation = 'weekly' then 'week' else 'day' end, us.updated_at) as period,
+            count(*)::bigint as cancelled_subscriptions
+        from user_subscriptions us
+        where us.status = 'cancelled'
+        and us.updated_at between start_date and end_date
+        and (user_uuid is null or us.user_id = user_uuid)
+        group by date_trunc(case when aggregation = 'weekly' then 'week' else 'day' end, us.updated_at)
+    ),
+    combined_trends as (
+        -- Combine new and cancelled counts per period, handling missing periods with full outer join
+        select
+            coalesce(ns.period, cs.period) as period,
+            coalesce(ns.new_subscriptions, 0)::bigint as new_subscriptions,
+            coalesce(cs.cancelled_subscriptions, 0)::bigint as cancelled_subscriptions,
+            coalesce(ns.new_subscriptions, 0)::bigint - coalesce(cs.cancelled_subscriptions, 0)::bigint as net_change
+        from new_subs ns
+        full outer join cancelled_subs cs on ns.period = cs.period
     )
     select
-        nc.period,
-        nc.new_subscriptions,
-        nc.cancelled_subscriptions,
-        nc.net_change,
-        sum(nc.net_change) over (order by nc.period)::bigint as cumulative_active
-    from net_changes nc
-    order by nc.period;
+        ct.period,
+        ct.new_subscriptions,
+        ct.cancelled_subscriptions,
+        ct.net_change,
+        sum(ct.net_change) over (order by ct.period)::bigint as cumulative_active
+    from combined_trends ct
+    order by ct.period;
 end;
 $$ language plpgsql security definer;
 

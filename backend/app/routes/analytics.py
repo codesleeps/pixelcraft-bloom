@@ -22,6 +22,7 @@ from ..models.analytics import (
 )
 from ..utils.auth import get_current_user, require_admin
 from ..utils.supabase_client import get_supabase_client
+from ..utils.logger import logger
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -65,7 +66,7 @@ async def get_revenue_summary(
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
         result = sb.rpc('get_revenue_summary', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
-        if result.data:
+        if result.data and len(result.data) > 0:
             data = result.data[0]
             return RevenueSummary(
                 mrr=data["mrr"],
@@ -76,8 +77,10 @@ async def get_revenue_summary(
                 churn_rate=data["churn_rate"]
             )
         else:
-            raise HTTPException(status_code=500, detail="No data returned from analytics function")
+            logger.error("Revenue summary RPC returned no data", extra={"user_uuid": user_uuid, "time_range": time_range.dict()})
+            raise HTTPException(status_code=500, detail="No revenue summary data available for the specified time range")
     except Exception as e:
+        logger.error(f"Revenue analytics error in get_revenue_summary: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -90,6 +93,8 @@ async def get_revenue_by_package(
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
         result = sb.rpc('get_revenue_by_package', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
+        if not result.data:
+            return []
         return [
             RevenueByPackage(
                 package_id=row["package_id"],
@@ -101,6 +106,7 @@ async def get_revenue_by_package(
             for row in result.data
         ]
     except Exception as e:
+        logger.error(f"Revenue analytics error in get_revenue_by_package: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -129,6 +135,7 @@ async def get_subscription_trends(
             aggregation=aggregation
         )
     except Exception as e:
+        logger.error(f"Revenue analytics error in get_subscription_trends: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -141,6 +148,10 @@ async def get_customer_ltv(
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
         result = sb.rpc('get_customer_ltv', {'user_uuid': user_uuid}).execute()
+        if not result.data:
+            return []
+        if pagination.offset >= len(result.data):
+            raise HTTPException(status_code=400, detail="Pagination offset exceeds available data")
         paginated_data = result.data[pagination.offset:pagination.offset + pagination.limit]
         return [
             CustomerLTV(
@@ -154,6 +165,7 @@ async def get_customer_ltv(
             for row in paginated_data
         ]
     except Exception as e:
+        logger.error(f"Revenue analytics error in get_customer_ltv: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -198,22 +210,10 @@ async def get_lead_trends(
 ):
     sb = get_supabase_client()
     try:
-        user_filter = f" AND user_id = '{current_user['user_id']}'" if current_user["role"] == "user" else ""
-        trunc_unit = "day" if aggregation == "daily" else "week"
-        query = f"""
-        SELECT 
-            date_trunc('{trunc_unit}', created_at) as date,
-            count(*) as value
-        FROM leads
-        WHERE created_at BETWEEN '{time_range.start_date}' AND '{time_range.end_date}'
-        AND deleted_at IS NULL{user_filter}
-        GROUP BY date
-        ORDER BY date
-        """
-        result = sb.rpc("execute_sql", {"query": query}).execute()  # Assuming a helper RPC for raw queries, or use table select
-        # Note: Supabase client may not support raw SQL directly; adjust if needed
+        user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
+        result = sb.rpc("get_lead_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid}).execute()
         data_points = [
-            TimeSeriesDataPoint(date=row["date"].date(), value=row["value"], label=None)
+            TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
         return TimeSeriesResponse(
@@ -264,24 +264,10 @@ async def get_conversation_trends(
 ):
     sb = get_supabase_client()
     try:
-        user_filter = f" AND user_id = '{current_user['user_id']}'" if current_user["role"] == "user" else ""
-        status_filter = f" AND status = '{filters.status}'" if filters.status else ""
-        channel_filter = f" AND channel = '{filters.channel}'" if filters.channel else ""
-        trunc_unit = "day" if aggregation == "daily" else "week"
-        sort_order = filters.sort_order or "desc"
-        query = f"""
-        SELECT 
-            date_trunc('{trunc_unit}', created_at) as date,
-            count(*) as value
-        FROM conversations
-        WHERE created_at BETWEEN '{time_range.start_date}' AND '{time_range.end_date}'
-        AND deleted_at IS NULL{user_filter}{status_filter}{channel_filter}
-        GROUP BY date
-        ORDER BY date {sort_order}
-        """
-        result = sb.rpc("execute_sql", {"query": query}).execute()  # Adjust for actual Supabase query method
+        user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
+        result = sb.rpc("get_conversation_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid, "status_filter": filters.status, "channel_filter": filters.channel}).execute()
         data_points = [
-            TimeSeriesDataPoint(date=row["date"].date(), value=row["value"], label=None)
+            TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
         return TimeSeriesResponse(
@@ -352,19 +338,9 @@ async def get_agent_trends(
 ):
     sb = get_supabase_client()
     try:
-        agent_filter = f" AND agent_type = '{agent_type}'" if agent_type else ""
-        query = f"""
-        SELECT 
-            date_trunc('day', created_at) as date,
-            (count(*) filter (where status = 'success')::numeric / nullif(count(*), 0)::numeric * 100) as value
-        FROM agent_logs
-        WHERE created_at BETWEEN '{time_range.start_date}' AND '{time_range.end_date}'{agent_filter}
-        GROUP BY date
-        ORDER BY date
-        """
-        result = sb.rpc("execute_sql", {"query": query}).execute()  # Adjust for actual method
+        result = sb.rpc("get_agent_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "agent_type_filter": agent_type}).execute()
         data_points = [
-            TimeSeriesDataPoint(date=row["date"].date(), value=row["value"], label=None)
+            TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
         return TimeSeriesResponse(
