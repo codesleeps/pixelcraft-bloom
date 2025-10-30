@@ -46,6 +46,26 @@ const safeParseFloat = (value: any, defaultValue: number = 0): number => {
   return value != null ? parseFloat(value) : defaultValue;
 };
 
+// Helper function to get recovery suggestions based on error type
+const getRecoverySuggestion = (errorType: string): string => {
+  switch (errorType) {
+    case 'Authentication error':
+      return 'Please sign in again.';
+    case 'Network error':
+      return 'Please check your internet connection.';
+    case 'Timeout error':
+      return 'The request took too long. Please try again.';
+    case 'Rate limit exceeded':
+      return 'Too many requests. Please wait a moment.';
+    case 'Permission denied':
+    case 'Resource not found':
+    case 'CORS error':
+    case 'Data parsing error':
+    default:
+      return 'Please try again later.';
+  }
+};
+
 // Function to fetch analytics data
 const fetchAnalyticsData = async (token: string | undefined, timeRange: ReturnType<typeof getTimeRanges>) => {
   if (!token) {
@@ -104,15 +124,25 @@ const fetchAnalyticsData = async (token: string | undefined, timeRange: ReturnTy
     if (error instanceof Error) {
       if (error.message.includes('HTTP error! status: 401')) {
         errorType = 'Authentication error';
+      } else if (error.message.includes('HTTP error! status: 403')) {
+        errorType = 'Permission denied';
+      } else if (error.message.includes('HTTP error! status: 404')) {
+        errorType = 'Resource not found';
+      } else if (error.message.includes('HTTP error! status: 429')) {
+        errorType = 'Rate limit exceeded';
       } else if (error.message.includes('HTTP error! status:')) {
         errorType = 'Network error';
         const match = error.message.match(/for (\/api\/analytics\/[^)]+)/);
         endpointContext = match ? ` on endpoint ${match[1]}` : '';
+      } else if (error.message.includes('timeout')) {
+        errorType = 'Timeout error';
+      } else if (error.message.includes('CORS')) {
+        errorType = 'CORS error';
       } else {
         errorType = 'Data parsing error';
       }
     }
-    throw new Error(`Failed to fetch analytics data (${errorType}${endpointContext}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to fetch analytics data (${errorType}${endpointContext}): ${error instanceof Error ? error.message : 'Unknown error'}. ${getRecoverySuggestion(errorType)}`);
   }
 };
 

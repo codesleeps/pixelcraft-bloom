@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,17 +17,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { format } from 'date-fns';
-import { Users, MessageSquare, TrendingUp, DollarSign, MessageSquare as MessageSquareIcon, Calendar, Wifi, WifiOff } from 'lucide-react';
+import { Users, MessageSquare, TrendingUp, DollarSign, MessageSquare as MessageSquareIcon, Calendar, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
+const getErrorMessage = (error: any, context: string) => {
+  const message = error?.message || '';
+  let title = 'Error Loading Data';
+  let description = `Unable to load ${context}. Please try again.`;
+  const actions: Array<{ label: string; onClick: () => void }> = [];
+
+  if (message.includes('401') || message.includes('Authentication')) {
+    title = 'Session Expired';
+    description = 'Please sign in again.';
+    actions.push({ label: 'Sign In', onClick: () => window.location.href = '/login' });
+  } else if (message.includes('5xx') || message.includes('Server error')) {
+    title = 'Server Error';
+    description = 'Our servers are experiencing issues. Please try again in a few minutes.';
+    actions.push({ label: 'Retry', onClick: () => window.location.reload() });
+  } else if (message.includes('Network') || message.includes('fetch failed')) {
+    title = 'Connection Error';
+    description = 'Please check your internet connection and try again.';
+    actions.push({ label: 'Retry', onClick: () => window.location.reload() });
+  } else if (message.includes('timeout')) {
+    title = 'Request Timeout';
+    description = 'The request took too long. Please try again.';
+    actions.push({ label: 'Retry', onClick: () => window.location.reload() });
+  } else {
+    actions.push({ label: 'Retry', onClick: () => window.location.reload() });
+  }
+
+  return { title, description, actions };
+};
+
 export default function Dashboard() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { user, role } = useAuth();
   const { data: analyticsData, loading: analyticsLoading, error: analyticsError } = useAnalytics();
   const { isConnected: wsConnected, error: wsError } = useWebSocket();
   const { notifications } = useNotifications({ unread_only: true, limit: 5 });
   useEffect(() => {
     if (wsError) {
-      toast.error(wsError);
+      toast.error('WebSocket Error', {
+        description: `${wsError}. Real-time updates unavailable. Data will refresh periodically.`,
+      });
     }
   }, [wsError]);
   useEffect(() => {
@@ -123,6 +158,25 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {analyticsError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>{getErrorMessage(analyticsError, 'analytics data').title}</AlertTitle>
+            <AlertDescription>
+              {getErrorMessage(analyticsError, 'analytics data').description}
+              <div className="mt-2 flex gap-2">
+                {getErrorMessage(analyticsError, 'analytics data').actions.map(action => (
+                  <Button key={action.label} size="sm" onClick={action.onClick}>
+                    {action.label}
+                  </Button>
+                ))}
+                <Button size="sm" onClick={() => window.open('mailto:support@example.com', '_blank')}>
+                  Contact Support
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold tracking-tight">Welcome back, {displayName}!</h2>
           <Select value={timeRange} onValueChange={setTimeRange}>
@@ -150,8 +204,17 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.total_leads?.value ?? 'N/A'}</div>
-              <p className="text-xs text-muted-foreground">{analyticsData?.total_leads?.change ?? '-'}% from last month</p>
+              {analyticsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{analyticsData?.total_leads?.value ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">{analyticsData?.total_leads?.change ?? '-'}% from last month</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -161,8 +224,17 @@ export default function Dashboard() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.active_conversations?.value ?? 'N/A'}</div>
-              <p className="text-xs text-muted-foreground">{analyticsData?.active_conversations?.change ?? '-'}% from last month</p>
+              {analyticsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{analyticsData?.active_conversations?.value ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">{analyticsData?.active_conversations?.change ?? '-'}% from last month</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -172,8 +244,17 @@ export default function Dashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData?.conversion_rate?.value ?? 'N/A'}%</div>
-              <p className="text-xs text-muted-foreground">{analyticsData?.conversion_rate?.change ?? '-'}% from last month</p>
+              {analyticsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{analyticsData?.conversion_rate?.value ?? 'N/A'}%</div>
+                  <p className="text-xs text-muted-foreground">{analyticsData?.conversion_rate?.change ?? '-'}% from last month</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -183,8 +264,17 @@ export default function Dashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${analyticsData?.total_revenue?.value ?? 'N/A'}</div>
-              <p className="text-xs text-muted-foreground">{analyticsData?.total_revenue?.change ?? '-'}% from last month</p>
+              {analyticsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">${analyticsData?.total_revenue?.value ?? 'N/A'}</div>
+                  <p className="text-xs text-muted-foreground">{analyticsData?.total_revenue?.change ?? '-'}% from last month</p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -200,12 +290,30 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {leadTrendsLoading ? (
-                    <Skeleton className="h-[300px] w-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-[300px] w-full" />
+                      <p className="text-sm text-muted-foreground text-center">Loading chart data...</p>
+                    </div>
                   ) : leadTrendsError ? (
-                    <Alert>
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>Failed to load lead trends data.</AlertDescription>
-                    </Alert>
+                    (() => {
+                      const leadError = getErrorMessage(leadTrendsError, 'lead trends data');
+                      return (
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>{leadError.title}</AlertTitle>
+                          <AlertDescription>
+                            {leadError.description}
+                            <div className="mt-2 flex gap-2">
+                              {leadError.actions.map(action => (
+                                <Button key={action.label} size="sm" onClick={action.onClick}>
+                                  {action.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()
                   ) : (
                     <ChartContainer config={leadChartConfig} className="h-[300px]">
                       <LineChart data={leadTrendsData}>
@@ -227,12 +335,30 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {conversationTrendsLoading ? (
-                    <Skeleton className="h-[300px] w-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-[300px] w-full" />
+                      <p className="text-sm text-muted-foreground text-center">Loading chart data...</p>
+                    </div>
                   ) : conversationTrendsError ? (
-                    <Alert>
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>Failed to load conversation trends data.</AlertDescription>
-                    </Alert>
+                    (() => {
+                      const convError = getErrorMessage(conversationTrendsError, 'conversation trends data');
+                      return (
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>{convError.title}</AlertTitle>
+                          <AlertDescription>
+                            {convError.description}
+                            <div className="mt-2 flex gap-2">
+                              {convError.actions.map(action => (
+                                <Button key={action.label} size="sm" onClick={action.onClick}>
+                                  {action.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()
                   ) : (
                     <ChartContainer config={conversationChartConfig} className="h-[300px]">
                       <LineChart data={conversationTrendsData}>
@@ -254,12 +380,30 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {serviceRecommendationsLoading ? (
-                    <Skeleton className="h-[300px] w-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-[300px] w-full" />
+                      <p className="text-sm text-muted-foreground text-center">Loading chart data...</p>
+                    </div>
                   ) : serviceRecommendationsError ? (
-                    <Alert>
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>Failed to load service recommendations data.</AlertDescription>
-                    </Alert>
+                    (() => {
+                      const servError = getErrorMessage(serviceRecommendationsError, 'service recommendations data');
+                      return (
+                        <Alert variant="destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertTitle>{servError.title}</AlertTitle>
+                          <AlertDescription>
+                            {servError.description}
+                            <div className="mt-2 flex gap-2">
+                              {servError.actions.map(action => (
+                                <Button key={action.label} size="sm" onClick={action.onClick}>
+                                  {action.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()
                   ) : (
                     <ChartContainer config={serviceChartConfig} className="h-[300px]">
                       <BarChart data={serviceRecommendationsData}>
@@ -282,12 +426,30 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     {agentPerformanceLoading ? (
-                      <Skeleton className="h-[300px] w-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-[300px] w-full" />
+                        <p className="text-sm text-muted-foreground text-center">Loading chart data...</p>
+                      </div>
                     ) : agentPerformanceError ? (
-                      <Alert>
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>Failed to load agent performance data.</AlertDescription>
-                      </Alert>
+                      (() => {
+                        const agentError = getErrorMessage(agentPerformanceError, 'agent performance data');
+                        return (
+                          <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>{agentError.title}</AlertTitle>
+                            <AlertDescription>
+                              {agentError.description}
+                              <div className="mt-2 flex gap-2">
+                                {agentError.actions.map(action => (
+                                  <Button key={action.label} size="sm" onClick={action.onClick}>
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      })()
                     ) : (
                       <ChartContainer config={agentChartConfig} className="h-[300px]">
                         <BarChart data={agentPerformanceData}>
@@ -324,10 +486,25 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : recentActivityError ? (
-                  <Alert>
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>Failed to load recent activity data.</AlertDescription>
-                  </Alert>
+                  (() => {
+                    const activityError = getErrorMessage(recentActivityError, 'recent activity data');
+                    return (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>{activityError.title}</AlertTitle>
+                        <AlertDescription>
+                          {activityError.description}
+                          <div className="mt-2 flex gap-2">
+                            {activityError.actions.map(action => (
+                              <Button key={action.label} size="sm" onClick={action.onClick}>
+                                {action.label}
+                              </Button>
+                            ))}
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    );
+                  })()
                 ) : recentActivityData && recentActivityData.length > 0 ? (
                   recentActivityData.map((item, index) => (
                     <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
