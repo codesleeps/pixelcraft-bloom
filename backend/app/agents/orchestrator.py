@@ -21,6 +21,7 @@ from .ecommerce_solutions_agent import create_ecommerce_solutions_agent
 from .content_creation_agent import create_content_creation_agent
 from .analytics_consulting_agent import create_analytics_consulting_agent
 from ..utils.supabase_client import get_supabase_client
+from ..utils.redis_client import publish_analytics_event
 
 logger = logging.getLogger("pixelcraft.agents.orchestrator")
 
@@ -29,6 +30,8 @@ class AgentOrchestrator:
 
     def __init__(self):
         self.registry: Dict[str, BaseAgent] = {}
+        self.message_bus: Dict[str, List[Dict[str, Any]]] = {}
+        self.active_workflows: Dict[str, Dict[str, Any]] = {}
         self.logger = logger
 
     def register(self, agent_id: str, agent: BaseAgent) -> None:
@@ -43,6 +46,130 @@ class AgentOrchestrator:
     def list_agents(self) -> List[str]:
         """List all registered agent IDs."""
         return list(self.registry.keys())
+
+    async def send_agent_message(
+        self,
+        workflow_execution_id: str,
+        from_agent: str,
+        to_agent: str,
+        message_type: str,
+        content: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Send a message from one agent to another within a workflow."""
+        if from_agent not in self.registry or to_agent not in self.registry:
+            raise ValueError(f"Invalid agents: from_agent '{from_agent}' or to_agent '{to_agent}' not registered")
+
+        supabase = get_supabase_client()
+        message_data = {
+            "workflow_execution_id": workflow_execution_id,
+            "from_agent": from_agent,
+            "to_agent": to_agent,
+            "message_type": message_type,
+            "content": content,
+            "status": "pending",
+            "metadata": metadata or {},
+            "created_at": datetime.utcnow().isoformat()
+        }
+        result = await supabase.table("agent_messages").insert(message_data).execute()
+        message_id = result.data[0]["id"]
+
+        # Add to in-memory message bus for immediate delivery
+        self.message_bus.setdefault(to_agent, []).append(message_data)
+
+        self.logger.info(f"Sent agent message from {from_agent} to {to_agent} in workflow {workflow_execution_id}")
+        return message_id
+
+    async def get_agent_messages(
+        self,
+        agent_id: str,
+        workflow_execution_id: Optional[str] = None,
+        mark_as_processed: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Retrieve pending messages for an agent."""
+        messages = self.message_bus.get(agent_id, [])
+        if workflow_execution_id:
+            messages = [msg for msg in messages if msg["workflow_execution_id"] == workflow_execution_id]
+
+        if mark_as_processed and messages:
+            supabase = get_supabase_client()
+            message_ids = [msg["id"] for msg in messages]
+            await supabase.table("agent_messages").update({
+                "status": "processed",
+                "processed_at": datetime.utcnow().isoformat()
+            }).in_("id", message_ids).execute()
+            # Clear from message bus
+            self.message_bus[agent_id] = [msg for msg in self.message_bus[agent_id] if msg not in messages]
+
+        return messages
+
+    async def create_workflow_execution(
+        self,
+        conversation_id: str,
+        workflow_type: str,
+        participating_agents: List[str],
+        workflow_config: Dict[str, Any],
+        execution_plan: Dict[str, Any]
+    ) -> str:
+        """Create a new workflow execution record."""
+        supabase = get_supabase_client()
+        workflow_data = {
+            "conversation_id": conversation_id,
+            "workflow_type": workflow_type,
+            "current_state": "pending",
+            "participating_agents": participating_agents,
+            "workflow_config": workflow_config,
+            "execution_plan": execution_plan,
+            "started_at": datetime.utcnow().isoformat()
+        }
+        result = await supabase.table("workflow_executions").insert(workflow_data).execute()
+        workflow_id = result.data[0]["id"]
+
+        self.active_workflows[workflow_id] = workflow_data
+
+        publish_analytics_event("analytics:workflows", "workflow_created", {
+            "workflow_id": workflow_id,
+            "conversation_id": conversation_id
+        })
+
+        self.logger.info(f"Created workflow execution {workflow_id} for conversation {conversation_id}")
+        return workflow_id
+
+    async def update_workflow_state(
+        self,
+        workflow_execution_id: str,
+        current_state: str,
+        current_step: Optional[str] = None,
+        results: Optional[Dict[str, Any]] = None,
+        error_message: Optional[str] = None
+    ) -> None:
+        """Update the state of a workflow execution."""
+        supabase = get_supabase_client()
+        update_data = {
+            "current_state": current_state,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+        if current_step:
+            update_data["current_step"] = current_step
+        if results:
+            update_data["results"] = results
+        if error_message:
+            update_data["error_message"] = error_message
+        if current_state in ["completed", "failed"]:
+            update_data["completed_at"] = datetime.utcnow().isoformat()
+
+        await supabase.table("workflow_executions").update(update_data).eq("id", workflow_execution_id).execute()
+
+        if workflow_execution_id in self.active_workflows:
+            self.active_workflows[workflow_execution_id].update(update_data)
+
+        publish_analytics_event("analytics:workflows", "workflow_state_update", {
+            "workflow_id": workflow_execution_id,
+            "current_state": current_state,
+            "current_step": current_step
+        })
+
+        self.logger.info(f"Updated workflow {workflow_execution_id} state to {current_state}")
 
     async def invoke(
         self,
@@ -164,52 +291,49 @@ class AgentOrchestrator:
         run_recommendations: bool = True,
         run_lead_analysis: bool = True
     ) -> Dict[str, Any]:
-        """Execute a multi-agent workflow."""
+        """Execute a multi-agent workflow with state tracking and shared memory."""
         results = {}
         message = input_data.get("message", "")
+        workflow_id = await self.create_workflow_execution(
+            conversation_id, "multi_agent", ["chat", "service_recommendation", "lead_qualification"], {}, {}
+        )
+        await self.update_workflow_state(workflow_id, "running", "chat")
 
         try:
             # Step 1: Chat interaction
             if run_chat:
                 self.logger.info(f"Running chat agent for conversation {conversation_id}")
-                chat_response = await self.invoke(
-                    "chat",
-                    {"message": message},
-                    conversation_id
-                )
+                await self.update_workflow_state(workflow_id, "running", "chat")
+                chat_agent = self.get("chat")
+                chat_response = await chat_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
                 results["chat"] = chat_response.to_dict()
+                await chat_agent.set_shared_memory(conversation_id, "chat_result", chat_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
             # Step 2: Service recommendations
             if run_recommendations:
                 self.logger.info(f"Running recommendation agent for conversation {conversation_id}")
-                rec_response = await self.invoke(
-                    "service_recommendation",
-                    {
-                        "message": message,
-                        "chat_response": results.get("chat", {})
-                    },
-                    conversation_id
-                )
+                await self.update_workflow_state(workflow_id, "running", "service_recommendation")
+                rec_agent = self.get("service_recommendation")
+                rec_response = await rec_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
                 results["recommendations"] = rec_response.to_dict()
+                await rec_agent.set_shared_memory(conversation_id, "recommendations_result", rec_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
             # Step 3: Lead qualification
             if run_lead_analysis:
                 self.logger.info(f"Running lead qualification for conversation {conversation_id}")
-                qual_response = await self.invoke(
-                    "lead_qualification",
-                    {
-                        "message": message,
-                        "chat_response": results.get("chat", {}),
-                        "recommendations": results.get("recommendations", {})
-                    },
-                    conversation_id
-                )
-                results["lead_qualification"] = qual_response.to_dict()
+                await self.update_workflow_state(workflow_id, "running", "lead_qualification")
+                lead_agent = self.get("lead_qualification")
+                lead_response = await lead_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
+                results["lead_qualification"] = lead_response.to_dict()
+                await lead_agent.set_shared_memory(conversation_id, "lead_qualification_result", lead_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
+            await self.update_workflow_state(workflow_id, "completed", results=results)
+            results["workflow_id"] = workflow_id
             return results
 
         except Exception as e:
             self.logger.exception("Multi-agent workflow failed")
+            await self.update_workflow_state(workflow_id, "failed", error_message=str(e))
             # Log workflow failure
             try:
                 supabase = get_supabase_client()
@@ -225,6 +349,74 @@ class AgentOrchestrator:
             except Exception as log_error:
                 self.logger.error(f"Failed to log workflow error: {log_error}")
             raise
+
+    async def conditional_workflow(
+        self,
+        conversation_id: str,
+        initial_agent: str,
+        routing_rules: Dict[str, Any],
+        input_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Execute a conditional workflow with dynamic routing."""
+        results = {}
+        execution_path = []
+        workflow_id = await self.create_workflow_execution(
+            conversation_id, "conditional", [initial_agent], routing_rules, {}
+        )
+        await self.update_workflow_state(workflow_id, "running", initial_agent)
+        current_agent = initial_agent
+        max_steps = 10
+        step = 0
+
+        try:
+            while current_agent and step < max_steps:
+                execution_path.append(current_agent)
+                agent = self.get(current_agent)
+                if not agent:
+                    raise ValueError(f"Agent {current_agent} not found")
+
+                response = await agent.process_message(conversation_id, input_data.get("message", ""), {
+                    "workflow_execution_id": workflow_id
+                })
+                results[current_agent] = response.to_dict()
+                await agent.set_shared_memory(conversation_id, f"{current_agent}_result", response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
+
+                # Evaluate routing rules
+                next_agent = None
+                for condition in routing_rules.get("conditions", []):
+                    field = condition["field"]
+                    operator = condition["operator"]
+                    value = condition["value"]
+                    next_candidate = condition["next_agent"]
+                    response_value = response.metadata.get(field.split(".")[-1]) if "." in field else response.metadata.get(field)
+                    if self._evaluate_condition(response_value, operator, value):
+                        next_agent = next_candidate
+                        break
+                if not next_agent:
+                    next_agent = routing_rules.get("default")
+
+                current_agent = next_agent
+                step += 1
+
+            await self.update_workflow_state(workflow_id, "completed", results=results)
+            return {"results": results, "execution_path": execution_path, "workflow_id": workflow_id}
+
+        except Exception as e:
+            self.logger.exception("Conditional workflow failed")
+            await self.update_workflow_state(workflow_id, "failed", error_message=str(e))
+            raise
+
+    def _evaluate_condition(self, response_value: Any, operator: str, value: Any) -> bool:
+        """Evaluate a simple condition for routing."""
+        if operator == ">":
+            return response_value > value
+        elif operator == "<":
+            return response_value < value
+        elif operator == "==":
+            return response_value == value
+        elif operator == "!=":
+            return response_value != value
+        return False
 
 # Create global orchestrator instance
 orchestrator = AgentOrchestrator()

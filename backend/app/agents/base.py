@@ -129,6 +129,81 @@ class BaseAgent:
         self.tools: Dict[str, AgentTool] = {tool.name: tool for tool in config.tools}
         self.logger = logging.getLogger(f"agent.{config.agent_id}")
 
+    async def set_shared_memory(self, conversation_id: str, key: str, value: Any, scope: str = 'conversation', workflow_execution_id: Optional[str] = None, expires_at: Optional[datetime] = None) -> None:
+        """Set a shared memory entry for the given conversation and key."""
+        if not supabase:
+            self.logger.warning("Supabase client not available, cannot set shared memory")
+            return
+        try:
+            # Serialize value to JSON-compatible format
+            if isinstance(value, (dict, list, str, int, float, bool, type(None))):
+                memory_value = value
+            else:
+                memory_value = str(value)
+            memory_entry = {
+                "conversation_id": conversation_id,
+                "workflow_execution_id": workflow_execution_id,
+                "memory_key": key,
+                "memory_value": memory_value,
+                "scope": scope,
+                "created_by_agent": self.config.agent_id,
+                "expires_at": expires_at.isoformat() if expires_at else None,
+                "created_at": datetime.utcnow().isoformat()
+            }
+            await supabase.table("shared_memory").upsert(memory_entry, on_conflict="conversation_id,memory_key,scope").execute()
+            self.logger.debug(f"Set shared memory for key '{key}' in conversation '{conversation_id}'")
+        except Exception as e:
+            self.logger.warning(f"Failed to set shared memory: {e}")
+
+    async def get_shared_memory(self, conversation_id: str, key: str, scope: str = 'conversation', workflow_execution_id: Optional[str] = None) -> Optional[Any]:
+        """Retrieve a shared memory entry for the given conversation and key."""
+        if not supabase:
+            return None
+        try:
+            query = supabase.table("shared_memory").select("memory_value,access_count,expires_at").eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope)
+            if workflow_execution_id:
+                query = query.eq("workflow_execution_id", workflow_execution_id)
+            result = await query.execute()
+            if not result.data:
+                return None
+            data = result.data[0]
+            # Check if expired
+            if data.get("expires_at"):
+                expires_at = datetime.fromisoformat(data["expires_at"])
+                if datetime.utcnow() > expires_at:
+                    return None
+            # Increment access count
+            access_count = data.get("access_count", 0)
+            await supabase.table("shared_memory").update({"access_count": access_count + 1}).eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
+            return data["memory_value"]
+        except Exception as e:
+            self.logger.warning(f"Failed to get shared memory: {e}")
+            return None
+
+    async def list_shared_memory_keys(self, conversation_id: str, scope: str = 'conversation', workflow_execution_id: Optional[str] = None) -> List[str]:
+        """List all shared memory keys for the given conversation and scope."""
+        if not supabase:
+            return []
+        try:
+            query = supabase.table("shared_memory").select("memory_key").eq("conversation_id", conversation_id).eq("scope", scope)
+            if workflow_execution_id:
+                query = query.eq("workflow_execution_id", workflow_execution_id)
+            result = await query.execute()
+            return [row["memory_key"] for row in result.data]
+        except Exception as e:
+            self.logger.warning(f"Failed to list shared memory keys: {e}")
+            return []
+
+    async def delete_shared_memory(self, conversation_id: str, key: str, scope: str = 'conversation') -> None:
+        """Delete a shared memory entry for the given conversation and key."""
+        if not supabase:
+            return
+        try:
+            await supabase.table("shared_memory").delete().eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
+            self.logger.debug(f"Deleted shared memory for key '{key}' in conversation '{conversation_id}'")
+        except Exception as e:
+            self.logger.warning(f"Failed to delete shared memory: {e}")
+
     def get_memory(self, conversation_id: str) -> AgentMemory:
         """Get or create memory for a conversation."""
         if conversation_id not in self.memory_store:

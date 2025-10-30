@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
+from .orchestrator import orchestrator
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 
@@ -173,11 +174,19 @@ class ChatAgent(BaseAgent):
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
+            # Check for shared memory context
+            workflow_execution_id = metadata.get("workflow_execution_id") if metadata else None
+            shared_context = None
+            if workflow_execution_id:
+                shared_context = await self.get_shared_memory(conversation_id, "workflow_context", scope="workflow", workflow_execution_id=workflow_execution_id)
+
             # Get Ollama client
             ollama = get_ollama_client()
 
             # Build conversation context
             context = memory.get_context_string(limit=5)
+            if shared_context:
+                context = f"Shared workflow context: {shared_context}\n\n{context}"
             system_prompt = self._build_system_prompt()
 
             # Generate response using Ollama
@@ -193,6 +202,33 @@ class ChatAgent(BaseAgent):
 
             # Extract assistant's message
             assistant_message = response["message"]["content"]
+
+            # Check if specialist help is needed
+            specialist_needed = any(keyword in assistant_message.lower() or keyword in message.lower()
+                                   for keyword in ["technical details", "pricing", "lead qualification", "specialist", "expert"])
+            if specialist_needed and workflow_execution_id:
+                # Determine target agent based on keywords
+                target_agent = None
+                if "technical" in (assistant_message + message).lower():
+                    target_agent = "web_development"
+                elif "pricing" in (assistant_message + message).lower() or "cost" in (assistant_message + message).lower():
+                    target_agent = "service_recommendation"
+                elif "lead" in (assistant_message + message).lower() or "qualification" in (assistant_message + message).lower():
+                    target_agent = "lead_qualification"
+                if target_agent:
+                    conversation_context = context
+                    await orchestrator.send_agent_message(
+                        workflow_execution_id,
+                        self.config.agent_id,
+                        target_agent,
+                        "handoff",
+                        {"reason": "specialist_needed", "context": conversation_context}
+                    )
+
+            # Store key conversation insights in shared memory
+            extracted_intent = message  # Simple extraction, could be improved
+            if workflow_execution_id:
+                await self.set_shared_memory(conversation_id, "user_intent", extracted_intent, scope="workflow", workflow_execution_id=workflow_execution_id)
 
             # Add response to memory
             memory.add_message("assistant", assistant_message)
@@ -256,3 +292,13 @@ class ChatAgent(BaseAgent):
                 error_message=str(e)
             )
             raise
+
+    async def check_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
+        """Check for incoming agent messages in the workflow."""
+        messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
+        # Process handoff messages
+        for msg in messages:
+            if msg["message_type"] == "handoff":
+                self.logger.info(f"Received handoff from {msg['from_agent']}: {msg['content']}")
+                # Could add logic to handle handoffs, e.g., update context
+        return messages

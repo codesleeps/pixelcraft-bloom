@@ -15,6 +15,7 @@ from collections import defaultdict
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
+from .orchestrator import orchestrator
 
 logger = logging.getLogger("pixelcraft.agents.recommendation")
 
@@ -151,6 +152,49 @@ class ServiceRecommendationAgent(BaseAgent):
         recommendations.sort(key=lambda x: x["confidence"], reverse=True)
         return recommendations[:3]  # Return top 3 recommendations
 
+    async def check_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
+        """Check for incoming agent messages and handle responses."""
+        messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
+        for msg in messages:
+            if msg["message_type"] == "request" and "service_suggestions" in msg["content"]:
+                # Process request for service suggestions
+                # Assume content has conversation_id and message
+                req_conversation_id = msg["content"].get("conversation_id")
+                req_message = msg["content"].get("message", "")
+                if req_conversation_id and req_message:
+                    # Generate recommendations for the request
+                    needs = self._extract_needs_and_constraints(req_message)
+                    keyword_scores = self._keyword_matching_score(req_message)
+                    try:
+                        ollama = get_ollama_client()
+                        response = await ollama.chat(
+                            model=self.config.default_model,
+                            messages=[
+                                {"role": "system", "content": self.config.system_prompt},
+                                {"role": "user", "content": f"Analyze needs and recommend services:\nMessage: {req_message}\nExtracted needs: {json.dumps(needs)}"}
+                            ],
+                            temperature=self.config.temperature
+                        )
+                        content = response["message"]["content"]
+                        json_match = re.search(r'```json\n(.*)\n```', content, re.DOTALL)
+                        if json_match:
+                            recommendations = json.loads(json_match.group(1))
+                        else:
+                            recommendations = self._get_fallback_recommendations(keyword_scores)
+                    except Exception as e:
+                        logger.error(f"Failed to generate recommendations for agent message: {e}")
+                        recommendations = self._get_fallback_recommendations(keyword_scores)
+
+                    # Send response back
+                    await orchestrator.send_agent_message(
+                        workflow_execution_id,
+                        self.config.agent_id,
+                        msg["from_agent"],
+                        "response",
+                        {"recommendations": recommendations}
+                    )
+        return messages
+
     async def process_message(
         self,
         conversation_id: str,
@@ -158,21 +202,38 @@ class ServiceRecommendationAgent(BaseAgent):
         metadata: Optional[Dict[str, Any]] = None
     ) -> AgentResponse:
         """Process a message and generate service recommendations."""
+        # Check for incoming agent messages if in a workflow
+        workflow_execution_id = metadata.get("workflow_execution_id") if metadata else None
+        if workflow_execution_id:
+            await self.check_agent_messages(workflow_execution_id)
+
         try:
             # Extract needs and constraints
             needs = self._extract_needs_and_constraints(message)
-            
+
+            # Check shared memory for additional context
+            workflow_execution_id = metadata.get("workflow_execution_id") if metadata else None
+            user_intent = await self.get_shared_memory(conversation_id, "user_intent", scope="workflow", workflow_execution_id=workflow_execution_id)
+            chat_history = await self.get_shared_memory(conversation_id, "chat_result", scope="workflow", workflow_execution_id=workflow_execution_id)
+
             # Calculate keyword matching scores
             keyword_scores = self._keyword_matching_score(message)
             
             # Get AI recommendations
             try:
                 ollama = get_ollama_client()
+                # Incorporate shared context into the prompt
+                shared_context = ""
+                if chat_history:
+                    shared_context += f"Previous conversation context: {chat_history}\n"
+                if user_intent:
+                    shared_context += f"User intent: {user_intent}\n"
+
                 response = await ollama.chat(
                     model=self.config.default_model,
                     messages=[
                         {"role": "system", "content": self.config.system_prompt},
-                        {"role": "user", "content": f"Analyze needs and recommend services:\nMessage: {message}\nExtracted needs: {json.dumps(needs)}"}
+                        {"role": "user", "content": f"{shared_context}Analyze needs and recommend services:\nMessage: {message}\nExtracted needs: {json.dumps(needs)}"}
                     ],
                     temperature=self.config.temperature
                 )
@@ -192,6 +253,10 @@ class ServiceRecommendationAgent(BaseAgent):
             except Exception as e:
                 logger.error(f"AI recommendation failed: {e}")
                 recommendations = self._get_fallback_recommendations(keyword_scores)
+
+            # Store recommendations and needs in shared memory
+            await self.set_shared_memory(conversation_id, "recommendations", recommendations, scope="workflow", workflow_execution_id=workflow_execution_id)
+            await self.set_shared_memory(conversation_id, "user_needs", needs, scope="workflow", workflow_execution_id=workflow_execution_id)
 
             # Persist recommendations to Supabase
             try:

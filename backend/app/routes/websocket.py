@@ -50,7 +50,7 @@ async def analytics_websocket(websocket: WebSocket, token: str = Query(...)):
 
     # Determine channels
     if role == "admin":
-        channels = ["analytics:leads", "analytics:conversations", "analytics:revenue", "analytics:agents"]
+        channels = ["analytics:leads", "analytics:conversations", "analytics:revenue", "analytics:agents", "analytics:workflows"]
     else:
         channels = [f"analytics:user:{user_id}"]
 
@@ -94,6 +94,109 @@ async def analytics_websocket(websocket: WebSocket, token: str = Query(...)):
         logger.info("WebSocket disconnected for user %s", user_id)
     except Exception as e:
         logger.error("WebSocket error for user %s: %s", user_id, e)
+    finally:
+        manager.disconnect(user_id)
+        if pubsub:
+            pubsub.unsubscribe()
+            pubsub.close()
+
+
+@router.websocket("/workflows/{workflow_id}")
+async def workflow_websocket(websocket: WebSocket, workflow_id: str, token: str = Query(...)):
+    # Authenticate the token
+    try:
+        payload = verify_supabase_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=1008)
+            return
+    except Exception as e:
+        logger.error("Authentication failed: %s", e)
+        await websocket.close(code=1008)
+        return
+
+    # Verify access to workflow
+    supabase = get_supabase_client()
+    try:
+        workflow_response = supabase.table("workflow_executions").select("conversation_id").eq("id", workflow_id).execute()
+        if not workflow_response.data:
+            await websocket.close(code=1008)
+            return
+        conversation_id = workflow_response.data[0]["conversation_id"]
+        conversation_response = supabase.table("conversations").select("user_id").eq("id", conversation_id).execute()
+        if not conversation_response.data or conversation_response.data[0]["user_id"] != user_id:
+            await websocket.close(code=1008)
+            return
+    except Exception as e:
+        logger.error("Access verification failed: %s", e)
+        await websocket.close(code=1008)
+        return
+
+    await websocket.accept()
+    await manager.connect(user_id, websocket)
+    logger.info("Workflow WebSocket connection established for user %s, workflow %s", user_id, workflow_id)
+
+    # Send initial workflow state
+    try:
+        workflow_data = supabase.table("workflow_executions").select("*").eq("id", workflow_id).execute()
+        if workflow_data.data:
+            initial_data = workflow_data.data[0]
+            await websocket.send_json({
+                "type": "workflow_update",
+                "workflow_id": workflow_id,
+                "event_type": "initial_state",
+                "data": initial_data,
+                "timestamp": asyncio.get_event_loop().time()
+            })
+    except Exception as e:
+        logger.error("Failed to send initial workflow state: %s", e)
+
+    # Subscribe to workflow channel
+    pubsub = subscribe_to_analytics_events([f"workflow:{workflow_id}"])
+    if pubsub is None:
+        logger.warning("Redis unavailable for workflow %s, keeping connection idle", workflow_id)
+        last_ping = asyncio.get_event_loop().time()
+        try:
+            while True:
+                now = asyncio.get_event_loop().time()
+                if now - last_ping >= 30:
+                    await websocket.send_json({"type": "ping"})
+                    last_ping = now
+                await asyncio.sleep(1)
+        except WebSocketDisconnect:
+            logger.info("Workflow WebSocket disconnected for user %s, workflow %s", user_id, workflow_id)
+        finally:
+            manager.disconnect(user_id)
+        return
+
+    # Message forwarding loop
+    last_ping = asyncio.get_event_loop().time()
+    try:
+        while True:
+            now = asyncio.get_event_loop().time()
+            if now - last_ping >= 30:
+                await websocket.send_json({"type": "ping"})
+                last_ping = now
+            try:
+                message = await asyncio.get_event_loop().run_in_executor(
+                    None, pubsub.get_message, True, 1.0
+                )
+                if message and message.get('type') == 'message':
+                    data = json.loads(message['data'])
+                    await websocket.send_json({
+                        "type": "workflow_update",
+                        "workflow_id": workflow_id,
+                        "event_type": data.get("event_type"),
+                        "data": data.get("data"),
+                        "timestamp": data.get("timestamp")
+                    })
+            except Exception as e:
+                logger.error("Error processing Redis message: %s", e)
+                break
+    except WebSocketDisconnect:
+        logger.info("Workflow WebSocket disconnected for user %s, workflow %s", user_id, workflow_id)
+    except Exception as e:
+        logger.error("Workflow WebSocket error for user %s, workflow %s: %s", user_id, workflow_id, e)
     finally:
         manager.disconnect(user_id)
         if pubsub:

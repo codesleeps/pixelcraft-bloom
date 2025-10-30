@@ -15,6 +15,7 @@ from datetime import datetime
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
+from .orchestrator import orchestrator
 
 logger = logging.getLogger("pixelcraft.agents.lead")
 
@@ -97,13 +98,19 @@ class LeadQualificationAgent(BaseAgent):
             "reasons": reasons
         }
 
-    async def _get_ai_analysis(self, lead_data: Dict[str, Any], conversation_history: Optional[List[Dict]] = None) -> Dict[str, Any]:
+    async def _get_ai_analysis(self, lead_data: Dict[str, Any], conversation_history: Optional[List[Dict]] = None, shared_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Get AI analysis of the lead using the Ollama model."""
         try:
-            # Prepare input for AI analysis
+            # Prepare input for AI analysis, incorporating shared context
+            recommendations = shared_context.get("recommendations", {}) if shared_context else {}
+            user_needs = shared_context.get("user_needs", []) if shared_context else []
+            user_intent = shared_context.get("user_intent", "") if shared_context else ""
             analysis_prompt = {
                 "lead": lead_data,
-                "conversation_history": conversation_history or []
+                "conversation_history": conversation_history or [],
+                "service_recommendations": recommendations,
+                "user_needs": user_needs,
+                "user_intent": user_intent
             }
 
             ollama = get_ollama_client()
@@ -111,7 +118,7 @@ class LeadQualificationAgent(BaseAgent):
                 model=self.config.default_model,
                 messages=[
                     {"role": "system", "content": self.config.system_prompt},
-                    {"role": "user", "content": f"Analyze this lead: {json.dumps(analysis_prompt)}"}
+                    {"role": "user", "content": f"Analyze this lead with shared context: {json.dumps(analysis_prompt)}"}
                 ],
                 temperature=self.config.temperature
             )
@@ -159,11 +166,21 @@ class LeadQualificationAgent(BaseAgent):
             if not lead_data:
                 raise ValueError("No lead data provided in metadata")
 
+            # Retrieve shared context from workflow
+            recommendations = await self.get_shared_memory(conversation_id, "recommendations", scope="workflow")
+            user_needs = await self.get_shared_memory(conversation_id, "user_needs", scope="workflow")
+            user_intent = await self.get_shared_memory(conversation_id, "user_intent", scope="workflow")
+            shared_context = {
+                "recommendations": recommendations,
+                "user_needs": user_needs,
+                "user_intent": user_intent
+            }
+
             # Calculate heuristic score
             heuristic_analysis = self._calculate_heuristic_score(lead_data)
 
-            # Get AI analysis
-            ai_analysis = await self._get_ai_analysis(lead_data)
+            # Get AI analysis with shared context
+            ai_analysis = await self._get_ai_analysis(lead_data, shared_context=shared_context)
 
             # Combine scores: 40% heuristic + 60% AI
             final_score = (heuristic_analysis["score"] * 0.4) + (ai_analysis["score"] * 0.6)
@@ -182,6 +199,24 @@ class LeadQualificationAgent(BaseAgent):
                 "priority": ai_analysis["priority"],
                 "estimated_value": ai_analysis["estimated_value"]
             }
+
+            # Store qualification result in shared memory
+            workflow_execution_id = metadata.get("workflow_execution_id") if metadata else None
+            await self.set_shared_memory(conversation_id, "lead_qualification", final_analysis, scope="workflow", workflow_execution_id=workflow_execution_id)
+
+            # If lead score is high, send message to appropriate agent for follow-up
+            if final_score > 70:
+                target_agent = "web_development" if "web" in str(recommendations).lower() else "digital_marketing"
+                await orchestrator.send_agent_message(
+                    workflow_execution_id or "",
+                    self.config.agent_id,
+                    target_agent,
+                    "notification",
+                    {"lead_score": final_score, "priority": "high", "recommended_services": ai_analysis["recommended_services"]}
+                )
+
+            # Store lead priority in shared memory
+            await self.set_shared_memory(conversation_id, "lead_priority", ai_analysis["priority"], scope="workflow", workflow_execution_id=workflow_execution_id)
 
             # Update lead score in Supabase
             try:
@@ -223,3 +258,32 @@ class LeadQualificationAgent(BaseAgent):
                 error_message=str(e)
             )
             raise
+
+    async def handle_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
+        """Handle incoming agent messages for lead qualification requests."""
+        messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
+        processed_responses = []
+        for msg in messages:
+            if msg["message_type"] == "request" and "lead_data" in msg["content"]:
+                # Process lead qualification request from another agent
+                lead_data = msg["content"]["lead_data"]
+                conversation_id = msg["content"].get("conversation_id", "")
+                # Perform qualification (reuse process_message logic if needed, or simplified)
+                heuristic_analysis = self._calculate_heuristic_score(lead_data)
+                ai_analysis = await self._get_ai_analysis(lead_data)
+                final_score = (heuristic_analysis["score"] * 0.4) + (ai_analysis["score"] * 0.6)
+                response_content = {
+                    "lead_score": round(final_score, 1),
+                    "priority": ai_analysis["priority"],
+                    "recommended_services": ai_analysis["recommended_services"]
+                }
+                # Send response back
+                await orchestrator.send_agent_message(
+                    workflow_execution_id,
+                    self.config.agent_id,
+                    msg["from_agent"],
+                    "response",
+                    response_content
+                )
+                processed_responses.append({"message_id": msg["id"], "response": response_content})
+        return processed_responses

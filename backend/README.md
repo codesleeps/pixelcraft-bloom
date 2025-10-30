@@ -159,6 +159,90 @@ To test external integrations:
 ### Security Notes
 API keys should never be committed to version control. Use environment-specific credentials (dev, staging, production) and rotate API keys regularly.
 
+## Advanced Agent Workflows
+
+### Overview
+The advanced agent workflow system enables sophisticated multi-agent orchestration with state management, agent-to-agent messaging, and shared memory. This allows for complex use cases such as multi-step lead qualification, collaborative service recommendations, and dynamic problem-solving where agents can communicate and share context in real-time.
+
+### Workflow Types
+1. **Multi-Agent Workflow**: Sequential execution of multiple agents (chat → recommendations → lead qualification)
+2. **Conditional Workflow**: Dynamic routing based on agent responses and conditions
+3. **Collaborative Workflow**: Agents communicate via messages and share context through shared memory
+
+### Key Features
+- **State Management**: Track workflow execution state (pending, running, completed, failed, paused)
+- **Agent-to-Agent Messaging**: Agents can send requests, responses, notifications, and handoffs to each other
+- **Shared Memory**: Conversation-scoped and workflow-scoped memory accessible to all participating agents
+- **Real-time Visualization**: WebSocket endpoint for monitoring workflow execution in real-time
+- **Conditional Routing**: Route to different agents based on response metadata (e.g., lead score, user intent)
+
+### API Endpoints
+- `POST /api/agents/workflows/execute` - Start a new workflow
+- `GET /api/agents/workflows/{workflow_id}` - Get workflow status
+- `GET /api/agents/workflows/{workflow_id}/visualization` - Get visualization data
+- `POST /api/agents/workflows/{workflow_id}/messages` - Send agent message
+- `PATCH /api/agents/workflows/{workflow_id}/state` - Update workflow state
+- `WS /api/ws/workflows/{workflow_id}` - Real-time workflow updates
+
+### Database Tables
+- `workflow_executions`: Tracks workflow state and results
+- `agent_messages`: Stores agent-to-agent messages
+- `shared_memory`: Stores shared context accessible to all agents
+
+### Example Usage
+```python
+# Start a conditional workflow
+workflow_request = {
+    "workflow_type": "conditional",
+    "conversation_id": "conv_123",
+    "participating_agents": ["chat", "lead_qualification", "web_development"],
+    "workflow_config": {
+        "routing_rules": {
+            "conditions": [
+                {"field": "metadata.lead_score", "operator": ">", "value": 70, "next_agent": "web_development"},
+                {"default": "chat"}
+            ]
+        }
+    },
+    "input_data": {"message": "I need a website"}
+}
+
+response = await client.post("/api/agents/workflows/execute", json=workflow_request)
+workflow_id = response.json()["workflow_id"]
+
+# Monitor workflow in real-time via WebSocket
+ws = await websocket_connect(f"/api/ws/workflows/{workflow_id}?token={jwt_token}")
+```
+
+### Shared Memory Usage
+```python
+# In an agent's process_message method
+await self.set_shared_memory(conversation_id, "user_intent", intent_data, scope="workflow")
+user_needs = await self.get_shared_memory(conversation_id, "user_needs", scope="workflow")
+```
+
+### Agent Messaging
+```python
+# Send message from one agent to another
+await orchestrator.send_agent_message(
+    workflow_execution_id=workflow_id,
+    from_agent="chat",
+    to_agent="web_development",
+    message_type="handoff",
+    content={"reason": "technical_consultation_needed", "context": conversation_summary}
+)
+```
+
+### Testing
+- Run workflow tests: `python backend/test_agents.py`
+- Tests cover conditional routing, agent messaging, shared memory, and visualization
+
+### Monitoring
+- View workflow execution in real-time via WebSocket
+- Query workflow_executions table for historical data
+- Check agent_logs table for detailed agent actions
+- Monitor agent_messages table for communication patterns
+
 Next steps
 - Implement AgentScope agents under `app/agents/`.
 - Add tests and CI for backend code.

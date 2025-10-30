@@ -10,8 +10,10 @@ from datetime import datetime
 import uuid
 import sys
 from typing import Any, Dict, Optional
+import httpx
 
 from app.agents.orchestrator import orchestrator
+from app.utils.supabase_client import get_supabase_client
 
 # ANSI colors for pretty output
 GREEN = "\033[92m"
@@ -145,10 +147,32 @@ async def test_multi_agent_workflow() -> bool:
             run_lead_analysis=True
         )
         
+        # Verify workflow_id is returned
+        workflow_id = results.get("workflow_id")
+        if not workflow_id:
+            print_result("Multi-Agent Workflow", False, {"error": "workflow_id not returned"})
+            return False
+        
+        # Check workflow state is 'completed'
+        supabase = get_supabase_client()
+        workflow_result = await supabase.table("workflow_executions").select("current_state").eq("id", workflow_id).execute()
+        if not workflow_result.data or workflow_result.data[0]["current_state"] != "completed":
+            print_result("Multi-Agent Workflow", False, {"error": "workflow not completed"})
+            return False
+        
+        # Verify shared memory contains expected keys
+        memory_keys = await supabase.table("shared_memory").select("memory_key").eq("conversation_id", conversation_id).eq("scope", "workflow").execute()
+        expected_keys = ["chat_result", "recommendations_result", "lead_qualification_result"]
+        actual_keys = [item["memory_key"] for item in memory_keys.data]
+        if not all(key in actual_keys for key in expected_keys):
+            print_result("Multi-Agent Workflow", False, {"error": f"missing shared memory keys, expected {expected_keys}, got {actual_keys}"})
+            return False
+        
         workflow_summary = {
             "chat_response": results["chat"]["content"][:100] + "...",
             "recommendations": len(json.loads(results["recommendations"]["content"])),
-            "lead_score": json.loads(results["lead_qualification"]["content"]).get("score")
+            "lead_score": json.loads(results["lead_qualification"]["content"]).get("score"),
+            "workflow_id": workflow_id
         }
         
         print_result("Multi-Agent Workflow", True, workflow_summary)
@@ -192,6 +216,214 @@ async def test_agent_routing() -> bool:
         print_result("Agent Routing Test", False, {"error": str(e)})
         return False
 
+async def test_conditional_workflow() -> bool:
+    """Test conditional routing based on lead score."""
+    try:
+        print_header("Testing Conditional Workflow")
+        
+        conversation_id = str(uuid.uuid4())
+        routing_rules = {
+            "conditions": [
+                {"field": "metadata.lead_score", "operator": ">", "value": 70, "next_agent": "web_development"}
+            ],
+            "default": "chat"
+        }
+        input_data = {
+            "message": "We need website development help with high budget."
+        }
+        
+        results = await orchestrator.conditional_workflow(
+            conversation_id=conversation_id,
+            initial_agent="lead_qualification",
+            routing_rules=routing_rules,
+            input_data=input_data
+        )
+        
+        workflow_id = results.get("workflow_id")
+        execution_path = results.get("execution_path", [])
+        
+        # Verify correct agent invoked based on conditions
+        # Assuming lead score > 70 for this input
+        expected_path = ["lead_qualification", "web_development"]
+        if execution_path != expected_path:
+            print_result("Conditional Workflow", False, {"error": f"execution path mismatch, expected {expected_path}, got {execution_path}"})
+            return False
+        
+        # Check workflow state
+        supabase = get_supabase_client()
+        workflow_result = await supabase.table("workflow_executions").select("current_state").eq("id", workflow_id).execute()
+        if not workflow_result.data or workflow_result.data[0]["current_state"] != "completed":
+            print_result("Conditional Workflow", False, {"error": "workflow not completed"})
+            return False
+        
+        # Verify shared memory accessible
+        memory_keys = await supabase.table("shared_memory").select("memory_key").eq("conversation_id", conversation_id).eq("scope", "workflow").execute()
+        expected_keys = ["lead_qualification_result", "web_development_result"]
+        actual_keys = [item["memory_key"] for item in memory_keys.data]
+        if not all(key in actual_keys for key in expected_keys):
+            print_result("Conditional Workflow", False, {"error": f"missing shared memory keys, expected {expected_keys}, got {actual_keys}"})
+            return False
+        
+        print_result("Conditional Workflow", True, {"execution_path": execution_path, "workflow_id": workflow_id})
+        return True
+        
+    except Exception as e:
+        print_result("Conditional Workflow Test", False, {"error": str(e)})
+        return False
+
+async def test_agent_messaging() -> bool:
+    """Test sending messages between agents."""
+    try:
+        print_header("Testing Agent Messaging")
+        
+        conversation_id = str(uuid.uuid4())
+        workflow_id = await orchestrator.create_workflow_execution(
+            conversation_id, "test", ["chat", "lead_qualification"], {}, {}
+        )
+        
+        # Send message from chat to lead_qualification
+        message_id = await orchestrator.send_agent_message(
+            workflow_execution_id=workflow_id,
+            from_agent="chat",
+            to_agent="lead_qualification",
+            message_type="request",
+            content={"request": "qualify this lead"},
+            metadata={"priority": "high"}
+        )
+        
+        # Get messages for lead_qualification
+        messages = await orchestrator.get_agent_messages("lead_qualification", workflow_id)
+        if not messages or messages[0]["id"] != message_id:
+            print_result("Agent Messaging", False, {"error": "message not delivered"})
+            return False
+        
+        # Check message status in database
+        supabase = get_supabase_client()
+        msg_result = await supabase.table("agent_messages").select("status").eq("id", message_id).execute()
+        if not msg_result.data or msg_result.data[0]["status"] != "processed":
+            print_result("Agent Messaging", False, {"error": "message status not updated"})
+            return False
+        
+        print_result("Agent Messaging", True, {"message_id": message_id, "messages_received": len(messages)})
+        return True
+        
+    except Exception as e:
+        print_result("Agent Messaging Test", False, {"error": str(e)})
+        return False
+
+async def test_shared_memory() -> bool:
+    """Test setting and getting shared memory across agents."""
+    try:
+        print_header("Testing Shared Memory")
+        
+        conversation_id = str(uuid.uuid4())
+        workflow_id = await orchestrator.create_workflow_execution(
+            conversation_id, "test", ["chat"], {}, {}
+        )
+        
+        chat_agent = orchestrator.get("chat")
+        
+        # Set shared memory
+        test_data = {"user_intent": "website development", "confidence": 0.9}
+        await chat_agent.set_shared_memory(conversation_id, "test_key", test_data, scope="workflow", workflow_execution_id=workflow_id)
+        
+        # Get shared memory
+        retrieved = await chat_agent.get_shared_memory(conversation_id, "test_key", scope="workflow", workflow_execution_id=workflow_id)
+        if retrieved != test_data:
+            print_result("Shared Memory", False, {"error": "data mismatch"})
+            return False
+        
+        # Check access_count incremented
+        supabase = get_supabase_client()
+        memory_result = await supabase.table("shared_memory").select("access_count").eq("conversation_id", conversation_id).eq("memory_key", "test_key").eq("scope", "workflow").execute()
+        if not memory_result.data or memory_result.data[0]["access_count"] != 1:
+            print_result("Shared Memory", False, {"error": "access_count not incremented"})
+            return False
+        
+        # Test different scopes
+        await chat_agent.set_shared_memory(conversation_id, "global_key", {"global": True}, scope="global")
+        global_data = await chat_agent.get_shared_memory(conversation_id, "global_key", scope="global")
+        if global_data != {"global": True}:
+            print_result("Shared Memory", False, {"error": "global scope failed"})
+            return False
+        
+        # Test expiration (set with past date)
+        expired_at = datetime.utcnow().replace(year=2000)
+        await chat_agent.set_shared_memory(conversation_id, "expired_key", {"expired": True}, scope="conversation", expires_at=expired_at)
+        expired_data = await chat_agent.get_shared_memory(conversation_id, "expired_key", scope="conversation")
+        if expired_data is not None:
+            print_result("Shared Memory", False, {"error": "expired data not filtered"})
+            return False
+        
+        print_result("Shared Memory", True, {"test_data": test_data, "global_data": global_data})
+        return True
+        
+    except Exception as e:
+        print_result("Shared Memory Test", False, {"error": str(e)})
+        return False
+
+async def test_workflow_visualization() -> bool:
+    """Test workflow visualization endpoint."""
+    try:
+        print_header("Testing Workflow Visualization")
+        
+        conversation_id = str(uuid.uuid4())
+        input_data = {
+            "message": "We need digital marketing help."
+        }
+        
+        results = await orchestrator.multi_agent_workflow(
+            input_data=input_data,
+            conversation_id=conversation_id,
+            run_chat=True,
+            run_recommendations=True,
+            run_lead_analysis=True
+        )
+        
+        workflow_id = results["workflow_id"]
+        
+        # Query workflow visualization endpoint
+        async with httpx.AsyncClient() as client:
+            # Assuming server is running on localhost:8000, adjust as needed
+            response = await client.get(f"http://localhost:8000/api/agents/workflows/{workflow_id}/visualization")
+            if response.status_code != 200:
+                print_result("Workflow Visualization", False, {"error": f"endpoint returned {response.status_code}"})
+                return False
+            
+            data = response.json()
+            
+            # Verify execution timeline
+            timeline = data.get("execution_timeline", [])
+            if not timeline or len(timeline) < 3:  # At least pending, running, completed
+                print_result("Workflow Visualization", False, {"error": "execution timeline incomplete"})
+                return False
+            
+            # Verify agent interactions
+            interactions = data.get("agent_interactions", [])
+            if not interactions:  # Should have some interactions
+                print_result("Workflow Visualization", False, {"error": "no agent interactions"})
+                return False
+            
+            # Check execution graph
+            graph = data.get("execution_graph", {})
+            if not graph.get("nodes") or not graph.get("edges"):
+                print_result("Workflow Visualization", False, {"error": "execution graph incomplete"})
+                return False
+            
+            # Verify shared memory keys
+            shared_keys = data.get("shared_memory_keys", [])
+            expected_keys = ["chat_result", "recommendations_result", "lead_qualification_result"]
+            if not all(key in shared_keys for key in expected_keys):
+                print_result("Workflow Visualization", False, {"error": f"missing shared memory keys, expected {expected_keys}, got {shared_keys}"})
+                return False
+        
+        print_result("Workflow Visualization", True, {"timeline_events": len(timeline), "interactions": len(interactions), "shared_keys": shared_keys})
+        return True
+        
+    except Exception as e:
+        print_result("Workflow Visualization Test", False, {"error": str(e)})
+        return False
+
 async def main() -> None:
     """Run all agent tests."""
     try:
@@ -207,7 +439,11 @@ async def main() -> None:
             ("Lead Qualification", test_lead_qualification()),
             ("Service Recommendation", test_recommendation_agent()),
             ("Multi-Agent Workflow", test_multi_agent_workflow()),
-            ("Agent Routing", test_agent_routing())
+            ("Agent Routing", test_agent_routing()),
+            ("Conditional Workflow", test_conditional_workflow()),
+            ("Agent Messaging", test_agent_messaging()),
+            ("Shared Memory", test_shared_memory()),
+            ("Workflow Visualization", test_workflow_visualization())
         ]
         
         results = []
