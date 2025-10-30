@@ -125,6 +125,40 @@ Project structure
   - `agents/` - AgentScope agent scaffolding
   - `utils/` - helper clients for Supabase and Ollama
 
+## External API Integrations
+
+### Overview
+Agents can integrate with external services (CRM, email, calendar) to automate lead management and client communication. Supported integrations include HubSpot (CRM), SendGrid (Email), and Google Calendar. All integrations are optional, and agents gracefully degrade when not configured.
+
+### Configuration
+Reference the `.env.example` file for required environment variables. Follow these step-by-step setup instructions for each service:
+
+1. **HubSpot CRM**: Create a Private App in HubSpot (Settings > Integrations > Private Apps), copy the access token, and set `CRM_API_KEY`.
+2. **SendGrid Email**: Create an API key in SendGrid (Settings > API Keys) with Mail Send permissions and set `EMAIL_API_KEY`.
+3. **Google Calendar**: Create a Google Cloud project, enable the Calendar API, generate credentials, and set `CALENDAR_API_KEY`.
+
+### Available Tools
+The following external tools are available to each agent:
+
+- **Web Development Agent**: `create_project_lead`, `schedule_technical_consultation`
+- **Digital Marketing Agent**: `create_marketing_lead`, `send_marketing_proposal`, `schedule_strategy_session`
+- **Lead Qualification Agent**: `sync_lead_to_crm`, `send_qualification_notification`, `schedule_qualification_call`
+
+### Tool Execution Logging
+All tool executions are logged to the `agent_logs` table with timing, parameters, results, and errors. This enables analytics on tool usage and debugging of external API issues.
+
+### Error Handling
+If external services are unavailable, agents continue to function but skip external tool calls (graceful degradation). Errors are logged but do not fail the agent's primary function.
+
+### Testing
+To test external integrations:
+- Check the health endpoint: `GET /health` returns external service status.
+- Review agent logs: Query the `agent_logs` table for `action LIKE 'tool_execution:%'`.
+- Monitor tool execution times and error rates.
+
+### Security Notes
+API keys should never be committed to version control. Use environment-specific credentials (dev, staging, production) and rotate API keys regularly.
+
 Next steps
 - Implement AgentScope agents under `app/agents/`.
 - Add tests and CI for backend code.

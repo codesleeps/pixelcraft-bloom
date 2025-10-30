@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Callable, Union
 from datetime import datetime
 import json
 import logging
+import time
 from supabase import Client, create_client
 import os
 from dotenv import load_dotenv
@@ -139,7 +140,7 @@ class BaseAgent:
         if conversation_id in self.memory_store:
             del self.memory_store[conversation_id]
 
-    async def use_tool(self, tool_name: str, params: Dict[str, Any]) -> Any:
+    async def use_tool(self, conversation_id: str, tool_name: str, params: Dict[str, Any]) -> Any:
         """Use a specific tool with given parameters."""
         if tool_name not in self.tools:
             raise ValueError(f"Tool '{tool_name}' not found")
@@ -148,10 +149,15 @@ class BaseAgent:
         if not tool.validate_params(params):
             raise ValueError(f"Missing required parameters for tool '{tool_name}'")
 
+        start_time = time.time()
         try:
             result = await tool.function(**params)
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            await self._log_tool_execution(conversation_id, tool_name, params, result, execution_time_ms)
             return result
         except Exception as e:
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            await self._log_tool_execution(conversation_id, tool_name, params, None, execution_time_ms, str(e))
             self.logger.error(f"Error using tool '{tool_name}': {e}")
             raise
 
@@ -199,6 +205,34 @@ class BaseAgent:
             await supabase.table("agent_logs").insert(log_entry).execute()
         except Exception as e:
             self.logger.error(f"Failed to log interaction: {e}")
+
+    async def _log_tool_execution(self, conversation_id: str, tool_name: str, params: Dict[str, Any], result: Any, execution_time_ms: int, error_message: Optional[str] = None) -> None:
+        """Log tool execution to the Supabase agent_logs table."""
+        if not supabase:
+            self.logger.warning("Supabase client not initialized, skipping tool execution log")
+            return
+
+        try:
+            # Handle non-serializable result by converting to string
+            serializable_result = result
+            if not isinstance(result, (dict, list, str, int, float, bool, type(None))):
+                serializable_result = str(result)
+            
+            log_entry = {
+                "agent_type": self.config.agent_id,
+                "conversation_id": conversation_id,
+                "action": f"tool_execution:{tool_name}",
+                "input_data": {"tool_name": tool_name, "parameters": params},
+                "output_data": {"result": serializable_result},
+                "execution_time_ms": execution_time_ms,
+                "status": "error" if error_message else "success",
+                "error_message": error_message,
+                "created_at": datetime.utcnow().isoformat()
+            }
+
+            await supabase.table("agent_logs").insert(log_entry).execute()
+        except Exception as e:
+            self.logger.warning(f"Failed to log tool execution: {e}")
 
     async def process_message(self, conversation_id: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> AgentResponse:
         """Process a message and return a response. To be implemented by subclasses."""

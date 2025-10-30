@@ -13,6 +13,7 @@ import logging
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
+from ..utils.external_tools import create_crm_contact, send_email, create_calendar_event
 
 logger = logging.getLogger("pixelcraft.agents.web_development")
 
@@ -93,6 +94,125 @@ async def estimate_web_project(requirements: str, timeline: str, budget: str) ->
         "technologies": WEB_DEV_SERVICES["full_stack_development"]["technologies"][:3]
     }
 
+async def create_project_lead(name: str, email: str, company: str, project_requirements: str, budget: str, timeline: str) -> Dict[str, Any]:
+    """Create a project lead in CRM and send confirmation email."""
+    # Create CRM contact
+    crm_result = await create_crm_contact(
+        email=email,
+        first_name=name.split()[0] if name else "",
+        last_name=" ".join(name.split()[1:]) if name and len(name.split()) > 1 else "",
+        company=company,
+        metadata={"project_requirements": project_requirements, "budget": budget, "timeline": timeline}
+    )
+    
+    contact_id = crm_result.get("contact_id")
+    deal_id = None
+    
+    # If CRM contact creation succeeded, create a deal
+    if contact_id and not crm_result.get("error"):
+        deal_result = await create_crm_deal(
+            contact_id=contact_id,
+            deal_name=f"Web Development Project - {company}",
+            amount=float(budget.replace("$", "").replace(",", "")) if budget else 0,
+            stage="qualified_to_buy",
+            metadata={"project_requirements": project_requirements, "timeline": timeline}
+        )
+        deal_id = deal_result.get("deal_id") if not deal_result.get("error") else None
+    
+    # Send confirmation email
+    email_subject = "Project Inquiry Received - PixelCraft Web Development"
+    email_content = f"""
+    Dear {name},
+
+    Thank you for your interest in PixelCraft's web development services!
+
+    Project Summary:
+    - Requirements: {project_requirements}
+    - Budget: {budget}
+    - Timeline: {timeline}
+
+    Next Steps:
+    1. Our team will review your requirements within 24 hours
+    2. We'll schedule a technical consultation to discuss details
+    3. Receive a detailed project proposal and quote
+
+    If you have any immediate questions, please reply to this email.
+
+    Best regards,
+    PixelCraft Web Development Team
+    """
+    
+    email_result = await send_email(
+        to_email=email,
+        subject=email_subject,
+        html_content=email_content
+    )
+    
+    return {
+        "crm_contact_id": contact_id,
+        "crm_deal_id": deal_id,
+        "email_status": "sent" if not email_result.get("error") else "failed",
+        "crm_status": "created" if contact_id else "failed",
+        "deal_status": "created" if deal_id else "skipped" if contact_id else "failed"
+    }
+
+async def schedule_technical_consultation(client_email: str, client_name: str, preferred_date: str, project_type: str) -> Dict[str, Any]:
+    """Schedule a technical consultation and send calendar invite."""
+    # Parse preferred_date (assume ISO format or simple date)
+    # For simplicity, assume preferred_date is in YYYY-MM-DDTHH:MM:SSZ format
+    start_time = preferred_date
+    end_time = (datetime.fromisoformat(preferred_date.replace('Z', '+00:00')) + datetime.timedelta(minutes=60)).isoformat() + 'Z'
+    
+    # Create calendar event
+    event_result = await create_calendar_event(
+        summary=f"Technical Consultation - {project_type}",
+        start_time=start_time,
+        end_time=end_time,
+        attendees=[client_email, "tech@pixelcraft.com"],
+        description=f"Technical consultation for {project_type} project with {client_name}"
+    )
+    
+    event_id = event_result.get("event_id")
+    event_link = event_result.get("link")
+    
+    # Send calendar invite email
+    email_subject = "Technical Consultation Scheduled - PixelCraft"
+    email_content = f"""
+    Dear {client_name},
+
+    Your technical consultation has been scheduled!
+
+    Details:
+    - Date & Time: {start_time}
+    - Duration: 60 minutes
+    - Project Type: {project_type}
+    - Meeting Link: {event_link or 'To be provided'}
+
+    Agenda:
+    - Review project requirements
+    - Discuss technical approach
+    - Address questions and concerns
+    - Next steps and timeline
+
+    Please ensure you have a stable internet connection and any relevant project materials ready.
+
+    Best regards,
+    PixelCraft Technical Team
+    """
+    
+    email_result = await send_email(
+        to_email=client_email,
+        subject=email_subject,
+        html_content=email_content
+    )
+    
+    return {
+        "event_id": event_id,
+        "event_link": event_link,
+        "email_status": "sent" if not email_result.get("error") else "failed",
+        "calendar_status": "scheduled" if event_id else "failed"
+    }
+
 def create_web_development_agent() -> 'WebDevelopmentAgent':
     """Factory function to create a WebDevelopmentAgent instance."""
     config = BaseAgentConfig(
@@ -137,6 +257,20 @@ def create_web_development_agent() -> 'WebDevelopmentAgent':
                 function=estimate_web_project,
                 parameters={"requirements": "str", "timeline": "str", "budget": "str"},
                 required_params=["requirements"]
+            ),
+            AgentTool(
+                name="create_project_lead",
+                description="Create a project lead in CRM and send confirmation email",
+                function=create_project_lead,
+                parameters={"name": "str", "email": "str", "company": "str", "project_requirements": "str", "budget": "str", "timeline": "str"},
+                required_params=["name", "email", "company", "project_requirements", "budget", "timeline"]
+            ),
+            AgentTool(
+                name="schedule_technical_consultation",
+                description="Schedule a technical consultation and send calendar invite",
+                function=schedule_technical_consultation,
+                parameters={"client_email": "str", "client_name": "str", "preferred_date": "str", "project_type": "str"},
+                required_params=["client_email", "client_name", "preferred_date", "project_type"]
             )
         ]
     )
@@ -178,6 +312,56 @@ class WebDevelopmentAgent(BaseAgent):
             # Extract assistant's message
             assistant_message = response["message"]["content"]
 
+            # Analyze message for tool triggers
+            tools_used = []
+            tool_results = {}
+            
+            # Check for project inquiry intent (email and requirements mentioned)
+            if ("email" in message.lower() or "@" in message) and ("project" in message.lower() or "website" in message.lower() or "development" in message.lower()):
+                # Extract parameters from message and metadata
+                name = metadata.get("name", "") if metadata else ""
+                email = metadata.get("email", "") if metadata else ""
+                company = metadata.get("company", "") if metadata else ""
+                requirements = message  # Use full message as requirements
+                budget = metadata.get("budget", "") if metadata else ""
+                timeline = metadata.get("timeline", "") if metadata else ""
+                
+                if name and email and company and requirements:
+                    try:
+                        lead_result = await self.use_tool(conversation_id, "create_project_lead", {
+                            "name": name,
+                            "email": email,
+                            "company": company,
+                            "project_requirements": requirements,
+                            "budget": budget,
+                            "timeline": timeline
+                        })
+                        tools_used.append("create_project_lead")
+                        tool_results["create_project_lead"] = lead_result
+                    except Exception as e:
+                        logger.error(f"Failed to create project lead: {e}")
+            
+            # Check for scheduling intent
+            if "schedule" in message.lower() or "consultation" in message.lower() or "meeting" in message.lower():
+                # Extract parameters
+                client_email = metadata.get("email", "") if metadata else ""
+                client_name = metadata.get("name", "") if metadata else ""
+                preferred_date = metadata.get("preferred_date", "") if metadata else ""
+                project_type = metadata.get("project_type", "web development") if metadata else "web development"
+                
+                if client_email and client_name and preferred_date:
+                    try:
+                        schedule_result = await self.use_tool(conversation_id, "schedule_technical_consultation", {
+                            "client_email": client_email,
+                            "client_name": client_name,
+                            "preferred_date": preferred_date,
+                            "project_type": project_type
+                        })
+                        tools_used.append("schedule_technical_consultation")
+                        tool_results["schedule_technical_consultation"] = schedule_result
+                    except Exception as e:
+                        logger.error(f"Failed to schedule consultation: {e}")
+
             # Add response to memory
             memory.add_message("assistant", assistant_message)
 
@@ -212,9 +396,10 @@ class WebDevelopmentAgent(BaseAgent):
                 metadata={
                     "model": self.config.default_model,
                     "temperature": self.config.temperature,
-                    "specialization": "web_development"
+                    "specialization": "web_development",
+                    "tool_results": tool_results
                 },
-                tools_used=[],
+                tools_used=tools_used,
                 timestamp=datetime.utcnow()
             )
 

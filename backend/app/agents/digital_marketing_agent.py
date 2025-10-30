@@ -12,6 +12,7 @@ import logging
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
+from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, send_template_email
 
 logger = logging.getLogger("pixelcraft.agents.digital_marketing")
 
@@ -87,6 +88,122 @@ async def analyze_marketing_roi(budget: str, goals: str, industry: str) -> Dict[
         }
     }
 
+async def create_marketing_lead(name: str, email: str, company: str, marketing_goals: str, budget: str, channels: List[str]) -> Dict[str, Any]:
+    # Split name into first and last
+    name_parts = name.split(' ', 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+    
+    # Create CRM contact
+    contact_result = await create_crm_contact(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        company=company,
+        metadata={
+            "marketing_goals": marketing_goals,
+            "budget": budget,
+            "preferred_channels": ', '.join(channels)
+        }
+    )
+    
+    if contact_result.get("error"):
+        return {"error": "Failed to create CRM contact", "details": contact_result}
+    
+    contact_id = contact_result.get("contact_id")
+    deal_result = None
+    if contact_id:
+        # Create deal
+        deal_result = await create_crm_deal(
+            contact_id=contact_id,
+            deal_name=f"Marketing Services - {company}",
+            amount=float(budget.replace('$', '').replace(',', '').replace('/month', '')),
+            stage="Qualified Lead",
+            metadata={"marketing_goals": marketing_goals, "channels": channels}
+        )
+    
+    # Send welcome email
+    email_result = await send_template_email(
+        to_email=email,
+        template_id="marketing_welcome_template",  # Assuming a template ID
+        template_data={
+            "name": name,
+            "company": company,
+            "marketing_goals": marketing_goals,
+            "budget": budget,
+            "channels": channels
+        }
+    )
+    
+    return {
+        "contact_id": contact_id,
+        "deal_id": deal_result.get("deal_id") if deal_result and not deal_result.get("error") else None,
+        "email_status": email_result
+    }
+
+async def send_marketing_proposal(client_email: str, client_name: str, recommended_services: List[str], estimated_budget: str, roi_projection: Dict[str, Any]) -> Dict[str, Any]:
+    # Build HTML content
+    services_html = "<ul>" + "".join(f"<li>{service}</li>" for service in recommended_services) + "</ul>"
+    roi_html = f"<p>Conservative ROI: {roi_projection.get('conservative_roi', 'N/A')}</p><p>Expected ROI: {roi_projection.get('expected_roi', 'N/A')}</p><p>Optimistic ROI: {roi_projection.get('optimistic_roi', 'N/A')}</p>"
+    
+    html_content = f"""
+    <h2>Personalized Marketing Proposal for {client_name}</h2>
+    <p>Dear {client_name},</p>
+    <p>Based on our analysis, we recommend the following services:</p>
+    {services_html}
+    <p>Estimated Budget: {estimated_budget}</p>
+    <h3>ROI Projections:</h3>
+    {roi_html}
+    <p>Please find attached our detailed proposal PDF.</p>
+    <p>Best regards,<br>PixelCraft Digital Marketing Team</p>
+    """
+    
+    # Send email
+    result = await send_email(
+        to_email=client_email,
+        subject=f"Marketing Proposal for {client_name}",
+        html_content=html_content
+    )
+    
+    return result
+
+async def schedule_strategy_session(client_email: str, client_name: str, preferred_date: str, focus_areas: List[str]) -> Dict[str, Any]:
+    # Schedule event
+    event_result = await create_calendar_event(
+        summary=f"Marketing Strategy Session - {client_name}",
+        start_time=preferred_date,  # Assuming preferred_date is in ISO format
+        end_time=(datetime.fromisoformat(preferred_date.replace('Z', '+00:00')) + datetime.timedelta(minutes=90)).isoformat(),
+        attendees=[client_email, "marketing@pixelcraft.com"],
+        description=f"Focus areas: {', '.join(focus_areas)}. Pre-session questionnaire will be sent separately."
+    )
+    
+    if event_result.get("error"):
+        return {"error": "Failed to schedule event", "details": event_result}
+    
+    # Send confirmation email
+    confirmation_html = f"""
+    <h2>Marketing Strategy Session Confirmed</h2>
+    <p>Dear {client_name},</p>
+    <p>Your marketing strategy session has been scheduled.</p>
+    <p>Date & Time: {preferred_date}</p>
+    <p>Meeting Link: {event_result.get('link', 'TBD')}</p>
+    <p>Focus Areas: {', '.join(focus_areas)}</p>
+    <p>Please complete the pre-session questionnaire attached.</p>
+    <p>Best regards,<br>PixelCraft Team</p>
+    """
+    
+    email_result = await send_email(
+        to_email=client_email,
+        subject="Marketing Strategy Session Confirmation",
+        html_content=confirmation_html
+    )
+    
+    return {
+        "event_id": event_result.get("event_id"),
+        "meeting_link": event_result.get("link"),
+        "email_status": email_result
+    }
+
 def create_digital_marketing_agent() -> 'DigitalMarketingAgent':
     """Factory function to create a DigitalMarketingAgent instance."""
     config = BaseAgentConfig(
@@ -131,6 +248,27 @@ def create_digital_marketing_agent() -> 'DigitalMarketingAgent':
                 function=analyze_marketing_roi,
                 parameters={"budget": "str", "goals": "str", "industry": "str"},
                 required_params=["budget", "goals"]
+            ),
+            AgentTool(
+                name="create_marketing_lead",
+                description="Create a marketing lead in CRM and send welcome email",
+                function=create_marketing_lead,
+                parameters={"name": "str", "email": "str", "company": "str", "marketing_goals": "str", "budget": "str", "channels": "List[str]"},
+                required_params=["name", "email", "company", "marketing_goals", "budget", "channels"]
+            ),
+            AgentTool(
+                name="send_marketing_proposal",
+                description="Send a personalized marketing proposal via email",
+                function=send_marketing_proposal,
+                parameters={"client_email": "str", "client_name": "str", "recommended_services": "List[str]", "estimated_budget": "str", "roi_projection": "Dict[str, Any]"},
+                required_params=["client_email", "client_name", "recommended_services", "estimated_budget", "roi_projection"]
+            ),
+            AgentTool(
+                name="schedule_strategy_session",
+                description="Schedule a marketing strategy session and send confirmation",
+                function=schedule_strategy_session,
+                parameters={"client_email": "str", "client_name": "str", "preferred_date": "str", "focus_areas": "List[str]"},
+                required_params=["client_email", "client_name", "preferred_date", "focus_areas"]
             )
         ]
     )
@@ -172,6 +310,53 @@ class DigitalMarketingAgent(BaseAgent):
             # Extract assistant's message
             assistant_message = response["message"]["content"]
 
+            # Analyze conversation for tool usage
+            tools_used = []
+            tool_results = {}
+            
+            # Check for marketing inquiry
+            if "inquiry" in message.lower() or "interested" in message.lower() or "budget" in message.lower():
+                # Extract params from context/metadata
+                name = metadata.get("name", "Unknown") if metadata else "Unknown"
+                email = metadata.get("email", "") if metadata else ""
+                company = metadata.get("company", "") if metadata else ""
+                goals = metadata.get("goals", "") if metadata else ""
+                budget = metadata.get("budget", "") if metadata else ""
+                channels = metadata.get("channels", []) if metadata else []
+                if email and name:
+                    lead_result = await self.use_tool(conversation_id, "create_marketing_lead", {
+                        "name": name, "email": email, "company": company, "marketing_goals": goals, "budget": budget, "channels": channels
+                    })
+                    tools_used.append("create_marketing_lead")
+                    tool_results["create_marketing_lead"] = lead_result
+            
+            # Check for proposal request
+            if "proposal" in message.lower() or "quote" in message.lower():
+                client_name = metadata.get("name", "Client") if metadata else "Client"
+                client_email = metadata.get("email", "") if metadata else ""
+                services = metadata.get("recommended_services", []) if metadata else []
+                budget = metadata.get("budget", "") if metadata else ""
+                roi = await self.use_tool(conversation_id, "analyze_marketing_roi", {"budget": budget, "goals": "growth", "industry": "general"})
+                if client_email and services:
+                    proposal_result = await self.use_tool(conversation_id, "send_marketing_proposal", {
+                        "client_email": client_email, "client_name": client_name, "recommended_services": services, "estimated_budget": budget, "roi_projection": roi
+                    })
+                    tools_used.append("send_marketing_proposal")
+                    tool_results["send_marketing_proposal"] = proposal_result
+            
+            # Check for scheduling
+            if "schedule" in message.lower() or "meeting" in message.lower() or "session" in message.lower():
+                client_name = metadata.get("name", "Client") if metadata else "Client"
+                client_email = metadata.get("email", "") if metadata else ""
+                preferred_date = metadata.get("preferred_date", "") if metadata else ""
+                focus_areas = metadata.get("focus_areas", []) if metadata else []
+                if client_email and preferred_date:
+                    schedule_result = await self.use_tool(conversation_id, "schedule_strategy_session", {
+                        "client_email": client_email, "client_name": client_name, "preferred_date": preferred_date, "focus_areas": focus_areas
+                    })
+                    tools_used.append("schedule_strategy_session")
+                    tool_results["schedule_strategy_session"] = schedule_result
+
             # Add response to memory
             memory.add_message("assistant", assistant_message)
 
@@ -206,9 +391,10 @@ class DigitalMarketingAgent(BaseAgent):
                 metadata={
                     "model": self.config.default_model,
                     "temperature": self.config.temperature,
-                    "specialization": "digital_marketing"
+                    "specialization": "digital_marketing",
+                    "tool_results": tool_results
                 },
-                tools_used=[],
+                tools_used=tools_used,
                 timestamp=datetime.utcnow()
             )
 

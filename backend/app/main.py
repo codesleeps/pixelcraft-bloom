@@ -15,6 +15,7 @@ from .routes import websocket as websocket_routes
 from .utils.ollama_client import test_ollama_connection, list_available_models, get_ollama_client
 from .utils.supabase_client import get_supabase_client, test_connection as test_supabase_connection
 from .utils.redis_client import get_redis_client, test_redis_connection
+from .utils.external_tools import test_external_services
 
 logger = logging.getLogger("pixelcraft.backend")
 
@@ -70,6 +71,13 @@ def create_app() -> FastAPI:
         except Exception as exc:
             logger.exception("Redis initialization error: %s", exc)
 
+        # Initialize external services connectivity check
+        try:
+            external_services_status = await test_external_services()
+            logger.info("External services status: %s", external_services_status)
+        except Exception as exc:
+            logger.exception("External services initialization error: %s", exc)
+
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Shutting down PixelCraft AI Backend")
@@ -84,6 +92,7 @@ def create_app() -> FastAPI:
             "ollama_available": test_ollama_connection(),
             "supabase": test_supabase_connection(),
             "redis": test_redis_connection(),
+            "external_services": await test_external_services(),
         }
 
     @app.get("/", tags=["root"])
