@@ -202,3 +202,68 @@ async def workflow_websocket(websocket: WebSocket, workflow_id: str, token: str 
         if pubsub:
             pubsub.unsubscribe()
             pubsub.close()
+
+
+@router.websocket("/notifications")
+async def notifications_websocket(websocket: WebSocket, token: str = Query(...)):
+    # Authenticate the token
+    try:
+        payload = verify_supabase_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=1008)
+            return
+    except Exception as e:
+        logger.error("Authentication failed: %s", e)
+        await websocket.close(code=1008)
+        return
+
+    await websocket.accept()
+    await manager.connect(user_id, websocket)
+    logger.info("Notifications WebSocket connection established for user %s", user_id)
+
+    # Subscribe to user-specific notification channel
+    pubsub = subscribe_to_analytics_events([f"notifications:user:{user_id}"])
+    if pubsub is None:
+        logger.warning("Redis unavailable for user %s, keeping connection idle", user_id)
+        last_ping = asyncio.get_event_loop().time()
+        try:
+            while True:
+                now = asyncio.get_event_loop().time()
+                if now - last_ping >= 30:
+                    await websocket.send_json({"type": "ping"})
+                    last_ping = now
+                await asyncio.sleep(1)
+        except WebSocketDisconnect:
+            logger.info("Notifications WebSocket disconnected for user %s", user_id)
+        finally:
+            manager.disconnect(user_id)
+        return
+
+    # Message forwarding loop
+    last_ping = asyncio.get_event_loop().time()
+    try:
+        while True:
+            now = asyncio.get_event_loop().time()
+            if now - last_ping >= 30:
+                await websocket.send_json({"type": "ping"})
+                last_ping = now
+            try:
+                message = await asyncio.get_event_loop().run_in_executor(
+                    None, pubsub.get_message, True, 1.0
+                )
+                if message and message.get('type') == 'message':
+                    data = json.loads(message['data'])
+                    await websocket.send_json(data)
+            except Exception as e:
+                logger.error("Error processing Redis message: %s", e)
+                break
+    except WebSocketDisconnect:
+        logger.info("Notifications WebSocket disconnected for user %s", user_id)
+    except Exception as e:
+        logger.error("Notifications WebSocket error for user %s: %s", user_id, e)
+    finally:
+        manager.disconnect(user_id)
+        if pubsub:
+            pubsub.unsubscribe()
+            pubsub.close()

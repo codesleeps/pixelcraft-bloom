@@ -22,6 +22,7 @@ from .content_creation_agent import create_content_creation_agent
 from .analytics_consulting_agent import create_analytics_consulting_agent
 from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
+from ..utils.notification_service import create_notification, create_notification_for_admins
 
 logger = logging.getLogger("pixelcraft.agents.orchestrator")
 
@@ -169,6 +170,35 @@ class AgentOrchestrator:
             "current_step": current_step
         })
 
+        # Create notifications for workflow state changes
+        try:
+            if current_state == "completed":
+                conversation = await supabase.table("conversations").select("user_id").eq("id", self.active_workflows[workflow_execution_id]["conversation_id"]).single().execute()
+                if conversation.data and conversation.data[0].get("user_id"):
+                    await create_notification(
+                        recipient_id=conversation.data[0]["user_id"],
+                        notification_type="workflow",
+                        severity="success",
+                        title="Workflow Completed",
+                        message=f"Workflow {workflow_execution_id} has completed successfully",
+                        action_url=f"/dashboard/workflows/{workflow_execution_id}",
+                        metadata={"workflow_id": workflow_execution_id, "workflow_type": self.active_workflows[workflow_execution_id]["workflow_type"]}
+                    )
+            elif current_state == "failed":
+                conversation = await supabase.table("conversations").select("user_id").eq("id", self.active_workflows[workflow_execution_id]["conversation_id"]).single().execute()
+                if conversation.data and conversation.data[0].get("user_id"):
+                    await create_notification(
+                        recipient_id=conversation.data[0]["user_id"],
+                        notification_type="workflow",
+                        severity="error",
+                        title="Workflow Failed",
+                        message=f"Workflow {workflow_execution_id} has failed: {error_message}",
+                        action_url=f"/dashboard/workflows/{workflow_execution_id}",
+                        metadata={"workflow_id": workflow_execution_id, "workflow_type": self.active_workflows[workflow_execution_id]["workflow_type"], "error": error_message}
+                    )
+        except Exception as e:
+            self.logger.warning(f"Failed to create workflow notification: {e}")
+
         self.logger.info(f"Updated workflow {workflow_execution_id} state to {current_state}")
 
     async def invoke(
@@ -220,6 +250,19 @@ class AgentOrchestrator:
                 }).execute()
             except Exception as e:
                 self.logger.error(f"Failed to log agent metrics: {e}")
+
+            # Create notifications for critical agent errors
+            try:
+                if error and agent_id in ["lead_qualification", "web_development"]:
+                    await create_notification_for_admins(
+                        notification_type="agent",
+                        severity="error",
+                        title=f"Agent {agent_id} Failed",
+                        message=f"Agent {agent_id} encountered an error: {error}",
+                        metadata={"agent_id": agent_id, "conversation_id": conversation_id, "error": error}
+                    )
+            except Exception as e:
+                self.logger.warning(f"Failed to create agent error notification: {e}")
 
     async def route_message(
         self,

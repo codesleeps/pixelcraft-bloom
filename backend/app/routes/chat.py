@@ -8,6 +8,7 @@ from ..models.chat import ChatRequest, ChatResponse, ChatStreamChunk, ChatMessag
 from ..config import settings
 from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
+from ..utils.notification_service import create_notification
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -26,6 +27,23 @@ async def post_message(req: ChatRequest):
         _ = sb.table("conversations").insert({"conversation_id": conversation_id, "role": "user", "content": req.message}).execute()
         try:
             publish_analytics_event("analytics:conversations", "message_created", {"conversation_id": conversation_id})
+        except Exception:
+            pass
+        try:
+            conv = sb.table("conversations").select("user_id").eq("session_id", conversation_id).single().execute()
+            user_id = conv.data.get("user_id")
+            if user_id:
+                msg_count = sb.table("conversations").select("id", count="exact").eq("conversation_id", conversation_id).execute()
+                if msg_count.count == 1:
+                    await create_notification(
+                        recipient_id=user_id,
+                        notification_type="conversation",
+                        severity="info",
+                        title="New Conversation Started",
+                        message="A new conversation has been initiated",
+                        action_url=f"/dashboard/conversations/{conversation_id}",
+                        metadata={"conversation_id": conversation_id}
+                    )
         except Exception:
             pass
     except Exception:

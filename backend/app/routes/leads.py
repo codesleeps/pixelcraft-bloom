@@ -5,6 +5,7 @@ from uuid import uuid4
 from ..models.lead import LeadRequest, LeadResponse, LeadAnalysis, LeadScore
 from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
+from ..utils.notification_service import create_notification, create_notification_for_admins
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -25,6 +26,32 @@ async def submit_lead(req: LeadRequest):
         publish_analytics_event("analytics:leads", "lead_created", {"lead_id": lead_id, "user_id": req.lead_data.dict().get("user_id")})
     except Exception:
         # Log warning but don't fail the request if Redis is unavailable
+        pass
+
+    # Create notification for lead creation
+    try:
+        user_id = req.lead_data.dict().get("user_id")
+        if user_id:
+            await create_notification(
+                recipient_id=user_id,
+                notification_type="lead",
+                severity="success",
+                title="New Lead Created",
+                message=f"Lead {lead_id} has been successfully created",
+                action_url=f"/dashboard/leads/{lead_id}",
+                metadata={"lead_id": lead_id}
+            )
+        else:
+            await create_notification_for_admins(
+                notification_type="lead",
+                severity="success",
+                title="New Lead Created",
+                message=f"Lead {lead_id} has been successfully created",
+                action_url=f"/dashboard/leads/{lead_id}",
+                metadata={"lead_id": lead_id}
+            )
+    except Exception:
+        # Log warning but don't fail the request if notification creation fails
         pass
 
     analysis = None
@@ -93,6 +120,23 @@ async def analyze_lead(lead_id: str):
         publish_analytics_event("analytics:leads", "lead_analyzed", {"lead_id": lead_id})
     except Exception:
         # Log warning but don't fail the request if Redis is unavailable
+        pass
+
+    # Create notification for lead analysis
+    try:
+        lead = sb.table("leads").select("user_id").eq("id", lead_id).single().execute()
+        if lead.data and lead.data.get("user_id"):
+            await create_notification(
+                recipient_id=lead.data["user_id"],
+                notification_type="lead",
+                severity="info",
+                title="Lead Analysis Complete",
+                message=f"Lead {lead_id} has been analyzed with score {score.score}",
+                action_url=f"/dashboard/leads/{lead_id}",
+                metadata={"lead_id": lead_id, "score": score.score}
+            )
+    except Exception:
+        # Log warning but don't fail the request if notification creation fails
         pass
 
     return analysis

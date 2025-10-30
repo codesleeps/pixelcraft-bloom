@@ -98,6 +98,73 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 - Verify JWT token is valid (WebSocket requires authentication)
 - Check backend logs for Redis connection issues
 
+## Notification System
+
+**Overview:**
+- Explain that the platform includes a comprehensive notification system for real-time alerts about leads, agent actions, workflows, and system events
+- Notifications are delivered via both REST API and WebSocket for real-time updates
+- Users see notifications in a dropdown menu in the dashboard header, and critical alerts appear as toast notifications
+
+**Notification Types:**
+- **Lead notifications**: Created when leads are submitted or analyzed
+- **Agent notifications**: Created when agents complete tasks or encounter errors
+- **Workflow notifications**: Created when workflows complete or fail
+- **Conversation notifications**: Created for important conversation milestones
+- **System notifications**: Created for system-wide alerts (admin only)
+
+**Severity Levels:**
+- **Info**: General informational notifications (blue)
+- **Success**: Successful operations (green)
+- **Warning**: Important warnings that need attention (yellow)
+- **Error**: Critical errors that require immediate action (red)
+
+**Backend API Endpoints:**
+- `GET /api/notifications` - List notifications with filtering and pagination
+- `GET /api/notifications/{id}` - Get a specific notification
+- `POST /api/notifications/mark-read` - Mark notifications as read
+- `POST /api/notifications/mark-all-read` - Mark all notifications as read
+- `DELETE /api/notifications/{id}` - Delete a notification
+- `GET /api/notifications/unread-count` - Get unread notification count
+- `WS /api/ws/notifications` - WebSocket endpoint for real-time notifications
+
+**Database Schema:**
+- `notifications` table stores all notifications with recipient, type, severity, title, message, action URL, metadata, and read status
+- RLS policies ensure users can only access their own notifications
+- Automatic cleanup of expired notifications
+
+**Frontend Integration:**
+- `useNotifications` hook provides access to notifications with real-time updates
+- Notification bell icon in dashboard header shows unread count
+- Clicking the bell opens a dropdown with recent notifications
+- Critical notifications (errors/warnings) appear as Sonner toast notifications
+- Notifications can link to related resources (e.g., leads, workflows)
+
+**Creating Notifications (for developers):**
+```python
+from app.utils.notification_service import create_notification
+
+await create_notification(
+    recipient_id=user_id,
+    notification_type="lead",
+    severity="success",
+    title="New Lead Created",
+    message="Lead has been successfully created",
+    action_url="/dashboard/leads/123",
+    metadata={"lead_id": "123"}
+)
+```
+
+**Real-Time Delivery:**
+- Notifications are published to Redis channel `notifications:user:{user_id}`
+- WebSocket connection automatically receives new notifications
+- Frontend React Query cache is invalidated, triggering UI updates
+- Toast notifications appear immediately for critical events
+
+**Testing:**
+- Create test notifications via API or directly in database
+- Monitor WebSocket connection in browser DevTools
+- Check Redis pub/sub messages: `redis-cli SUBSCRIBE notifications:user:*`
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

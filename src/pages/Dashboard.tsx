@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -9,6 +10,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useLeadTrends, useConversationTrends, useServiceRecommendations, useAgentPerformance } from '@/hooks/useAnalyticsTrends';
 import { useRecentActivity } from '@/hooks/useRecentActivity';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useNotifications } from '@/hooks/useNotifications';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
@@ -20,12 +22,40 @@ export default function Dashboard() {
   const { user, role } = useAuth();
   const { data: analyticsData, loading: analyticsLoading, error: analyticsError } = useAnalytics();
   const { isConnected: wsConnected, error: wsError } = useWebSocket();
+  const { notifications } = useNotifications({ unread_only: true, limit: 5 });
   useEffect(() => {
     if (wsError) {
       toast.error(wsError);
     }
   }, [wsError]);
+  useEffect(() => {
+    if (!notifications) return;
+    
+    const now = new Date();
+    const recentNotifications = notifications.filter(n => {
+      const createdAt = new Date(n.created_at);
+      const ageInSeconds = (now.getTime() - createdAt.getTime()) / 1000;
+      return ageInSeconds < 10 && !shownNotificationsRef.current.has(n.id);
+    });
+    
+    recentNotifications.forEach(notification => {
+      if (notification.severity === 'error' || notification.severity === 'warning') {
+        toast.error(notification.title, { 
+          description: notification.message, 
+          action: notification.action_url ? { 
+            label: 'View', 
+            onClick: () => navigate(notification.action_url) 
+          } : undefined 
+        });
+      } else if (notification.severity === 'success') {
+        toast.success(notification.title, { description: notification.message });
+      }
+      shownNotificationsRef.current.add(notification.id);
+    });
+  }, [notifications, navigate]);
   const [timeRange, setTimeRange] = useState('30d');
+  const navigate = useNavigate();
+  const shownNotificationsRef = useRef<Set<string>>(new Set());
 
   const getTimeRangeParams = (range: string) => {
     const now = new Date();
