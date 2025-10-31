@@ -2,6 +2,30 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 
+/**
+ * useWebSocket
+ *
+ * Establishes an authenticated WebSocket connection to the analytics channel and
+ * automatically reconnects with exponential backoff.
+ *
+ * Parameters:
+ * - options.enabled?: boolean (default: true)
+ *   When false, the hook will not attempt to connect.
+ *
+ * Returns:
+ * - isConnected: boolean
+ *   True when the socket is currently open.
+ * - error: string | null
+ *   Last connection error (auth failure, unsupported, max retries, etc.).
+ *
+ * Authentication:
+ * - Uses the current Supabase session access_token via useAuth().
+ * - Token is appended as a query parameter (token=JWT) when building the WS URL.
+ *
+ * Reconnection behavior:
+ * - Exponential backoff starting at 1s, capped at 30s, up to 10 attempts.
+ * - Stops retrying after receiving policy close code 1008 (auth failure) or after max attempts.
+ */
 interface UseWebSocketOptions {
   enabled?: boolean;
 }

@@ -1,249 +1,278 @@
-# PixelCraft AI Backend
+# Backend API and WebSocket Documentation
 
-This directory contains a FastAPI-based backend scaffold for PixelCraft. It provides AI automation via AgentScope and local Ollama models, and persists data to Supabase.
+This document describes the REST API endpoints, WebSocket channels and authentication, environment configuration, and database schema mapping used by the PixelCraft Bloom backend.
 
-## Overview
+---
 
-- Framework: FastAPI
-- LLMs: Ollama (local) via AgentScope
-- Database: Supabase (Postgres)
+## Table of Contents
+- REST API
+  - Agents
+    - POST /api/agents/invoke
+    - POST /api/agents/workflows/execute
+  - Analytics (overview)
+  - Notifications (overview)
+- WebSockets
+  - Channels
+    - /api/ws/analytics
+    - /api/ws/workflows
+    - /api/ws/notifications
+  - Authentication Flow
+  - Client Message Schemas
+  - Server Event Schemas
+- Environment Variables
+- Database Schema Mapping to Migrations
 
-## Prerequisites
+---
 
-- Python 3.10+
-- Ollama installed locally (https://ollama.com)
-- Supabase project and service role key
+## REST API
 
-## Setup
+All API endpoints are prefixed with `/api`. Authentication is typically performed via a Bearer JWT or a Supabase-authenticated user token where applicable.
 
-1. Create a virtual environment and activate it:
+### Agents
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
+#### POST /api/agents/invoke
+Invoke a single agent for a request.
+
+- URL: `/api/agents/invoke`
+- Method: POST
+- Auth: Bearer JWT (service, server-to-server) OR user session depending on deployment
+- Content-Type: application/json
+
+Request body:
 ```
-
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Copy and configure environment variables:
-
-```bash
-cp .env.example .env
-# Edit .env and add SUPABASE_KEY and other secrets
-```
-
-4. (Optional) Pull an Ollama model:
-
-```bash
-# ollama pull llama3
-```
-
-## Running the server
-
-Development mode (auto-reload):
-
-```bash
-cd backend
-python run.py --reload
-```
-
-Open the API docs at: http://localhost:8000/docs
-
-## API Endpoints (summary)
-
-- `POST /api/chat/message` — send a chat message
-- `POST /api/chat/stream` — streaming chat responses
-- `GET /api/chat/history/{conversation_id}` — conversation history
-- `DELETE /api/chat/history/{conversation_id}` — clear history
-- `GET /api/agents` — list agents
-- `GET /api/agents/{agent_type}` — agent detail
-- `POST /api/agents/invoke` — invoke an agent
-- `GET /api/agents/health` — agents health
-- `POST /api/leads/submit` — submit a lead
-- `GET /api/leads/{lead_id}` — get lead
-- `POST /api/leads/{lead_id}/analyze` — analyze an existing lead
-- `GET /api/leads` — list leads
-
-## Next steps
-
-- Implement AgentScope agent implementations (chat, lead_qualification)
-- Add database migrations for `leads`, `conversations`, and `agent_logs` tables
-- Add proper streaming SSE responses and authentication
-# PixelCraft AI Backend
-
-This directory contains the Python FastAPI backend for PixelCraft, designed to integrate with AgentScope and Ollama for open-source LLM usage and Supabase for persistence.
-
-Overview
-- Framework: FastAPI
-- LLM Orchestration: AgentScope + Ollama (local)
-- Database: Supabase (Postgres)
-- Language: Python 3.10+
-
-Prerequisites
-- Python 3.10+
-- Ollama installed (~ https://ollama.ai)
-- Supabase project and service role key
-
-Quick start
-
-1. Create and activate a virtual environment
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-2. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Copy `.env.example` to `.env` and fill in credentials (SUPABASE_KEY, etc.)
-
-4. Run the development server
-
-```bash
-python run.py --reload
-```
-
-API
-- Swagger UI: http://localhost:8000/docs
-- Health: GET /health
-- Chat endpoints: /api/chat
-- Agents endpoints: /api/agents
-- Leads endpoints: /api/leads
-
-Project structure
-- `app/` - main application package
-  - `models/` - Pydantic request/response schemas
-  - `routes/` - FastAPI routers (chat, agents, leads)
-  - `agents/` - AgentScope agent scaffolding
-  - `utils/` - helper clients for Supabase and Ollama
-
-## External API Integrations
-
-### Overview
-Agents can integrate with external services (CRM, email, calendar) to automate lead management and client communication. Supported integrations include HubSpot (CRM), SendGrid (Email), and Google Calendar. All integrations are optional, and agents gracefully degrade when not configured.
-
-### Configuration
-Reference the `.env.example` file for required environment variables. Follow these step-by-step setup instructions for each service:
-
-1. **HubSpot CRM**: Create a Private App in HubSpot (Settings > Integrations > Private Apps), copy the access token, and set `CRM_API_KEY`.
-2. **SendGrid Email**: Create an API key in SendGrid (Settings > API Keys) with Mail Send permissions and set `EMAIL_API_KEY`.
-3. **Google Calendar**: Create a Google Cloud project, enable the Calendar API, generate credentials, and set `CALENDAR_API_KEY`.
-
-### Available Tools
-The following external tools are available to each agent:
-
-- **Web Development Agent**: `create_project_lead`, `schedule_technical_consultation`
-- **Digital Marketing Agent**: `create_marketing_lead`, `send_marketing_proposal`, `schedule_strategy_session`
-- **Lead Qualification Agent**: `sync_lead_to_crm`, `send_qualification_notification`, `schedule_qualification_call`
-
-### Tool Execution Logging
-All tool executions are logged to the `agent_logs` table with timing, parameters, results, and errors. This enables analytics on tool usage and debugging of external API issues.
-
-### Error Handling
-If external services are unavailable, agents continue to function but skip external tool calls (graceful degradation). Errors are logged but do not fail the agent's primary function.
-
-### Testing
-To test external integrations:
-- Check the health endpoint: `GET /health` returns external service status.
-- Review agent logs: Query the `agent_logs` table for `action LIKE 'tool_execution:%'`.
-- Monitor tool execution times and error rates.
-
-### Security Notes
-API keys should never be committed to version control. Use environment-specific credentials (dev, staging, production) and rotate API keys regularly.
-
-## Advanced Agent Workflows
-
-### Overview
-The advanced agent workflow system enables sophisticated multi-agent orchestration with state management, agent-to-agent messaging, and shared memory. This allows for complex use cases such as multi-step lead qualification, collaborative service recommendations, and dynamic problem-solving where agents can communicate and share context in real-time.
-
-### Workflow Types
-1. **Multi-Agent Workflow**: Sequential execution of multiple agents (chat → recommendations → lead qualification)
-2. **Conditional Workflow**: Dynamic routing based on agent responses and conditions
-3. **Collaborative Workflow**: Agents communicate via messages and share context through shared memory
-
-### Key Features
-- **State Management**: Track workflow execution state (pending, running, completed, failed, paused)
-- **Agent-to-Agent Messaging**: Agents can send requests, responses, notifications, and handoffs to each other
-- **Shared Memory**: Conversation-scoped and workflow-scoped memory accessible to all participating agents
-- **Real-time Visualization**: WebSocket endpoint for monitoring workflow execution in real-time
-- **Conditional Routing**: Route to different agents based on response metadata (e.g., lead score, user intent)
-
-### API Endpoints
-- `POST /api/agents/workflows/execute` - Start a new workflow
-- `GET /api/agents/workflows/{workflow_id}` - Get workflow status
-- `GET /api/agents/workflows/{workflow_id}/visualization` - Get visualization data
-- `POST /api/agents/workflows/{workflow_id}/messages` - Send agent message
-- `PATCH /api/agents/workflows/{workflow_id}/state` - Update workflow state
-- `WS /api/ws/workflows/{workflow_id}` - Real-time workflow updates
-
-### Database Tables
-- `workflow_executions`: Tracks workflow state and results
-- `agent_messages`: Stores agent-to-agent messages
-- `shared_memory`: Stores shared context accessible to all agents
-
-### Example Usage
-```python
-# Start a conditional workflow
-workflow_request = {
-    "workflow_type": "conditional",
-    "conversation_id": "conv_123",
-    "participating_agents": ["chat", "lead_qualification", "web_development"],
-    "workflow_config": {
-        "routing_rules": {
-            "conditions": [
-                {"field": "metadata.lead_score", "operator": ">", "value": 70, "next_agent": "web_development"},
-                {"default": "chat"}
-            ]
-        }
-    },
-    "input_data": {"message": "I need a website"}
+{
+  "agent_type": "string",               // e.g., "lead_agent", "chat_agent"
+  "input": { "...": "..." },          // Arbitrary JSON input for the agent
+  "user_id": "string",                 // Optional: end-user identifier
+  "metadata": { "...": "..." }        // Optional: correlation or tracking metadata
 }
-
-response = await client.post("/api/agents/workflows/execute", json=workflow_request)
-workflow_id = response.json()["workflow_id"]
-
-# Monitor workflow in real-time via WebSocket
-ws = await websocket_connect(f"/api/ws/workflows/{workflow_id}?token={jwt_token}")
 ```
 
-### Shared Memory Usage
-```python
-# In an agent's process_message method
-await self.set_shared_memory(conversation_id, "user_intent", intent_data, scope="workflow")
-user_needs = await self.get_shared_memory(conversation_id, "user_needs", scope="workflow")
+Response body (success):
+```
+{
+  "request_id": "string",
+  "status": "queued" | "running" | "completed" | "failed",
+  "result": { "...": "..." },      // Present when status is completed
+  "error": "string|null"            // Present when status is failed
+}
 ```
 
-### Agent Messaging
-```python
-# Send message from one agent to another
-await orchestrator.send_agent_message(
-    workflow_execution_id=workflow_id,
-    from_agent="chat",
-    to_agent="web_development",
-    message_type="handoff",
-    content={"reason": "technical_consultation_needed", "context": conversation_summary}
-)
+Response body (error):
+```
+{
+  "error": "Invalid agent_type or input",
+  "code": "BAD_REQUEST"
+}
 ```
 
-### Testing
-- Run workflow tests: `python backend/test_agents.py`
-- Tests cover conditional routing, agent messaging, shared memory, and visualization
+Common status codes: 200, 400, 401, 403, 500
 
-### Monitoring
-- View workflow execution in real-time via WebSocket
-- Query workflow_executions table for historical data
-- Check agent_logs table for detailed agent actions
-- Monitor agent_messages table for communication patterns
+---
 
-Next steps
-- Implement AgentScope agents under `app/agents/`.
-- Add tests and CI for backend code.
-- Harden security (vault secrets, rotated keys, RLS policies in Supabase).
+#### POST /api/agents/workflows/execute
+Execute an agent workflow (multi-step orchestration).
+
+- URL: `/api/agents/workflows/execute`
+- Method: POST
+- Auth: Bearer JWT (service) OR user session
+- Content-Type: application/json
+
+Request body:
+```
+{
+  "workflow_id": "string",            // Workflow identifier
+  "inputs": { "...": "..." },        // Workflow inputs
+  "user_id": "string",               // Optional
+  "async": true | false                // Optional, default false
+}
+```
+
+Response body (success):
+```
+{
+  "workflow_run_id": "string",
+  "status": "queued" | "running" | "completed" | "failed",
+  "outputs": { "...": "..." },     // Present when completed
+  "error": "string|null"
+}
+```
+
+If `async: true`, you typically receive a queued/running status, and final results are delivered over WebSocket events or polling endpoints.
+
+---
+
+### Analytics (overview)
+The backend exposes analytics endpoints (see `backend/app/routes/analytics.py`) for aggregated metrics (leads, conversations, revenue). Authentication depends on role.
+
+- Typical responses include summary values and deltas:
+```
+{
+  "total_leads": { "value": 123, "change": 5.4 },
+  "active_conversations": { "value": 12, "change": -2.1 },
+  "conversion_rate": { "value": 14.2, "change": 0.7 },
+  "total_revenue": { "value": 10234, "change": 3.3 }
+}
+```
+
+### Notifications (overview)
+REST endpoints under `backend/app/routes/notifications.py` provide list/fetch operations. Real-time notifications are delivered via the WebSocket `/api/ws/notifications` channel.
+
+---
+
+## WebSockets
+
+### Channels
+- `/api/ws/analytics`: Real-time updates for analytics time-series and KPIs.
+- `/api/ws/workflows`: Real-time workflow run status updates.
+- `/api/ws/notifications`: Real-time user notifications (success, warning, error).
+
+### Authentication Flow
+1. Client obtains a JWT (or session token) from the authentication provider (e.g., Supabase or your auth server).
+2. Client connects to the WebSocket endpoint using a Bearer token (header) or token query parameter.
+   - Example URL: `wss://your-api-host/api/ws/analytics?token=JWT_HERE`
+3. Server validates the token, extracts claims (sub/user id, role/scope), and either accepts or closes the connection.
+4. On reconnect, client should back off (exponential or jitter) and retry.
+
+Token generation (example claims):
+```
+{
+  "sub": "user-uuid",
+  "role": "user" | "admin",
+  "exp": 1735689600,
+  "iat": 1735603200,
+  "scope": ["analytics:read", "notifications:read"]
+}
+```
+
+### Client Message Schemas
+- Subscribe to a topic or stream:
+```
+{
+  "type": "subscribe",
+  "topic": "lead_trends",           // Example topics: lead_trends, conversation_trends, workflow_run:<id>
+  "params": { "start_date": "ISO", "end_date": "ISO", "aggregation": "daily" }
+}
+```
+
+- Unsubscribe:
+```
+{ "type": "unsubscribe", "topic": "lead_trends" }
+```
+
+- Ping (optional):
+```
+{ "type": "ping" }
+```
+
+### Server Event Schemas
+- Analytics update:
+```
+{
+  "type": "event",
+  "channel": "analytics",
+  "topic": "lead_trends",
+  "data": [ { "date": "ISO", "value": 12 }, ... ],
+  "ts": "ISO"
+}
+```
+
+- Workflow status:
+```
+{
+  "type": "event",
+  "channel": "workflows",
+  "topic": "workflow_run:abc123",
+  "data": { "status": "running" | "completed" | "failed", "progress": 0.6 },
+  "ts": "ISO"
+}
+```
+
+- Notification:
+```
+{
+  "type": "event",
+  "channel": "notifications",
+  "topic": "user:USER_ID",
+  "data": { "id": "uuid", "severity": "success" | "warning" | "error", "title": "...", "message": "...", "action_url": "/path" },
+  "ts": "ISO"
+}
+```
+
+- Error:
+```
+{
+  "type": "error",
+  "code": "UNAUTHORIZED" | "INVALID_TOPIC" | "BAD_REQUEST",
+  "message": "..."
+}
+```
+
+---
+
+## Environment Variables
+
+Frontend (Vite):
+- `VITE_API_URL`: Base URL for API (http/https). Example: `http://localhost:8000`
+- `VITE_SUPABASE_URL`: Supabase URL (for client features)
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: Supabase anon/publishable key (never use service key in client)
+
+Backend:
+- `API_JWT_SECRET` or keys for signing/validating JWTs
+- Service credentials for databases and external services should be kept server-side only.
+
+Supabase Keys:
+- Use publishable (anon) key in the browser, with Row Level Security (RLS) protecting data.
+- Use service role key only on the server (never in frontend). Ensure the backend loads it from secure env and never exposes it.
+
+---
+
+## Database Schema Mapping to Migrations
+
+The Supabase migrations under `supabase/migrations` define the database schema, functions, and policies. Key areas:
+
+- Notifications tables and triggers:
+  - `20250126000009_add_notifications.sql`
+- Analytics and metrics:
+  - `20250126000002_add_analytics_functions.sql`
+  - `20250126000006_add_revenue_analytics.sql`
+  - `20250126000007_add_trends_functions.sql`
+  - `20250126000003_add_model_metrics.sql`
+- Pricing:
+  - `20250126000004_add_pricing.sql`
+- AI / agents / workflows:
+  - `20250126000008_add_workflow_tables.sql`
+- Roles and user permissions:
+  - `20250126000005_add_user_roles.sql`
+- Foundational features:
+  - `20250126000000_ai_features_schema.sql`
+  - `20250126000001_add_helper_functions.sql`
+
+Consult each file for table definitions (e.g., `notifications`, `pricing_packages`, `pricing_campaigns`), views, functions, and RLS policies.
+
+---
+
+## Examples
+
+### Example: Invoking an agent
+```
+curl -X POST "$API_URL/api/agents/invoke" \
+  -H "Authorization: Bearer $API_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_type": "lead_agent",
+    "input": {"query": "Find top prospects in SaaS"},
+    "metadata": {"source": "dashboard"}
+  }'
+```
+
+### Example: Connecting to notifications WebSocket
+```
+const ws = new WebSocket(`${API_WS}/api/ws/notifications?token=${jwt}`);
+ws.onopen = () => ws.send(JSON.stringify({ type: 'subscribe', topic: `user:${userId}` }));
+ws.onmessage = (ev) => console.log('event', JSON.parse(ev.data));
+```
+
+---
+
+If you change schemas or add endpoints, update this document accordingly.

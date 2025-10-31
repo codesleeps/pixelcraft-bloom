@@ -3,6 +3,10 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/utils/test-utils';
 
+//
+// Note: removed stray 'await' fragment that was accidentally inserted into the file
+//
+
 // Mocks for hooks and libs used by Dashboard
 vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('@/hooks/useAnalytics', () => ({ useAnalytics: vi.fn() }));
@@ -53,7 +57,7 @@ import Dashboard from '../Dashboard';
 const authAdmin = { user: { user_metadata: { display_name: 'Admin A' }, email: 'admin@example.com' }, role: 'admin' };
 const authUser = { user: { user_metadata: { display_name: 'User U' }, email: 'user@example.com' }, role: 'user' };
 
-const setupMocks = ({
+const setupMocks = async ({
   auth = authAdmin,
   analytics = { data: { total_leads: { value: 10, change: 5 }, active_conversations: { value: 3, change: -1 }, conversion_rate: { value: 12.5, change: 0.5 }, total_revenue: { value: 1200, change: 10 } }, loading: false, error: null },
   ws = { isConnected: true, error: null },
