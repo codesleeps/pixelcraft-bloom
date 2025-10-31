@@ -20,14 +20,17 @@ export interface NotificationListResponse {
   unread_count: number;
 }
 
-// Helper function for authenticated fetch
-const fetchWithAuth = async (url: string, token: string) => {
+// Helper function for authenticated fetch (supports RequestInit)
+const fetchWithAuth = async (url: string, token: string, init?: RequestInit) => {
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const headers: HeadersInit = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    ...(init?.headers || {}),
+  };
   const response = await fetch(`${apiBaseUrl}${url}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    ...init,
+    headers,
   });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -72,7 +75,9 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
     wsRef.current.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        // Invalidate notifications query on any message
+        // Ignore ping frames from server
+        if (message?.type === 'ping') return;
+        // Invalidate notifications query on real notification messages
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
@@ -111,6 +116,20 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
       connect();
     }
 
+    const handleOnline = () => {
+      // Resume connection attempts when back online
+      if (!isConnected && session) connect();
+    };
+    const handleOffline = () => {
+      // Pause reconnect timers while offline
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
@@ -118,8 +137,10 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
-  }, [session]);
+  }, [session, isConnected]);
 
   const queryFn = async (): Promise<NotificationListResponse> => {
     if (!session?.access_token) {
