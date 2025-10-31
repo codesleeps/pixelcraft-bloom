@@ -160,9 +160,39 @@ await create_notification(
 - Frontend React Query cache is invalidated, triggering UI updates
 - Toast notifications appear immediately for critical events
 
-**Testing:**
-- Create test notifications via API or directly in database
-- Monitor WebSocket connection in browser DevTools
+## Testing
+
+This project includes comprehensive test suites for both frontend and backend components, with a focus on automated testing to ensure reliability and maintainability.
+
+### Frontend Tests
+- **Command to run tests**: `npm test` or `npm run test:watch`
+- **Command for coverage**: `npm run test:coverage`
+- **Location of test files**: `src/**/__tests__/` and `src/**/*.test.tsx`
+- **Note about test utilities**: Test utilities are available in `src/test/utils/` (e.g., `renderWithProviders` for component testing), and mocks are located in `src/test/mocks/` (e.g., for WebSocket and authentication).
+
+### Backend Tests
+- **Command to run tests**: `cd backend && pytest`
+- **Command for coverage**: `cd backend && pytest --cov=app --cov-report=html`
+- **Location of test files**: `backend/tests/`
+- **Note about fixtures**: Shared fixtures and utilities are defined in `backend/tests/conftest.py` for mocking dependencies like Supabase and Redis.
+
+### Notification System Tests
+The notification system has extensive test coverage across frontend and backend layers to validate real-time delivery, API endpoints, and WebSocket functionality.
+- **Frontend**: Hook tests (`useNotifications.test.tsx` for WebSocket lifecycle and mutations), Dashboard tests (`Dashboard.notifications.test.tsx` for toast display and filtering).
+- **Backend**: API tests (`test_notifications_api.py` for REST endpoints), WebSocket tests (`test_notifications_websocket.py` for real-time delivery), Service tests (`test_notification_service.py` for utility functions).
+- **Note about mocked dependencies**: Tests mock WebSocket connections, Supabase database queries, and Redis pub/sub to ensure isolation and reliability.
+
+### Running Specific Tests
+- **Frontend**: `npm test -- useNotifications` to run a specific test file (e.g., hook tests).
+- **Backend**: `pytest tests/test_notifications_api.py` to run a specific test file, or `pytest -k "test_mark_read"` to run tests matching a pattern (e.g., mark-read functionality).
+
+### Coverage Thresholds
+- **Frontend**: 70% (branches, functions, lines, statements)
+- **Backend**: 70% (to be configured)
+
+For manual testing of notifications (e.g., during development):
+- Create test notifications via API or directly in the database.
+- Monitor WebSocket connections in browser DevTools.
 - Check Redis pub/sub messages: `redis-cli SUBSCRIBE notifications:user:*`
 
 ## How can I edit this code?
