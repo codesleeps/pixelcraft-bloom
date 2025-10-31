@@ -169,7 +169,7 @@ describe('PricingSection', () => {
 
   it('toggles billing cycle and updates prices', async () => {
     const user = userEvent.setup();
-    
+
     mockSupabase.from.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -179,25 +179,28 @@ describe('PricingSection', () => {
     });
 
     renderWithProviders(<PricingSection />);
-    
+
     await waitForLoadingToFinish();
-    
+
     // Initially monthly
     expect(screen.getByText('£99')).toBeInTheDocument();
     expect(screen.getByText('£299')).toBeInTheDocument();
     expect(screen.getByText('£599')).toBeInTheDocument();
     expect(screen.queryByText('Save 20%')).not.toBeInTheDocument();
-    
-    // Switch to yearly
-    const select = screen.getByRole('combobox');
-    await user.click(select);
-    await user.click(screen.getByText('Yearly'));
-    
-    expect(screen.getByText('£990')).toBeInTheDocument();
-    expect(screen.getByText('£2990')).toBeInTheDocument();
-    expect(screen.getByText('£5990')).toBeInTheDocument();
-    expect(screen.getAllByText('Save 20% annually')).toHaveLength(3);
-    expect(screen.getByText('Save 20%')).toBeInTheDocument(); // Badge
+
+    // Switch to yearly via Radix Select portal
+    const trigger = screen.getByRole('button', { name: /Monthly|Yearly|billing/i });
+    await user.click(trigger);
+    const yearlyOption = await screen.findByText('Yearly');
+    await user.click(yearlyOption);
+
+    await waitFor(() => {
+      expect(screen.getByText('£990')).toBeInTheDocument();
+      expect(screen.getByText('£2990')).toBeInTheDocument();
+      expect(screen.getByText('£5990')).toBeInTheDocument();
+      expect(screen.getAllByText('Save 20% annually')).toHaveLength(3);
+      expect(screen.getByText('Save 20%')).toBeInTheDocument(); // Badge
+    });
   });
 
   it('applies discount code successfully', async () => {
