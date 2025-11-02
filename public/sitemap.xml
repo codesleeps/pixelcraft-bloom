@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://your-domain.example/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url><loc>https://your-domain.example/dashboard-hub.html</loc></url>
+  <url><loc>https://your-domain.example/enhanced-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/mini-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/notifications.html</loc></url>
+  <url><loc>https://your-domain.example/project-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/timeline-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/project-timeline.html</loc></url>
+  <url><loc>https://your-domain.example/admin-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/admin-login.html</loc></url>
+  <url><loc>https://your-domain.example/resource-allocation.html</loc></url>
+  <url><loc>https://your-domain.example/risk-assessment.html</loc></url>
+  <url><loc>https://your-domain.example/budget-tracking.html</loc></url>
+  <url><loc>https://your-domain.example/client-communication.html</loc></url>
+  <url><loc>https://your-domain.example/data-integration.html</loc></url>
+  <url><loc>https://your-domain.example/kpi-dashboard.html</loc></url>
+  <url><loc>https://your-domain.example/simple-dashboard.html</loc></url>
+</urlset>

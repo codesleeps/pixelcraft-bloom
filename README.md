@@ -259,6 +259,55 @@ Backend:
 - Supabase (Postgres) for persistence
 
 
+## Production Deployment
+
+Recommended architecture for production:
+
+- Frontend (static site and SPA) on Vercel
+- Backend (Python API + WebSocket) on a Hostinger VPS (or Render)
+
+### Frontend on Vercel
+
+- `vercel.json` provides security headers, long-term asset caching, and safe SPA rewrites that avoid hijacking static HTML pages.
+- Project settings:
+  - Build command: `npm run build`
+  - Output directory: `dist`
+  - Install command: `npm ci`
+  - Environment variables: `VITE_API_BASE_URL`, `VITE_WS_URL`, etc.
+
+### Backend on Hostinger VPS
+
+1. Provision an Ubuntu VPS and open ports 80/443.
+2. Install Python 3.11+, Nginx, and Certbot.
+3. Deploy the FastAPI app behind a process manager (`uvicorn`/`gunicorn` via `systemd`).
+4. Use `ops/nginx.conf` as a template:
+   - Set your domain in `server_name`.
+   - Proxy to `http://127.0.0.1:8000`.
+   - WebSocket upgrade headers are included.
+   - Basic rate limiting and security headers are enabled.
+5. Issue TLS with Let’s Encrypt: `sudo certbot --nginx -d api.yourdomain.com`.
+6. Verify `/health` returns 200.
+
+### CI/CD
+
+- Vercel Git Integration handles frontend deployments.
+- GitHub Actions already build and deploy to GitHub Pages (`dist/`). Keep or disable as needed.
+- Add backend test workflow if desired (`pytest`).
+
+### Security & Performance
+
+- CSP, HSTS, X-Frame-Options, and Permissions-Policy are applied at Vercel’s edge.
+- Nginx adds complementary headers and basic rate limiting for the API.
+- Immutable assets cached for 1 year; HTML stays non-cached.
+
+### Launch Checklist
+
+- Update CSP sources in `vercel.json` if using external CDNs.
+- Set `VITE_API_BASE_URL` to your backend domain.
+- Validate dashboard pages and SPA routes.
+- Confirm WebSocket features (live analytics, activity log).
+- Configure monitoring (Sentry, UptimeRobot) and backups.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/f1718176-4080-4bf5-9910-b3d5b66f3fb7) and click on Share -> Publish.
