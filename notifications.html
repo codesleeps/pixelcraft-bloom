@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Notification System</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    .header { background: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; }
+    .card { background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .notification { padding: 10px; border-left: 4px solid #ddd; margin-bottom: 10px; }
+    .notification-unread { background: #f0f7ff; }
+    .notification-urgent { border-left-color: #e74c3c; }
+    .notification-warning { border-left-color: #f39c12; }
+    .notification-info { border-left-color: #3498db; }
+    .notification-success { border-left-color: #2ecc71; }
+    .notification-time { color: #7f8c8d; font-size: 12px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #1976d2; color: white; }
+    .btn-secondary { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+    .tabs { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px; }
+    .tab { padding: 10px 15px; cursor: pointer; }
+    .tab-active { border-bottom: 2px solid #1976d2; color: #1976d2; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Notification System</h1>
+  </div>
+  
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Notifications</h2>
+      <div>
+        <button class="btn btn-secondary" onclick="markAllRead()">Mark All Read</button>
+        <button class="btn btn-primary" onclick="configureNotifications()">Configure</button>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab tab-active" onclick="filterNotifications('all')">All</div>
+      <div class="tab" onclick="filterNotifications('unread')">Unread</div>
+      <div class="tab" onclick="filterNotifications('urgent')">Urgent</div>
+    </div>
+    
+    <div id="notifications-container">
+      <div class="notification notification-unread notification-urgent">
+        <div style="display: flex; justify-content: space-between;">
+          <strong>Budget Alert: Project Alpha exceeds budget by 15%</strong>
+          <span class="notification-time">10 minutes ago</span>
+        </div>
+        <p>The current spending on Project Alpha has exceeded the allocated budget by 15%. Immediate review required.</p>
+        <div>
+          <button class="btn btn-secondary" onclick="viewDetails('budget-alert-1')">View Details</button>
+          <button class="btn btn-secondary" onclick="markRead(this)">Mark Read</button>
+        </div>
+      </div>
+      
+      <div class="notification notification-unread notification-warning">
+        <div style="display: flex; justify-content: space-between;">
+          <strong>Deadline Approaching: Project Beta</strong>
+          <span class="notification-time">1 hour ago</span>
+        </div>
+        <p>Project Beta is due in 3 days. 2 critical tasks are still in progress.</p>
+        <div>
+          <button class="btn btn-secondary" onclick="viewDetails('deadline-alert-1')">View Tasks</button>
+          <button class="btn btn-secondary" onclick="markRead(this)">Mark Read</button>
+        </div>
+      </div>
+      
+      <div class="notification notification-info">
+        <div style="display: flex; justify-content: space-between;">
+          <strong>Resource Assignment: Sarah added to Project Delta</strong>
+          <span class="notification-time">Yesterday</span>
+        </div>
+        <p>Sarah Johnson has been assigned to Project Delta as a UI Designer.</p>
+        <div>
+          <button class="btn btn-secondary" onclick="viewDetails('resource-update-1')">View Project</button>
+        </div>
+      </div>
+      
+      <div class="notification notification-success">
+        <div style="display: flex; justify-content: space-between;">
+          <strong>Milestone Completed: Project Gamma Phase 1</strong>
+          <span class="notification-time">2 days ago</span>
+        </div>
+        <p>Phase 1 of Project Gamma has been successfully completed and approved by the client.</p>
+        <div>
+          <button class="btn btn-secondary" onclick="viewDetails('milestone-complete-1')">View Milestone</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Notification Settings</h2>
+    <table style="width: 100%;">
+      <thead>
+        <tr>
+          <th>Event Type</th>
+          <th>Email</th>
+          <th>In-App</th>
+          <th>SMS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Budget Alerts</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox" checked></td>
+        </tr>
+        <tr>
+          <td>Deadline Reminders</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox"></td>
+        </tr>
+        <tr>
+          <td>Resource Changes</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox"></td>
+        </tr>
+        <tr>
+          <td>Milestone Updates</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox"></td>
+        </tr>
+        <tr>
+          <td>Client Communications</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="checkbox"></td>
+          <td><input type="checkbox"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 15px;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <script>
+    function markRead(button) {
+      const notification = button.closest('.notification');
+      notification.classList.remove('notification-unread');
+      button.remove();
+    }
+    
+    function markAllRead() {
+      const unreadNotifications = document.querySelectorAll('.notification-unread');
+      unreadNotifications.forEach(notification => {
+        notification.classList.remove('notification-unread');
+        const markReadBtn = notification.querySelector('button:last-child');
+        if (markReadBtn && markReadBtn.textContent === 'Mark Read') {
+          markReadBtn.remove();
+        }
+      });
+      alert('All notifications marked as read');
+    }
+    
+    function configureNotifications() {
+      // Scroll to notification settings
+      document.querySelectorAll('.card')[1].scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function viewDetails(id) {
+      alert(`Viewing details for ${id}`);
+    }
+    
+    function filterNotifications(filter) {
+      // Update active tab
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('tab-active'));
+      event.target.classList.add('tab-active');
+      
+      // In a real implementation, this would filter the notifications
+      alert(`Filtering notifications by: ${filter}`);
+    }
+    
+    function saveSettings() {
+      alert('Notification settings saved successfully');
+    }
+  </script>
+</body>
+</html>

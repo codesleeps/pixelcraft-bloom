@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Project Timeline</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    .header { background: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; }
+    .card { background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    /* Gantt Chart Styles */
+    .gantt-container { overflow-x: auto; }
+    .gantt-chart { position: relative; margin-top: 20px; }
+    .gantt-row { display: flex; height: 40px; margin-bottom: 5px; }
+    .gantt-row-header { width: 200px; padding-right: 15px; font-weight: bold; display: flex; align-items: center; }
+    .gantt-row-bars { position: relative; flex-grow: 1; background-color: #f9f9f9; height: 100%; }
+    .gantt-timeline { display: flex; height: 30px; border-bottom: 1px solid #ddd; }
+    .gantt-timeline-cell { width: 40px; text-align: center; font-size: 12px; color: #666; }
+    .gantt-bar { position: absolute; height: 30px; top: 5px; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; cursor: pointer; }
+    .gantt-bar-active { background-color: #3498db; }
+    .gantt-bar-completed { background-color: #2ecc71; }
+    .gantt-bar-delayed { background-color: #e74c3c; }
+    .gantt-milestone { position: absolute; width: 12px; height: 12px; background-color: #9b59b6; border-radius: 50%; top: 14px; cursor: pointer; }
+    
+    /* Tooltip styles */
+    .tooltip { position: absolute; background: white; border: 1px solid #ddd; padding: 10px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; z-index: 100; min-width: 200px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Project Timeline Dashboard</h1>
+  </div>
+  
+  <div class="card">
+    <h2>Interactive Project Timeline</h2>
+    <div class="gantt-container">
+      <div class="gantt-chart">
+        <div class="gantt-timeline">
+          <div class="gantt-timeline-cell" style="width: 200px;">Project</div>
+          <div class="gantt-timeline-cell">May</div>
+          <div class="gantt-timeline-cell">Jun</div>
+          <div class="gantt-timeline-cell">Jul</div>
+          <div class="gantt-timeline-cell">Aug</div>
+          <div class="gantt-timeline-cell">Sep</div>
+          <div class="gantt-timeline-cell">Oct</div>
+          <div class="gantt-timeline-cell">Nov</div>
+          <div class="gantt-timeline-cell">Dec</div>
+        </div>
+        
+        <div class="gantt-row">
+          <div class="gantt-row-header">E-commerce Redesign</div>
+          <div class="gantt-row-bars">
+            <div class="gantt-bar gantt-bar-active" style="left: 40px; width: 120px;" 
+                 onmouseover="showTooltip(event, 'E-commerce Phase 1', 'May-Jul', '75% complete')" 
+                 onmouseout="hideTooltip()">Phase 1</div>
+            <div class="gantt-bar gantt-bar-active" style="left: 160px; width: 80px;"
+                 onmouseover="showTooltip(event, 'E-commerce Phase 2', 'Jul-Sep', '30% complete')" 
+                 onmouseout="hideTooltip()">Phase 2</div>
+            <div class="gantt-milestone" style="left: 240px;" 
+                 onmouseover="showTooltip(event, 'Launch', 'Sep 5', 'Major milestone')" 
+                 onmouseout="hideTooltip()"></div>
+          </div>
+        </div>
+        
+        <div class="gantt-row">
+          <div class="gantt-row-header">Mobile App Dev</div>
+          <div class="gantt-row-bars">
+            <div class="gantt-bar gantt-bar-active" style="left: 80px; width: 160px;"
+                 onmouseover="showTooltip(event, 'Mobile App Development', 'Jun-Sep', '45% complete')" 
+                 onmouseout="hideTooltip()">Development</div>
+            <div class="gantt-milestone" style="left: 240px;"
+                 onmouseover="showTooltip(event, 'Beta Release', 'Sep 15', 'Testing milestone')" 
+                 onmouseout="hideTooltip()"></div>
+            <div class="gantt-bar gantt-bar-active" style="left: 240px; width: 80px;"
+                 onmouseover="showTooltip(event, 'Mobile App Testing', 'Sep-Nov', 'Not started')" 
+                 onmouseout="hideTooltip()">Testing</div>
+          </div>
+        </div>
+        
+        <div class="gantt-row">
+          <div class="gantt-row-header">AI Chatbot</div>
+          <div class="gantt-row-bars">
+            <div class="gantt-bar gantt-bar-delayed" style="left: 0px; width: 80px;"
+                 onmouseover="showTooltip(event, 'AI Chatbot Planning', 'May-Jun', 'Delayed')" 
+                 onmouseout="hideTooltip()">Planning</div>
+            <div class="gantt-bar gantt-bar-delayed" style="left: 80px; width: 120px;"
+                 onmouseover="showTooltip(event, 'AI Chatbot Development', 'Jun-Sep', 'Delayed')" 
+                 onmouseout="hideTooltip()">Development</div>
+          </div>
+        </div>
+        
+        <div class="gantt-row">
+          <div class="gantt-row-header">Corporate Website</div>
+          <div class="gantt-row-bars">
+            <div class="gantt-bar gantt-bar-completed" style="left: 0px; width: 120px;"
+                 onmouseover="showTooltip(event, 'Corporate Website', 'May-Jul', 'Completed')" 
+                 onmouseout="hideTooltip()">Completed</div>
+          </div>
+        </div>
+        
+        <div class="gantt-row">
+          <div class="gantt-row-header">Inventory System</div>
+          <div class="gantt-row-bars">
+            <div class="gantt-bar gantt-bar-active" style="left: 120px; width: 160px;"
+                 onmouseover="showTooltip(event, 'Inventory System', 'Jul-Oct', '60% complete')" 
+                 onmouseout="hideTooltip()">In Progress</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="tooltip" class="tooltip"></div>
+    
+    <div style="text-align: right; margin-top: 10px;">
+      <button onclick="alert('Timeline exported!')">Export Timeline</button>
+      <button onclick="alert('Edit mode would open here')">Edit Timeline</button>
+    </div>
+  </div>
+
+  <script>
+    function showTooltip(event, title, timeline, status) {
+      const tooltip = document.getElementById('tooltip');
+      tooltip.innerHTML = `<strong>${title}</strong><br>Timeline: ${timeline}<br>Status: ${status}`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (event.pageX + 10) + 'px';
+      tooltip.style.top = (event.pageY + 10) + 'px';
+    }
+    
+    function hideTooltip() {
+      document.getElementById('tooltip').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

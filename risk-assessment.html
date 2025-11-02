@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Risk Assessment Matrix</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    .header { background: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; }
+    .card { background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    /* Risk Matrix Styles */
+    .risk-matrix { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 60px); gap: 2px; margin-top: 15px; }
+    .risk-cell { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+    .risk-low { background-color: #2ecc71; }
+    .risk-medium { background-color: #f39c12; }
+    .risk-high { background-color: #e74c3c; }
+    .risk-item { padding: 3px; border-radius: 50%; background-color: white; color: black; margin: 2px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Risk Assessment Dashboard</h1>
+  </div>
+  
+  <div class="card">
+    <h2>Risk Assessment Matrix</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <p><strong>Impact vs. Probability Matrix</strong></p>
+        <p>Click on a risk item to see details and mitigation plans</p>
+      </div>
+      <button onclick="addRisk()">Add Risk</button>
+    </div>
+    
+    <div class="risk-matrix">
+      <!-- Headers -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Impact ↓</div>
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Very Low</div>
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Low</div>
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Medium</div>
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">High</div>
+      
+      <!-- Row 1 -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Very High</div>
+      <div class="risk-cell risk-medium"></div>
+      <div class="risk-cell risk-high"></div>
+      <div class="risk-cell risk-high">
+        <div class="risk-item" title="API Integration Failure" onclick="showRiskDetails(1)">1</div>
+      </div>
+      <div class="risk-cell risk-high"></div>
+      
+      <!-- Row 2 -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">High</div>
+      <div class="risk-cell risk-medium"></div>
+      <div class="risk-cell risk-medium"></div>
+      <div class="risk-cell risk-high">
+        <div class="risk-item" title="Budget Overrun" onclick="showRiskDetails(2)">2</div>
+      </div>
+      <div class="risk-cell risk-high"></div>
+      
+      <!-- Row 3 -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Medium</div>
+      <div class="risk-cell risk-low"></div>
+      <div class="risk-cell risk-medium">
+        <div class="risk-item" title="Resource Unavailability" onclick="showRiskDetails(3)">3</div>
+      </div>
+      <div class="risk-cell risk-medium"></div>
+      <div class="risk-cell risk-high"></div>
+      
+      <!-- Row 4 -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Low</div>
+      <div class="risk-cell risk-low">
+        <div class="risk-item" title="Minor UI Issues" onclick="showRiskDetails(4)">4</div>
+      </div>
+      <div class="risk-cell risk-low"></div>
+      <div class="risk-cell risk-medium"></div>
+      <div class="risk-cell risk-medium"></div>
+      
+      <!-- Row 5 -->
+      <div style="display: flex; justify-content: center; align-items: center; font-weight: bold;">Very Low</div>
+      <div class="risk-cell risk-low"></div>
+      <div class="risk-cell risk-low"></div>
+      <div class="risk-cell risk-low"></div>
+      <div class="risk-cell risk-medium"></div>
+    </div>
+    
+    <div id="risk-details" style="margin-top: 15px; display: none; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+      <h3>Risk Details: <span id="risk-title"></span></h3>
+      <p><strong>Description:</strong> <span id="risk-description"></span></p>
+      <p><strong>Impact:</strong> <span id="risk-impact"></span></p>
+      <p><strong>Probability:</strong> <span id="risk-probability"></span></p>
+      <p><strong>Mitigation Plan:</strong> <span id="risk-mitigation"></span></p>
+      <button onclick="document.getElementById('risk-details').style.display = 'none'">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // Risk details
+    function showRiskDetails(riskId) {
+      const riskData = {
+        1: {
+          title: "API Integration Failure",
+          description: "Risk of failure in integrating with client's legacy systems API",
+          impact: "Very High - Would prevent core functionality from working",
+          probability: "Medium - Client's API documentation is incomplete",
+          mitigation: "Early technical spike, dedicated integration team, fallback plan with simplified integration"
+        },
+        2: {
+          title: "Budget Overrun",
+          description: "Risk of exceeding allocated budget due to scope creep",
+          impact: "High - Would reduce project profitability",
+          probability: "Medium - Client has history of requesting additional features",
+          mitigation: "Clear change request process, buffer in initial estimates, regular budget reviews"
+        },
+        3: {
+          title: "Resource Unavailability",
+          description: "Key team members may be unavailable during critical project phases",
+          impact: "Medium - Would cause delays in delivery",
+          probability: "Low - Based on current resource allocation plans",
+          mitigation: "Cross-training team members, documentation of processes, backup resource plan"
+        },
+        4: {
+          title: "Minor UI Issues",
+          description: "Small visual inconsistencies in the user interface",
+          impact: "Low - Minimal impact on user experience",
+          probability: "Very Low - Design system is well established",
+          mitigation: "Comprehensive UI testing, design review process"
+        }
+      };
+      
+      const risk = riskData[riskId];
+      document.getElementById('risk-title').textContent = risk.title;
+      document.getElementById('risk-description').textContent = risk.description;
+      document.getElementById('risk-impact').textContent = risk.impact;
+      document.getElementById('risk-probability').textContent = risk.probability;
+      document.getElementById('risk-mitigation').textContent = risk.mitigation;
+      document.getElementById('risk-details').style.display = 'block';
+    }
+    
+    function addRisk() {
+      alert('In a full implementation, this would open a form to add a new risk to the matrix.');
+    }
+  </script>
+</body>
+</html>

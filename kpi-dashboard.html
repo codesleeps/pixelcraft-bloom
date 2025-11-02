@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Customizable KPI Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    .header { background: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; }
+    .card { background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+    .kpi-card { border: 1px solid #ddd; border-radius: 5px; padding: 15px; }
+    .kpi-value { font-size: 24px; font-weight: bold; margin: 10px 0; }
+    .kpi-trend { font-size: 14px; }
+    .trend-up { color: #2ecc71; }
+    .trend-down { color: #e74c3c; }
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #1976d2; color: white; }
+    .btn-secondary { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+    .draggable-handle { cursor: move; padding: 5px; background: #f5f5f5; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Customizable KPI Dashboard</h1>
+  </div>
+  
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Key Performance Indicators</h2>
+      <div>
+        <button class="btn btn-secondary" onclick="toggleEditMode()">Edit Layout</button>
+        <button class="btn btn-primary" onclick="addKPI()">Add KPI</button>
+      </div>
+    </div>
+    
+    <div class="kpi-grid" id="kpi-container">
+      <!-- KPI Cards -->
+      <div class="kpi-card" id="kpi-1">
+        <div class="draggable-handle">Project Completion Rate</div>
+        <div class="kpi-value">87%</div>
+        <div class="kpi-trend trend-up">↑ 5% from last month</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-1')">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="kpi-card" id="kpi-2">
+        <div class="draggable-handle">Budget Variance</div>
+        <div class="kpi-value">-3.2%</div>
+        <div class="kpi-trend trend-up">↑ 2.1% from last month</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-2')">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="kpi-card" id="kpi-3">
+        <div class="draggable-handle">Resource Utilization</div>
+        <div class="kpi-value">92%</div>
+        <div class="kpi-trend trend-up">↑ 4% from last month</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-3')">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="kpi-card" id="kpi-4">
+        <div class="draggable-handle">Client Satisfaction</div>
+        <div class="kpi-value">4.7/5</div>
+        <div class="kpi-trend trend-up">↑ 0.2 from last month</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-4')">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="kpi-card" id="kpi-5">
+        <div class="draggable-handle">Risk Mitigation Rate</div>
+        <div class="kpi-value">78%</div>
+        <div class="kpi-trend trend-down">↓ 3% from last month</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-5')">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="kpi-card" id="kpi-6">
+        <div class="draggable-handle">Team Velocity</div>
+        <div class="kpi-value">24 pts</div>
+        <div class="kpi-trend trend-up">↑ 2 pts from last sprint</div>
+        <div style="margin-top: 10px;">
+          <select onchange="changeTimeframe(this, 'kpi-6')">
+            <option>This Sprint</option>
+            <option>Last Sprint</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>KPI Configuration</h2>
+    <table style="width: 100%;">
+      <thead>
+        <tr>
+          <th>KPI Name</th>
+          <th>Visible</th>
+          <th>Target Value</th>
+          <th>Alert Threshold</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Project Completion Rate</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="90%" style="width: 60px;"></td>
+          <td><input type="text" value="80%" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Budget Variance</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="0%" style="width: 60px;"></td>
+          <td><input type="text" value="5%" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Resource Utilization</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="95%" style="width: 60px;"></td>
+          <td><input type="text" value="85%" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Client Satisfaction</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="4.5" style="width: 60px;"></td>
+          <td><input type="text" value="4.0" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Risk Mitigation Rate</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="85%" style="width: 60px;"></td>
+          <td><input type="text" value="75%" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Team Velocity</td>
+          <td><input type="checkbox" checked></td>
+          <td><input type="text" value="25" style="width: 60px;"></td>
+          <td><input type="text" value="20" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>On-time Delivery</td>
+          <td><input type="checkbox"></td>
+          <td><input type="text" value="100%" style="width: 60px;"></td>
+          <td><input type="text" value="90%" style="width: 60px;"></td>
+        </tr>
+        <tr>
+          <td>Scope Change Rate</td>
+          <td><input type="checkbox"></td>
+          <td><input type="text" value="5%" style="width: 60px;"></td>
+          <td><input type="text" value="10%" style="width: 60px;"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 15px;">
+      <button class="btn btn-primary" onclick="saveKPISettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <script>
+    let editMode = false;
+    
+    function toggleEditMode() {
+      editMode = !editMode;
+      const handles = document.querySelectorAll('.draggable-handle');
+      
+      if (editMode) {
+        alert('Edit mode enabled. You can now drag and rearrange KPI cards.');
+        handles.forEach(handle => {
+          handle.style.display = 'block';
+        });
+      } else {
+        alert('Edit mode disabled. Layout saved.');
+        handles.forEach(handle => {
+          handle.style.display = 'none';
+        });
+      }
+    }
+    
+    function addKPI() {
+      alert('In a full implementation, this would open a form to add a new KPI to your dashboard.');
+    }
+    
+    function changeTimeframe(select, kpiId) {
+      alert(`Changed timeframe for ${kpiId} to ${select.value}`);
+    }
+    
+    function saveKPISettings() {
+      alert('KPI settings saved successfully');
+    }
+    
+    // Hide drag handles initially
+    document.addEventListener('DOMContentLoaded', function() {
+      const handles = document.querySelectorAll('.draggable-handle');
+      handles.forEach(handle => {
+        handle.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>
