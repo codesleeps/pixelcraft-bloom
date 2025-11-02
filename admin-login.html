@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      width: 400px;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #0060df;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard Access</h1>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" value="admin@pixelcraft.com" />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" value="Admin123!" />
+    </div>
+    <button onclick="login()">Login as Admin</button>
+    <div id="status" class="status" style="display: none;"></div>
+  </div>
+
+  <script>
+    // Initialize Supabase client
+    const supabaseUrl = 'http://localhost:54321';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const statusEl = document.getElementById('status');
+      
+      try {
+        // First try to sign in
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          // If login fails, create the admin user
+          const { data: signupData, error: signupError } = await supabase.auth.signUp({
+            email,
+            password
+          });
+
+          if (signupError) {
+            throw signupError;
+          }
+
+          // Set user role to admin
+          if (signupData.user) {
+            const { error: profileError } = await supabase
+              .from('user_profiles')
+              .upsert([
+                {
+                  user_id: signupData.user.id,
+                  email,
+                  display_name: 'Admin User',
+                  role: 'admin'
+                }
+              ]);
+
+            if (profileError) {
+              throw profileError;
+            }
+
+            statusEl.className = 'status success';
+            statusEl.textContent = 'Admin user created! Redirecting to dashboard...';
+            statusEl.style.display = 'block';
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 2000);
+          }
+        } else {
+          // If login succeeds, check if user is admin, if not, make them admin
+          if (data.user) {
+            const { data: profileData, error: fetchError } = await supabase
+              .from('user_profiles')
+              .select('role')
+              .eq('user_id', data.user.id)
+              .single();
+
+            if (fetchError || !profileData || profileData.role !== 'admin') {
+              const { error: updateError } = await supabase
+                .from('user_profiles')
+                .upsert([
+                  {
+                    user_id: data.user.id,
+                    email,
+                    display_name: 'Admin User',
+                    role: 'admin'
+                  }
+                ]);
+
+              if (updateError) {
+                throw updateError;
+              }
+            }
+
+            statusEl.className = 'status success';
+            statusEl.textContent = 'Login successful! Redirecting to dashboard...';
+            statusEl.style.display = 'block';
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+              window.location.href = '/#/dashboard';
+            }, 1000);
+          }
+        }
+      } catch (err) {
+        statusEl.className = 'status error';
+        statusEl.textContent = `Error: ${err.message || 'Unknown error'}`;
+        statusEl.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

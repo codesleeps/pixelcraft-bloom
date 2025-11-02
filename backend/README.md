@@ -10,15 +10,156 @@ This document describes the REST API endpoints, WebSocket channels and authentic
     - POST /api/agents/invoke
     - POST /api/agents/workflows/execute
   - Analytics (overview)
-  - Notifications (overview)
+    - Notifications (overview)
 - WebSockets
-  - Channels
-    - /api/ws/analytics
-    - /api/ws/workflows
-    - /api/ws/notifications
-  - Authentication Flow
-  - Client Message Schemas
-  - Server Event Schemas
+
+### Channels
+
+#### /api/ws/analytics
+Real-time analytics events for leads, conversations, and subscriptions.
+
+- URL: `/api/ws/analytics`
+- Authentication: Query parameter `token` with valid Supabase JWT
+- Connection: `wss://your-domain.com/api/ws/analytics?token=<supabase_jwt_token>`
+
+#### /api/ws/notifications
+Real-time notifications for the authenticated user.
+
+- URL: `/api/ws/notifications`
+- Authentication: Query parameter `token` with valid Supabase JWT
+- Connection: `wss://your-domain.com/api/ws/notifications?token=<supabase_jwt_token>`
+
+#### /api/ws/workflows
+Real-time workflow status updates.
+
+- URL: `/api/ws/workflows`
+- Authentication: Query parameter `token` with valid Supabase JWT
+- Connection: `wss://your-domain.com/api/ws/workflows?token=<supabase_jwt_token>`
+
+### Authentication Flow
+
+1. Client obtains a valid Supabase JWT token through authentication
+2. Client connects to WebSocket endpoint with token as query parameter
+3. Server validates token using `verify_supabase_token` function
+4. If valid, connection is established and user-specific channels are subscribed
+5. If invalid, connection is closed with code 1008 (Policy Violation)
+
+### Client Message Schemas
+
+#### Heartbeat (All Channels)
+```json
+{
+  "type": "heartbeat",
+  "timestamp": "2023-06-15T12:34:56Z"
+}
+```
+
+### Server Event Schemas
+
+#### Analytics Events
+```json
+{
+  "type": "lead_created",
+  "data": {
+    "lead_id": "string",
+    "user_id": "string",
+    "created_at": "ISO timestamp"
+  }
+}
+```
+
+```json
+{
+  "type": "lead_analyzed",
+  "data": {
+    "lead_id": "string",
+    "user_id": "string",
+    "analysis_id": "string",
+    "completed_at": "ISO timestamp"
+  }
+}
+```
+
+```json
+{
+  "type": "message_created",
+  "data": {
+    "conversation_id": "string",
+    "message_id": "string",
+    "user_id": "string",
+    "created_at": "ISO timestamp"
+  }
+}
+```
+
+```json
+{
+  "type": "conversation_deleted",
+  "data": {
+    "conversation_id": "string",
+    "user_id": "string",
+    "deleted_at": "ISO timestamp"
+  }
+}
+```
+
+```json
+{
+  "type": "subscription_created",
+  "data": {
+    "subscription_id": "string",
+    "user_id": "string",
+    "plan": "string",
+    "created_at": "ISO timestamp"
+  }
+}
+```
+
+```json
+{
+  "type": "subscription_updated",
+  "data": {
+    "subscription_id": "string",
+    "user_id": "string",
+    "plan": "string",
+    "updated_at": "ISO timestamp"
+  }
+}
+```
+
+#### Notification Events
+```json
+{
+  "type": "notification_created",
+  "data": {
+    "notification_id": "string",
+    "user_id": "string",
+    "notification_type": "string",
+    "severity": "info|warning|error",
+    "title": "string",
+    "message": "string",
+    "created_at": "ISO timestamp",
+    "read": false,
+    "metadata": {}
+  }
+}
+```
+
+#### Workflow Events
+```json
+{
+  "type": "workflow_status_update",
+  "data": {
+    "workflow_run_id": "string",
+    "workflow_id": "string",
+    "user_id": "string",
+    "status": "queued|running|completed|failed",
+    "step": "string",
+    "progress": 0.75,
+    "updated_at": "ISO timestamp"
+  }
+}
+```
 - Environment Variables
 - Database Schema Mapping to Migrations
 

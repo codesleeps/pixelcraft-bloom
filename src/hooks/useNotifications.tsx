@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
+import { useWebSocket } from './useWebSocket';
 
 export interface Notification {
   id: string;
@@ -42,105 +43,57 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
   const { unread_only = false, notification_type, limit = 50 } = options || {};
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [wsError, setWsError] = useState<string | null>(null);
+  const [lastNotification, setLastNotification] = useState<Notification | null>(null);
+  
+  // Use the enhanced WebSocket hook for notifications channel
+  const { 
+    isConnected, 
+    error: wsError, 
+    connectionStatus 
+  } = useWebSocket({
+    enabled: !!session,
+    heartbeatInterval: 30000,
+    maxReconnectAttempts: 15,
+    endpoint: '/notifications'
+  });
 
-  const buildWebSocketUrl = () => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
-    return `${wsUrl}/api/ws/notifications?token=${session?.access_token}`;
-  };
-
-  const connect = () => {
-    if (!session) return;
-
-    if (!window.WebSocket) {
-      setWsError('WebSocket not supported by this browser');
-      return;
-    }
-
-    const wsUrl = buildWebSocketUrl();
-    wsRef.current = new WebSocket(wsUrl);
-
-    wsRef.current.onopen = () => {
-      console.log('Notifications WebSocket connected');
-      setIsConnected(true);
-      setWsError(null);
-      reconnectAttemptsRef.current = 0;
-    };
-
-    wsRef.current.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        // Ignore ping frames from server
-        if (message?.type === 'ping') return;
-        // Invalidate notifications query on real notification messages
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-      }
-    };
-
-    wsRef.current.onerror = (event) => {
-      console.error('Notifications WebSocket error:', event);
-      setWsError('WebSocket connection error');
-    };
-
-    wsRef.current.onclose = (event) => {
-      console.log('Notifications WebSocket closed:', event.code, event.reason);
-      setIsConnected(false);
-
-      if (event.code === 1008) {
-        setWsError('Authentication failed');
-        return;
-      }
-
-      // Attempt reconnection if not intentional close
-      if (reconnectAttemptsRef.current < 10) {
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-        reconnectAttemptsRef.current += 1;
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connect();
-        }, delay);
-      } else {
-        setWsError('Max reconnection attempts reached');
-      }
-    };
-  };
-
+  // Setup notification listener for WebSocket events
   useEffect(() => {
-    if (session) {
-      connect();
-    }
-
-    const handleOnline = () => {
-      // Resume connection attempts when back online
-      if (!isConnected && session) connect();
-    };
-    const handleOffline = () => {
-      // Pause reconnect timers while offline
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
+    // Create a handler for notification events
+    const handleNotificationEvent = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Handle notification-specific events
+        if (data.event_type === 'notification_created') {
+          // Update the notification cache
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          
+          // Store the latest notification for UI updates
+          if (data.notification) {
+            setLastNotification(data.notification);
+            
+            // Persist unread count in localStorage for session persistence
+            const currentUnreadCount = parseInt(localStorage.getItem('unreadNotificationCount') || '0', 10);
+            localStorage.setItem('unreadNotificationCount', (currentUnreadCount + 1).toString());
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse notification WebSocket message:', err);
       }
     };
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'websocket_message') {
+        handleNotificationEvent(event.data.event);
+      }
+    });
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('message', handleNotificationEvent);
     };
-  }, [session, isConnected]);
+  }, [queryClient]);
 
   const queryFn = async (): Promise<NotificationListResponse> => {
     if (!session?.access_token) {
@@ -158,11 +111,16 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
     return fetchWithAuth(`/api/notifications?${params.toString()}`, session.access_token);
   };
 
-  const { data, isLoading, error } = useQuery<NotificationListResponse>({
+  const { data, isLoading, error, refetch } = useQuery<NotificationListResponse>({
     queryKey: ['notifications', user?.id, options],
     queryFn,
     enabled: !!session,
     refetchInterval: 60000,
+    staleTime: 30000,
+    onSuccess: (data) => {
+      // Update the persisted unread count
+      localStorage.setItem('unreadNotificationCount', data.unread_count.toString());
+    }
   });
 
   const markAsReadMutation = useMutation({
@@ -191,17 +149,32 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      // Reset the persisted unread count
+      localStorage.setItem('unreadNotificationCount', '0');
     },
   });
 
+  // Get persisted unread count from localStorage if data is not yet loaded
+  const getUnreadCount = () => {
+    if (data?.unread_count !== undefined) {
+      return data.unread_count;
+    }
+    
+    // Fall back to localStorage if query hasn't loaded yet
+    return parseInt(localStorage.getItem('unreadNotificationCount') || '0', 10);
+  };
+
   return {
     notifications: data?.notifications || [],
-    unreadCount: data?.unread_count || 0,
+    unreadCount: getUnreadCount(),
     isLoading,
     error,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     isConnected,
     wsError,
+    connectionStatus,
+    lastNotification,
+    refetchNotifications: refetch
   };
 };

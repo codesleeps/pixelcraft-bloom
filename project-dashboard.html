@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PixelCraft Project Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    .header { background: #2c3e50; color: white; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: white; border-radius: 5px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stats { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+    .stat-card { flex: 1; min-width: 200px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .stat-value { font-size: 24px; font-weight: bold; margin: 5px 0; }
+    .up { color: green; }
+    .down { color: red; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+    th { background-color: #f2f2f2; }
+    .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; height: 10px; margin-top: 5px; }
+    .progress-bar { height: 10px; border-radius: 4px; }
+    .progress-green { background-color: #4caf50; }
+    .progress-yellow { background-color: #ff9800; }
+    .progress-red { background-color: #f44336; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; }
+    .status-active { background-color: #e3fcef; color: #0d6832; }
+    .status-pending { background-color: #fff8e6; color: #a05e03; }
+    .status-completed { background-color: #e0e0e0; color: #333; }
+    .status-delayed { background-color: #ffeaea; color: #b91c1c; }
+    .tabs { display: flex; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { border-bottom: 2px solid #2c3e50; font-weight: bold; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .filters { display: flex; gap: 10px; margin-bottom: 15px; }
+    .filter-btn { padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+    .filter-btn.active { background-color: #2c3e50; color: white; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>PixelCraft Project Dashboard</h1>
+    <div>
+      <span>Welcome, Admin</span>
+    </div>
+  </div>
+  
+  <div class="stats">
+    <div class="stat-card">
+      <div>Active Projects</div>
+      <div class="stat-value">12</div>
+      <div class="up">↑ 2 from last month</div>
+    </div>
+    <div class="stat-card">
+      <div>Completed Projects</div>
+      <div class="stat-value">24</div>
+      <div class="up">↑ 3 this quarter</div>
+    </div>
+    <div class="stat-card">
+      <div>On-time Delivery</div>
+      <div class="stat-value">92%</div>
+      <div class="up">↑ 4% from last quarter</div>
+    </div>
+    <div class="stat-card">
+      <div>Client Satisfaction</div>
+      <div class="stat-value">4.8/5</div>
+      <div class="up">↑ 0.2 from last quarter</div>
+    </div>
+  </div>
+  
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('all-projects')">All Projects</div>
+    <div class="tab" onclick="switchTab('active-projects')">Active</div>
+    <div class="tab" onclick="switchTab('completed-projects')">Completed</div>
+    <div class="tab" onclick="switchTab('delayed-projects')">Delayed</div>
+  </div>
+  
+  <div id="all-projects" class="tab-content active">
+    <div class="filters">
+      <div class="filter-btn active" onclick="filterProjects('all')">All</div>
+      <div class="filter-btn" onclick="filterProjects('web')">Web Development</div>
+      <div class="filter-btn" onclick="filterProjects('mobile')">Mobile Apps</div>
+      <div class="filter-btn" onclick="filterProjects('ai')">AI Integration</div>
+    </div>
+    
+    <div class="card">
+      <h2>Project Overview</h2>
+      <table>
+        <tr>
+          <th>Project Name</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Progress</th>
+          <th>Deadline</th>
+        </tr>
+        <tr>
+          <td>E-commerce Platform Redesign</td>
+          <td>Fashion Forward Inc.</td>
+          <td>Web Development</td>
+          <td><span class="status-badge status-active">Active</span></td>
+          <td>
+            <div>75% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 75%"></div>
+            </div>
+          </td>
+          <td>June 15, 2023</td>
+        </tr>
+        <tr>
+          <td>Mobile App Development</td>
+          <td>HealthTrack Solutions</td>
+          <td>Mobile Apps</td>
+          <td><span class="status-badge status-active">Active</span></td>
+          <td>
+            <div>45% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-yellow" style="width: 45%"></div>
+            </div>
+          </td>
+          <td>July 30, 2023</td>
+        </tr>
+        <tr>
+          <td>AI Chatbot Integration</td>
+          <td>TechSupport Pro</td>
+          <td>AI Integration</td>
+          <td><span class="status-badge status-delayed">Delayed</span></td>
+          <td>
+            <div>30% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-red" style="width: 30%"></div>
+            </div>
+          </td>
+          <td>May 10, 2023 (Overdue)</td>
+        </tr>
+        <tr>
+          <td>Corporate Website Redesign</td>
+          <td>Global Finance Group</td>
+          <td>Web Development</td>
+          <td><span class="status-badge status-completed">Completed</span></td>
+          <td>
+            <div>100% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 100%"></div>
+            </div>
+          </td>
+          <td>April 20, 2023</td>
+        </tr>
+        <tr>
+          <td>Inventory Management System</td>
+          <td>Retail Solutions Ltd.</td>
+          <td>Web Development</td>
+          <td><span class="status-badge status-active">Active</span></td>
+          <td>
+            <div>60% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 60%"></div>
+            </div>
+          </td>
+          <td>August 5, 2023</td>
+        </tr>
+        <tr>
+          <td>AR Product Visualization</td>
+          <td>Furniture Emporium</td>
+          <td>Mobile Apps</td>
+          <td><span class="status-badge status-pending">Pending</span></td>
+          <td>
+            <div>10% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-yellow" style="width: 10%"></div>
+            </div>
+          </td>
+          <td>September 15, 2023</td>
+        </tr>
+        <tr>
+          <td>Customer Analytics Dashboard</td>
+          <td>DataInsight Corp</td>
+          <td>AI Integration</td>
+          <td><span class="status-badge status-completed">Completed</span></td>
+          <td>
+            <div>100% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 100%"></div>
+            </div>
+          </td>
+          <td>March 30, 2023</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <div id="active-projects" class="tab-content">
+    <div class="card">
+      <h2>Active Projects</h2>
+      <table>
+        <tr>
+          <th>Project Name</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Progress</th>
+          <th>Deadline</th>
+          <th>Team</th>
+        </tr>
+        <tr>
+          <td>E-commerce Platform Redesign</td>
+          <td>Fashion Forward Inc.</td>
+          <td>Web Development</td>
+          <td>
+            <div>75% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 75%"></div>
+            </div>
+          </td>
+          <td>June 15, 2023</td>
+          <td>Alex, Sarah, Michael</td>
+        </tr>
+        <tr>
+          <td>Mobile App Development</td>
+          <td>HealthTrack Solutions</td>
+          <td>Mobile Apps</td>
+          <td>
+            <div>45% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-yellow" style="width: 45%"></div>
+            </div>
+          </td>
+          <td>July 30, 2023</td>
+          <td>James, Emily, David</td>
+        </tr>
+        <tr>
+          <td>Inventory Management System</td>
+          <td>Retail Solutions Ltd.</td>
+          <td>Web Development</td>
+          <td>
+            <div>60% Complete</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar progress-green" style="width: 60%"></div>
+            </div>
+          </td>
+          <td>August 5, 2023</td>
+          <td>Robert, Lisa, John</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <div id="completed-projects" class="tab-content">
+    <div class="card">
+      <h2>Completed Projects</h2>
+      <table>
+        <tr>
+          <th>Project Name</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Completion Date</th>
+          <th>Budget</th>
+          <th>Client Rating</th>
+        </tr>
+        <tr>
+          <td>Corporate Website Redesign</td>
+          <td>Global Finance Group</td>
+          <td>Web Development</td>
+          <td>April 20, 2023</td>
+          <td>$45,000</td>
+          <td>5/5</td>
+        </tr>
+        <tr>
+          <td>Customer Analytics Dashboard</td>
+          <td>DataInsight Corp</td>
+          <td>AI Integration</td>
+          <td>March 30, 2023</td>
+          <td>$65,000</td>
+          <td>4.8/5</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <div id="delayed-projects" class="tab-content">
+    <div class="card">
+      <h2>Delayed Projects</h2>
+      <table>
+        <tr>
+          <th>Project Name</th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Original Deadline</th>
+          <th>New Deadline</th>
+          <th>Reason for Delay</th>
+        </tr>
+        <tr>
+          <td>AI Chatbot Integration</td>
+          <td>TechSupport Pro</td>
+          <td>AI Integration</td>
+          <td>May 10, 2023</td>
+          <td>June 30, 2023</td>
+          <td>API integration issues</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <div class="card">
+    <h2>Project Milestones</h2>
+    <table>
+      <tr>
+        <th>Project</th>
+        <th>Milestone</th>
+        <th>Due Date</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td>E-commerce Platform Redesign</td>
+        <td>UI Design Approval</td>
+        <td>May 20, 2023</td>
+        <td><span class="status-badge status-completed">Completed</span></td>
+      </tr>
+      <tr>
+        <td>E-commerce Platform Redesign</td>
+        <td>Frontend Development</td>
+        <td>June 5, 2023</td>
+        <td><span class="status-badge status-active">In Progress</span></td>
+      </tr>
+      <tr>
+        <td>Mobile App Development</td>
+        <td>Beta Testing</td>
+        <td>July 10, 2023</td>
+        <td><span class="status-badge status-pending">Pending</span></td>
+      </tr>
+      <tr>
+        <td>AI Chatbot Integration</td>
+        <td>Training Data Collection</td>
+        <td>May 5, 2023</td>
+        <td><span class="status-badge status-delayed">Delayed</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      // Hide all tab contents
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Deactivate all tabs
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Activate selected tab and content
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+    
+    function filterProjects(type) {
+      // This would filter projects in a real application
+      // For this demo, we'll just highlight the selected filter
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      alert('In a real application, this would filter projects to show only ' + type + ' projects.');
+    }
+  </script>
+</body>
+</html>
