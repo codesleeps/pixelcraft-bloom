@@ -1,12 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Project Management Dashboard Hub</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f5f7f9; }
     .header { background: #2c3e50; color: white; padding: 20px; margin-bottom: 20px; text-align: center; }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .dashboard-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    .dashboard-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+      gap: 20px; 
+      min-height: 400px;
+    }
+    .dashboard-card { 
+      background: white; 
+      border-radius: 8px; 
+      overflow: hidden; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+      transition: transform 0.2s; 
+      cursor: move;
+    }
     .dashboard-card:hover { transform: translateY(-5px); }
     .card-image { 
       height: 160px; 
@@ -30,86 +44,630 @@
     .bg-teal { background-color: #1abc9c; }
     .bg-dark { background-color: #34495e; }
     .bg-mint { background-color: #16a085; }
+
+    /* Personalization Controls */
+    .personalization-controls {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .toggle-button {
+      padding: 8px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .visibility-controls {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .visibility-toggle-label {
+      display: flex;
+      align-items: center;
+      margin-right: 15px;
+      margin-bottom: 10px;
+    }
+    .hidden-card { display: none; }
+    
+    /* Dark Mode */
+    .dark-mode { background: #1a1a2e; color: #f5f5f5; }
+    .dark-mode .header { background: #0f3460; }
+    .dark-mode .dashboard-card { background: #16213e; color: #f5f5f5; }
+    .dark-mode .card-description { color: #a2a2a2; }
+    .dark-mode .personalization-controls { background: #16213e; color: #f5f5f5; }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .toggle-button { margin-bottom: 10px; }
+      .visibility-controls { flex-direction: column; }
+    }
+    
+    /* Calendar Widget */
+    #calendar-widget {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .dark-mode #calendar-widget { background: #16213e; }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    #calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .calendar-day {
+      padding: 10px;
+      text-align: center;
+      border-radius: 4px;
+    }
+    .today { background: #3498db; color: white; }
+    .has-event { position: relative; }
+    .has-event::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #e74c3c;
+    }
+    
+    /* Activity Log */
+    #activity-log {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .dark-mode #activity-log { background: #16213e; }
+    .log-entry {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .dark-mode .log-entry { border-bottom: 1px solid #2c3e50; }
+    .log-time {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin-bottom: 5px;
+    }
+    .log-user { font-weight: bold; }
+    
+    /* Export Options */
+    #export-options {
+      position: absolute;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 10px;
+      display: none;
+      z-index: 100;
+    }
+    .dark-mode #export-options { background: #16213e; }
+    .export-option {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .export-option:hover { background: #f0f0f0; }
+    .dark-mode .export-option:hover { background: #2c3e50; }
+    
+    /* Filter Panel */
+    #filter-panel {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .dark-mode #filter-panel { background: #16213e; }
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+    }
+    
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    .dark-mode .modal-content { background: #16213e; }
+    .close-modal {
+      float: right;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>Project Management Dashboard Hub</h1>
-    <p>Access all your project management tools in one place</p>
   </div>
   
-  <div class="dashboard-grid">
-    <div class="dashboard-card">
-      <div class="card-image bg-blue">Timeline</div>
-      <div class="card-content">
-        <div class="card-title">Project Timeline</div>
-        <div class="card-description">Interactive Gantt chart for project timeline visualization and management</div>
-        <a href="timeline-dashboard.html" class="card-link">Open Dashboard</a>
+  <div class="container">
+    <div class="personalization-controls">
+      <div>
+        <button id="edit-mode-toggle" class="toggle-button">Enable Edit Mode</button>
+        <button id="dark-mode-toggle" class="toggle-button">Toggle Dark Mode</button>
+        <button id="save-layout" class="toggle-button">Save Layout</button>
+        <button id="export-dashboard" class="toggle-button">Export</button>
+        <button id="calendar-toggle" class="toggle-button">Calendar</button>
+        <button id="activity-log-toggle" class="toggle-button">Activity Log</button>
+        <button id="filter-toggle" class="toggle-button">Advanced Filters</button>
+      </div>
+      <div class="visibility-controls">
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="timeline" checked>
+          Timeline
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="resources" checked>
+          Resources
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="budget" checked>
+          Budget
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="communication" checked>
+          Communication
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="risk" checked>
+          Risk
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="data" checked>
+          Data
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="notifications" checked>
+          Notifications
+        </label>
+        <label class="visibility-toggle-label">
+          <input type="checkbox" class="visibility-toggle" data-card="kpi" checked>
+          KPIs
+        </label>
       </div>
     </div>
     
-    <div class="dashboard-card">
-      <div class="card-image bg-green">Resources</div>
-      <div class="card-content">
-        <div class="card-title">Resource Allocation</div>
-        <div class="card-description">Manage team resources, track utilization and capacity</div>
-        <a href="resource-allocation.html" class="card-link">Open Dashboard</a>
+    <!-- Export Options -->
+    <div id="export-options">
+      <div class="export-option" data-format="pdf">Export as PDF</div>
+      <div class="export-option" data-format="excel">Export as Excel</div>
+      <div class="export-option" data-format="csv">Export as CSV</div>
+    </div>
+    
+    <!-- Calendar Widget -->
+    <div id="calendar-widget">
+      <div class="calendar-header">
+        <div id="calendar-title">June 2023</div>
+        <div>
+          <button id="prev-month">&lt;</button>
+          <button id="next-month">&gt;</button>
+        </div>
+      </div>
+      <div id="calendar-grid"></div>
+    </div>
+    
+    <!-- Activity Log -->
+    <div id="activity-log">
+      <div><strong>User Activity Log</strong></div>
+      <div class="log-entry">
+        <div class="log-time">Today, 10:30 AM</div>
+        <div><span class="log-user">System</span> initialized dashboard</div>
       </div>
     </div>
     
-    <div class="dashboard-card">
-      <div class="card-image bg-red">Budget</div>
-      <div class="card-content">
-        <div class="card-title">Budget Tracking</div>
-        <div class="card-description">Monitor project budgets, expenses, and financial performance</div>
-        <a href="budget-tracking.html" class="card-link">Open Dashboard</a>
+    <!-- Filter Panel -->
+    <div id="filter-panel">
+      <div><strong>Advanced Filters</strong></div>
+      <div class="filter-group">
+        <div class="filter-item">
+          <div>Status</div>
+          <select class="filter-select">
+            <option>All Statuses</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+            <option>On Hold</option>
+            <option>Not Started</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <div>Team Member</div>
+          <select class="filter-select">
+            <option>All Team Members</option>
+            <option>John Doe</option>
+            <option>Jane Smith</option>
+            <option>Mike Johnson</option>
+            <option>Sarah Williams</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <div>Time Frame</div>
+          <select class="filter-select">
+            <option>All Time</option>
+            <option>This Week</option>
+            <option>This Month</option>
+            <option>This Quarter</option>
+            <option>This Year</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <div>Priority</div>
+          <select class="filter-select">
+            <option>All Priorities</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+      </div>
+      <button class="toggle-button">Apply Filters</button>
+      <button class="toggle-button" style="background: #95a5a6;">Reset</button>
+    </div>
+    
+    <!-- Template Modal -->
+    <div id="template-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Create Project Template</h2>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Template Name</label>
+          <input type="text" id="template-name" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Description</label>
+          <textarea id="template-description" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd; min-height: 100px;"></textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Components to Include</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" checked> Timeline</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" checked> Resources</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" checked> Budget</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" checked> Communication</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" checked> Risk Assessment</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox"> Data Integration</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox"> Notifications</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox"> KPIs</label>
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+          <button class="toggle-button" id="save-template">Save Template</button>
+          <button class="toggle-button" style="background: #95a5a6;" id="cancel-template">Cancel</button>
+        </div>
       </div>
     </div>
     
-    <div class="dashboard-card">
-      <div class="card-image bg-orange">Communication</div>
-      <div class="card-content">
-        <div class="card-title">Client Communication</div>
-        <div class="card-description">Track all client interactions, meetings, and action items</div>
-        <a href="client-communication.html" class="card-link">Open Dashboard</a>
+    <!-- AI Insights Modal -->
+    <div id="ai-insights-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>AI-Powered Insights</h2>
+        <div style="margin-bottom: 20px;">
+          <h3>Risk Prediction</h3>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #e74c3c;">
+            <p><strong>High Risk Alert:</strong> Based on historical data, the current resource allocation pattern has a 78% chance of causing project delays.</p>
+            <p><strong>Recommendation:</strong> Consider adding 2 additional developers to the backend team for the next sprint.</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <h3>Resource Optimization</h3>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #3498db;">
+            <p><strong>Efficiency Opportunity:</strong> Team utilization analysis shows uneven workload distribution.</p>
+            <p><strong>Recommendation:</strong> Redistribute tasks from Design team (currently at 95% capacity) to Frontend team (currently at 65% capacity).</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <h3>Budget Forecast</h3>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 4px solid #f39c12;">
+            <p><strong>Budget Warning:</strong> Current spending trajectory indicates a potential 15% budget overrun by project completion.</p>
+            <p><strong>Recommendation:</strong> Review and optimize third-party service costs, which have increased 23% above initial estimates.</p>
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+          <button class="toggle-button" id="apply-insights">Apply Recommendations</button>
+          <button class="toggle-button" style="background: #95a5a6;" id="close-insights">Close</button>
+        </div>
       </div>
     </div>
     
-    <div class="dashboard-card">
-      <div class="card-image bg-purple">Risk</div>
-      <div class="card-content">
-        <div class="card-title">Risk Assessment</div>
-        <div class="card-description">Identify, assess, and mitigate project risks</div>
-        <a href="risk-assessment.html" class="card-link">Open Dashboard</a>
-      </div>
-    </div>
-    
-    <div class="dashboard-card">
-      <div class="card-image bg-teal">Data</div>
-      <div class="card-content">
-        <div class="card-title">Data Integration</div>
-        <div class="card-description">Connect and manage data sources for your projects</div>
-        <a href="data-integration.html" class="card-link">Open Dashboard</a>
-      </div>
-    </div>
-    
-    <div class="dashboard-card">
-      <div class="card-image bg-dark">Notifications</div>
-      <div class="card-content">
-        <div class="card-title">Notifications</div>
-        <div class="card-description">Configure and manage project alerts and notifications</div>
-        <a href="notifications.html" class="card-link">Open Dashboard</a>
-      </div>
-    </div>
-    
-    <div class="dashboard-card">
-      <div class="card-image bg-mint">KPIs</div>
-      <div class="card-content">
-        <div class="card-title">KPI Dashboard</div>
-        <div class="card-description">Customize and monitor key performance indicators</div>
-        <a href="kpi-dashboard.html" class="card-link">Open Dashboard</a>
+    <!-- Automated Report Modal -->
+    <div id="report-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Schedule Automated Reports</h2>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Report Name</label>
+          <input type="text" id="report-name" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Report Type</label>
+          <select id="report-type" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+            <option value="summary">Project Summary</option>
+            <option value="timeline">Timeline Status</option>
+            <option value="resources">Resource Allocation</option>
+            <option value="budget">Budget Status</option>
+            <option value="risks">Risk Assessment</option>
+            <option value="custom">Custom Report</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Frequency</label>
+          <select id="report-frequency" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Recipients</label>
+          <input type="text" id="report-recipients" placeholder="Enter email addresses separated by commas" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Format</label>
+          <div style="display: flex; gap: 15px;">
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="radio" name="report-format" value="pdf" checked> PDF</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="radio" name="report-format" value="excel"> Excel</label>
+            <label style="display: flex; align-items: center; gap: 5px;"><input type="radio" name="report-format" value="csv"> CSV</label>
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+          <button class="toggle-button" id="schedule-report">Schedule Report</button>
+          <button class="toggle-button" style="background: #95a5a6;" id="cancel-report">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    // Dashboard Personalization
+    let editMode = false;
+    const editModeToggle = document.getElementById('edit-mode-toggle');
+    const saveLayoutBtn = document.getElementById('save-layout');
+    const dashboardGrid = document.querySelector('.dashboard-grid');
+    const cards = document.querySelectorAll('.dashboard-card');
+    const visibilityToggles = document.querySelectorAll('.visibility-toggle');
+    
+    // Load saved layout if exists
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLayout();
+      loadVisibilitySettings();
+    });
+    
+    // Toggle edit mode
+    editModeToggle.addEventListener('click', () => {
+      editMode = !editMode;
+      if (editMode) {
+        editModeToggle.textContent = 'Disable Edit Mode';
+        enableDragAndDrop();
+      } else {
+        editModeToggle.textContent = 'Enable Edit Mode';
+        disableDragAndDrop();
+      }
+    });
+    
+    // Save layout
+    saveLayoutBtn.addEventListener('click', () => {
+      saveLayout();
+      saveVisibilitySettings();
+      alert('Dashboard layout saved successfully!');
+    });
+    
+    // Enable drag and drop
+    function enableDragAndDrop() {
+      cards.forEach(card => {
+        card.setAttribute('draggable', 'true');
+        card.addEventListener('dragstart', dragStart);
+        card.addEventListener('dragend', dragEnd);
+      });
+      
+      dashboardGrid.addEventListener('dragover', dragOver);
+      dashboardGrid.addEventListener('dragenter', dragEnter);
+      dashboardGrid.addEventListener('dragleave', dragLeave);
+      dashboardGrid.addEventListener('drop', drop);
+    }
+    
+    // Disable drag and drop
+    function disableDragAndDrop() {
+      cards.forEach(card => {
+        card.setAttribute('draggable', 'false');
+        card.removeEventListener('dragstart', dragStart);
+        card.removeEventListener('dragend', dragEnd);
+      });
+      
+      dashboardGrid.removeEventListener('dragover', dragOver);
+      dashboardGrid.removeEventListener('dragenter', dragEnter);
+      dashboardGrid.removeEventListener('dragleave', dragLeave);
+      dashboardGrid.removeEventListener('drop', drop);
+    }
+    
+    // Drag and drop functions
+    let draggedItem = null;
+    
+    function dragStart() {
+      draggedItem = this;
+      setTimeout(() => this.classList.add('dragging'), 0);
+    }
+    
+    function dragEnd() {
+      this.classList.remove('dragging');
+      draggedItem = null;
+    }
+    
+    function dragOver(e) {
+      e.preventDefault();
+    }
+    
+    function dragEnter(e) {
+      e.preventDefault();
+    }
+    
+    function dragLeave() {}
+    
+    function drop() {
+      const children = Array.from(dashboardGrid.children);
+      const draggedIndex = children.indexOf(draggedItem);
+      const dropIndex = getDropIndex(dashboardGrid, draggedItem);
+      
+      if (draggedIndex !== dropIndex) {
+        if (dropIndex === children.length) {
+          dashboardGrid.appendChild(draggedItem);
+        } else {
+          dashboardGrid.insertBefore(draggedItem, children[dropIndex]);
+        }
+      }
+    }
+    
+    function getDropIndex(container, draggedItem) {
+      const children = Array.from(container.children).filter(child => child !== draggedItem);
+      const mouseY = event.clientY;
+      
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        const box = child.getBoundingClientRect();
+        const boxCenterY = box.top + box.height / 2;
+        
+        if (mouseY < boxCenterY) {
+          return i;
+        }
+      }
+      
+      return children.length;
+    }
+    
+    // Save and load layout
+    function saveLayout() {
+      const layout = Array.from(dashboardGrid.children).map(card => card.getAttribute('data-card'));
+      localStorage.setItem('dashboardLayout', JSON.stringify(layout));
+    }
+    
+    function loadLayout() {
+      const savedLayout = localStorage.getItem('dashboardLayout');
+      if (savedLayout) {
+        const layout = JSON.parse(savedLayout);
+        const fragment = document.createDocumentFragment();
+        
+        layout.forEach(cardId => {
+          const card = document.querySelector(`[data-card="${cardId}"]`);
+          if (card) {
+            fragment.appendChild(card);
+          }
+        });
+        
+        dashboardGrid.innerHTML = '';
+        dashboardGrid.appendChild(fragment);
+      }
+    }
+    
+    // Card visibility
+    visibilityToggles.forEach(toggle => {
+      toggle.addEventListener('change', () => {
+        const cardId = toggle.getAttribute('data-card');
+        const card = document.querySelector(`[data-card="${cardId}"]`);
+        
+        if (toggle.checked) {
+          card.classList.remove('hidden-card');
+        } else {
+          card.classList.add('hidden-card');
+        }
+      });
+    });
+    
+    function saveVisibilitySettings() {
+      const settings = {};
+      visibilityToggles.forEach(toggle => {
+        const cardId = toggle.getAttribute('data-card');
+        settings[cardId] = toggle.checked;
+      });
+      
+      localStorage.setItem('dashboardVisibility', JSON.stringify(settings));
+    }
+    
+    function loadVisibilitySettings() {
+      const savedSettings = localStorage.getItem('dashboardVisibility');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        
+        visibilityToggles.forEach(toggle => {
+          const cardId = toggle.getAttribute('data-card');
+          if (settings[cardId] !== undefined) {
+            toggle.checked = settings[cardId];
+            
+            const card = document.querySelector(`[data-card="${cardId}"]`);
+            if (!settings[cardId]) {
+              card.classList.add('hidden-card');
+            } else {
+              card.classList.remove('hidden-card');
+            }
+          }
+        });
+      }
+    }
+    
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    
+    darkModeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      
+      // Save dark mode preference
+      const isDarkMode = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', isDarkMode);
+    });
+    
+    // Load dark mode preference
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
 </body>
 </html>
