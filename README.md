@@ -1,8 +1,9 @@
-# Welcome to your Lovable project
+# Welcome to PixelCraft Bloom
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/f1718176-4080-4bf5-9910-b3d5b66f3fb7
+**URL**: https://codesleeps.github.io/pixelcraft-bloom/
+
 
 ## Backend API
 

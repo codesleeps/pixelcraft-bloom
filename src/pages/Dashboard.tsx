@@ -56,6 +56,7 @@ export default function Dashboard() {
   const { data: analyticsData, loading: analyticsLoading, error: analyticsError } = useAnalytics();
   const { isConnected: wsConnected, error: wsError } = useWebSocket();
   const { notifications } = useNotifications({ unread_only: true, limit: 5 });
+  const shownNotificationsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (wsError) {
       toast.error('WebSocket Error', {
@@ -89,8 +90,7 @@ export default function Dashboard() {
     });
   }, [notifications, navigate]);
   const [timeRange, setTimeRange] = useState('30d');
-  const navigate = useNavigate();
-  const shownNotificationsRef = useRef<Set<string>>(new Set());
+  
 
   const getTimeRangeParams = (range: string) => {
     const now = new Date();

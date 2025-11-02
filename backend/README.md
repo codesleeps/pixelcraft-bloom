@@ -199,6 +199,57 @@ Response body (success):
 }
 ```
 
+### Payments (Stripe)
+
+Enable server-side Stripe payments for subscriptions or one-off charges.
+
+- Endpoints
+  - `POST /api/payments/create-checkout-session`
+    - Creates a Stripe Checkout Session. Request body:
+      ```json
+      {
+        "price_id": "price_123",          // optional if STRIPE_PRICE_ID is set
+        "mode": "subscription",           // or "payment"
+        "success_url": "https://app.example.com/payments/success",
+        "cancel_url": "https://app.example.com/payments/cancel",
+        "customer_email": "user@example.com",
+        "metadata": {"package_id": "uuid"}
+      }
+      ```
+    - Response:
+      ```json
+      { "id": "cs_XXX", "url": "https://checkout.stripe.com/..." }
+      ```
+
+  - `POST /api/payments/webhook`
+    - Receives Stripe events. Verifies signature using `STRIPE_WEBHOOK_SECRET`.
+    - On `checkout.session.completed` (subscription mode), inserts a record into `user_subscriptions` with `status='active'`, `start_date`, and `final_price`.
+    - Note: For full lifecycle (cancellations, upgrades), extend mapping to include Stripe IDs in your schema.
+
+- Environment variables (set in `.env`):
+  - `STRIPE_API_KEY` – secret key (test or live)
+  - `STRIPE_WEBHOOK_SECRET` – signing secret for your webhook endpoint
+  - `STRIPE_PRICE_ID` – default price ID to use when the client does not pass one
+  - `STRIPE_MODE` – `subscription` or `payment`
+  - `STRIPE_SUCCESS_URL` – frontend success page
+  - `STRIPE_CANCEL_URL` – frontend cancel page
+
+- Webhook setup
+  - In Stripe Dashboard → Developers → Webhooks, add an endpoint:
+    - URL: `https://api.yourdomain.com/api/payments/webhook`
+    - Select events: `checkout.session.completed`, `customer.subscription.*` (as needed)
+    - Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+- Testing locally
+  - Use `stripe listen --forward-to localhost:8000/api/payments/webhook`
+  - Create a session via `POST /api/payments/create-checkout-session` using test price IDs.
+  - Complete checkout in Stripe’s hosted page; verify entry in `user_subscriptions`.
+
+- Supabase data model
+  - `user_subscriptions` stores subscription records and prices.
+  - Extend the table later with `stripe_customer_id`, `stripe_subscription_id` for precise lifecycle tracking.
+
+
 Response body (error):
 ```
 {

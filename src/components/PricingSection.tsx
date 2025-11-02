@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { Check, X } from 'lucide-react';
+import { createCheckoutSession } from '@/lib/payments';
 
 interface PricingPackage {
   id: string;
@@ -278,9 +279,22 @@ const PricingSection = () => {
     }
   };
 
-  const handleSubscribe = (packageId: string) => {
-    // TODO: Implement subscription flow
-    console.log('Subscribe to package:', packageId, 'with discount:', discountCode);
+  const handleSubscribe = async (packageId: string) => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({
+        mode: 'subscription',
+        success_url,
+        cancel_url,
+        metadata: { package_id: packageId, billing_cycle: billingCycle, discount_code: discountCode || null },
+      });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+      alert('Unable to start checkout. Please try again or contact support.');
+    }
   };
 
   if (loading) {

@@ -12,6 +12,7 @@ from .routes import pricing as pricing_routes
 from .routes import analytics as analytics_routes
 from .routes import notifications as notifications_routes
 from .routes import websocket as websocket_routes
+from .routes import payments as payments_routes
 
 from .utils.ollama_client import test_ollama_connection, list_available_models, get_ollama_client
 from .utils.supabase_client import get_supabase_client, test_connection as test_supabase_connection
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(analytics_routes.router, prefix="/api")
     app.include_router(notifications_routes.router, prefix="/api")
     app.include_router(websocket_routes.router, prefix="/api")
+    app.include_router(payments_routes.router, prefix="/api")
 
     @app.on_event("startup")
     async def startup_event():

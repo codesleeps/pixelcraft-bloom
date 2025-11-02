@@ -57,6 +57,15 @@ class SupabaseConfig(BaseSettings):
     jwt_algorithm: str = Field("HS256", description="JWT algorithm for decoding")
 
 
+class StripeConfig(BaseSettings):
+    api_key: Optional[str] = Field(None, description="Stripe secret API key")
+    webhook_secret: Optional[str] = Field(None, description="Stripe webhook signing secret")
+    default_price_id: Optional[str] = Field(None, description="Default Stripe price ID for checkout")
+    mode: str = Field("subscription", description="Checkout mode: subscription or payment")
+    success_url: Optional[AnyHttpUrl] = Field(None, description="Post-checkout success URL")
+    cancel_url: Optional[AnyHttpUrl] = Field(None, description="Post-checkout cancel URL")
+
+
 class AppConfig(BaseSettings):
     app_env: str = Field("development", description="Application environment")
     app_host: str = Field("0.0.0.0", description="Host to bind the server")
@@ -70,6 +79,7 @@ class AppConfig(BaseSettings):
     crm: Optional[CRMConfig] = None
     email: Optional[EmailConfig] = None
     calendar: Optional[CalendarConfig] = None
+    stripe: Optional[StripeConfig] = None
 
     @validator("app_port")
     def port_range(cls, v):
@@ -132,6 +142,20 @@ def get_settings() -> AppConfig:
         logging.warning("CALENDAR_API_KEY is not set. Calendar integration will not work properly.")
     elif environ.get("CALENDAR_ID") and not calendar_api_key:
         logging.warning("CALENDAR_API_KEY is not set. Calendar integration will not work properly.")
+
+    # Stripe (optional; configure when enabling payments)
+    stripe_api_key = environ.get("STRIPE_API_KEY")
+    if stripe_api_key:
+        settings.stripe = StripeConfig(
+            api_key=stripe_api_key,
+            webhook_secret=environ.get("STRIPE_WEBHOOK_SECRET"),
+            default_price_id=environ.get("STRIPE_PRICE_ID"),
+            mode=environ.get("STRIPE_MODE", "subscription"),
+            success_url=environ.get("STRIPE_SUCCESS_URL"),
+            cancel_url=environ.get("STRIPE_CANCEL_URL"),
+        )
+    elif any(environ.get(k) for k in ["STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_ID", "STRIPE_SUCCESS_URL", "STRIPE_CANCEL_URL"]):
+        logging.warning("STRIPE_API_KEY is not set. Payments integration will not work properly.")
 
     return settings
 
