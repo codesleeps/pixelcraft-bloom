@@ -51,6 +51,17 @@ const services = [
 ];
 
 const ServicesSection = () => {
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+    }
+  };
   return (
     <section id="services" className="py-24 bg-gradient-subtle">
       <div className="container mx-auto px-4">
@@ -95,12 +106,16 @@ const ServicesSection = () => {
         </div>
         
         {/* CTA */}
-        <div className="text-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" asChild>
             <Link to="/strategy-session">
               Get Custom Strategy
               <ArrowRight className="ml-2" />
             </Link>
+          </Button>
+          <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" onClick={handleSubscribe}>
+            Subscribe
+            <ArrowRight className="ml-2" />
           </Button>
         </div>
       </div>
@@ -109,3 +124,4 @@ const ServicesSection = () => {
 };
 
 export default ServicesSection;
+import { createCheckoutSession } from "@/lib/payments";

@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, Target, Zap } from "lucide-react";
+import { Trophy, Users, Target, Zap, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { createCheckoutSession } from "@/lib/payments";
 
 const achievements = [
   {
@@ -28,6 +29,17 @@ const achievements = [
 ];
 
 const AboutSection = () => {
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+    }
+  };
   return (
     <section id="about" className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -69,11 +81,17 @@ const AboutSection = () => {
               </div>
             </div>
             
-            <Link to="/partnership">
-              <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
-                Partner With Us
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/partnership">
+                <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
+                  Partner With Us
+                </Button>
+              </Link>
+              <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" onClick={handleSubscribe}>
+                Subscribe
+                <ArrowRight className="ml-2" />
               </Button>
-            </Link>
+            </div>
           </div>
           
           {/* Right Content - Achievement Cards */}

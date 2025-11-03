@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, HelpCircle, ArrowRight } from 'lucide-react';
+import { createCheckoutSession } from '@/lib/payments';
 
 const faqs = [
   {
@@ -51,6 +52,18 @@ const FAQSection = () => {
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+    }
   };
 
   return (
@@ -117,6 +130,10 @@ const FAQSection = () => {
               <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                 Contact Our Team
               </a>
+              <Button variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+                Subscribe
+                <ArrowRight className="ml-2" />
+              </Button>
             </div>
           </div>
         </div>

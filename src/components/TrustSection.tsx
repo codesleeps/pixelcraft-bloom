@@ -12,6 +12,8 @@ import {
   Star,
   Globe
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { createCheckoutSession } from '@/lib/payments';
 
 const trustElements = [
   {
@@ -62,6 +64,17 @@ const certifications = [
 ];
 
 const TrustSection = () => {
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+    }
+  };
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -162,6 +175,9 @@ const TrustSection = () => {
               <Link to="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                 Schedule a Call
               </Link>
+              <Button variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+                Subscribe
+              </Button>
             </div>
           </div>
         </div>

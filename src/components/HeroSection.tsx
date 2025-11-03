@@ -4,9 +4,22 @@ import { ArrowRight, Play, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LazyImage from "@/components/LazyImage";
+import { createCheckoutSession } from "@/lib/payments";
 
 const HeroSection = () => {
   const { user, signOut } = useAuth();
+
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+    }
+  };
 
   return (
     <header className="relative min-h-screen bg-gradient-hero overflow-hidden">
@@ -61,6 +74,16 @@ const HeroSection = () => {
                 <ArrowRight className="ml-2" aria-hidden="true" />
               </Button>
             </Link>
+            <Button
+              variant="hero"
+              size="lg"
+              className="text-lg px-8 py-6 h-auto"
+              aria-label="Subscribe to PixelCraft"
+              onClick={handleSubscribe}
+            >
+              Subscribe
+              <ArrowRight className="ml-2" aria-hidden="true" />
+            </Button>
             <Button
               variant="ghost"
               size="lg"
