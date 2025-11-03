@@ -6,9 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { createCheckoutSession } from "@/lib/payments";
 
 interface ContactFormData {
   firstName: string;
@@ -35,6 +36,19 @@ const ContactSection = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const services = ["SEO", "Social Media", "Web Design", "PPC", "Analytics", "Content"];
+
+  const handleSubscribe = async () => {
+    try {
+      const origin = window.location.origin;
+      const success_url = `${origin}/#/payments/success`;
+      const cancel_url = `${origin}/#/payments/cancel`;
+      const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+      window.location.href = url;
+    } catch (err) {
+      console.error('Checkout error', err);
+      alert('Unable to start checkout. Please try again or contact support.');
+    }
+  };
 
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -322,6 +336,14 @@ const ContactSection = () => {
                 <p className="text-xs text-center text-gray-500">
                   No spam, ever. We respect your privacy and will only send you relevant updates.
                 </p>
+
+                {/* Subscribe CTA for quick testing */}
+                <div className="mt-4 flex justify-center">
+                  <Button type="button" variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+                    Subscribe
+                    <ArrowRight className="ml-2" />
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>

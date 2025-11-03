@@ -2,8 +2,7 @@
 
 ## Project info
 
-**URL**: https://codesleeps.github.io/pixelcraft-bloom/
-
+**URL**: <https://codesleeps.github.io/pixelcraft-bloom/>
 
 ## Backend API
 
@@ -72,21 +71,25 @@ For more details, refer to the migration files and backend models.
 The dashboard supports real-time analytics updates via WebSocket connections, allowing you to see metrics update instantly as data changes.
 
 ### Architecture
+
 - **Backend**: FastAPI WebSocket endpoint at `/api/ws/analytics` with JWT authentication
 - **Event Broadcasting**: Redis pub/sub for scalable event distribution across multiple backend instances
 - **Frontend**: Custom React hook (`useWebSocket`) that integrates with React Query for automatic cache invalidation
 
 ### Setup Requirements
+
 - Redis must be running and configured via `REDIS_URL` environment variable
 - If Redis is unavailable, the system gracefully degrades to polling-based updates
 
 ### Events Triggered
+
 - Lead creation/updates → refreshes lead metrics and trends
 - Conversation messages → refreshes conversation metrics and trends
 - Subscription changes → refreshes revenue metrics and subscription trends
 - Agent actions → refreshes agent performance metrics
 
 ### Testing
+
 - Start Redis: `redis-server` (or use Docker: `docker run -d -p 6379:6379 redis`)
 - Start backend: `cd backend && uvicorn app.main:app --reload`
 - Start frontend: `npm run dev`
@@ -94,6 +97,7 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 - Create a test lead via API or UI and watch metrics update in real-time
 
 ### Troubleshooting
+
 - If WebSocket shows "Offline", check that Redis is running and `REDIS_URL` is configured
 - Check browser console for WebSocket connection errors
 - Verify JWT token is valid (WebSocket requires authentication)
@@ -102,11 +106,13 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 ## Notification System
 
 **Overview:**
+
 - Explain that the platform includes a comprehensive notification system for real-time alerts about leads, agent actions, workflows, and system events
 - Notifications are delivered via both REST API and WebSocket for real-time updates
 - Users see notifications in a dropdown menu in the dashboard header, and critical alerts appear as toast notifications
 
 **Notification Types:**
+
 - **Lead notifications**: Created when leads are submitted or analyzed
 - **Agent notifications**: Created when agents complete tasks or encounter errors
 - **Workflow notifications**: Created when workflows complete or fail
@@ -114,12 +120,14 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 - **System notifications**: Created for system-wide alerts (admin only)
 
 **Severity Levels:**
+
 - **Info**: General informational notifications (blue)
 - **Success**: Successful operations (green)
 - **Warning**: Important warnings that need attention (yellow)
 - **Error**: Critical errors that require immediate action (red)
 
 **Backend API Endpoints:**
+
 - `GET /api/notifications` - List notifications with filtering and pagination
 - `GET /api/notifications/{id}` - Get a specific notification
 - `POST /api/notifications/mark-read` - Mark notifications as read
@@ -129,11 +137,13 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 - `WS /api/ws/notifications` - WebSocket endpoint for real-time notifications
 
 **Database Schema:**
+
 - `notifications` table stores all notifications with recipient, type, severity, title, message, action URL, metadata, and read status
 - RLS policies ensure users can only access their own notifications
 - Automatic cleanup of expired notifications
 
 **Frontend Integration:**
+
 - `useNotifications` hook provides access to notifications with real-time updates
 - Notification bell icon in dashboard header shows unread count
 - Clicking the bell opens a dropdown with recent notifications
@@ -141,6 +151,7 @@ The dashboard supports real-time analytics updates via WebSocket connections, al
 - Notifications can link to related resources (e.g., leads, workflows)
 
 **Creating Notifications (for developers):**
+
 ```python
 from app.utils.notification_service import create_notification
 
@@ -156,42 +167,50 @@ await create_notification(
 ```
 
 **Real-Time Delivery:**
+
 - Notifications are published to Redis channel `notifications:user:{user_id}`
 - WebSocket connection automatically receives new notifications
 - Frontend React Query cache is invalidated, triggering UI updates
 - Toast notifications appear immediately for critical events
 
-## Testing
+## Test Suites
 
 This project includes comprehensive test suites for both frontend and backend components, with a focus on automated testing to ensure reliability and maintainability.
 
 ### Frontend Tests
+
 - **Command to run tests**: `npm test` or `npm run test:watch`
 - **Command for coverage**: `npm run test:coverage`
 - **Location of test files**: `src/**/__tests__/` and `src/**/*.test.tsx`
 - **Note about test utilities**: Test utilities are available in `src/test/utils/` (e.g., `renderWithProviders` for component testing), and mocks are located in `src/test/mocks/` (e.g., for WebSocket and authentication).
 
 ### Backend Tests
+
 - **Command to run tests**: `cd backend && pytest`
 - **Command for coverage**: `cd backend && pytest --cov=app --cov-report=html`
 - **Location of test files**: `backend/tests/`
 - **Note about fixtures**: Shared fixtures and utilities are defined in `backend/tests/conftest.py` for mocking dependencies like Supabase and Redis.
 
 ### Notification System Tests
+
 The notification system has extensive test coverage across frontend and backend layers to validate real-time delivery, API endpoints, and WebSocket functionality.
+
 - **Frontend**: Hook tests (`useNotifications.test.tsx` for WebSocket lifecycle and mutations), Dashboard tests (`Dashboard.notifications.test.tsx` for toast display and filtering).
 - **Backend**: API tests (`test_notifications_api.py` for REST endpoints), WebSocket tests (`test_notifications_websocket.py` for real-time delivery), Service tests (`test_notification_service.py` for utility functions).
 - **Note about mocked dependencies**: Tests mock WebSocket connections, Supabase database queries, and Redis pub/sub to ensure isolation and reliability.
 
 ### Running Specific Tests
+
 - **Frontend**: `npm test -- useNotifications` to run a specific test file (e.g., hook tests).
 - **Backend**: `pytest tests/test_notifications_api.py` to run a specific test file, or `pytest -k "test_mark_read"` to run tests matching a pattern (e.g., mark-read functionality).
 
 ### Coverage Thresholds
+
 - **Frontend**: 70% (branches, functions, lines, statements)
 - **Backend**: 70% (to be configured)
 
 For manual testing of notifications (e.g., during development):
+
 - Create test notifications via API or directly in the database.
 - Monitor WebSocket connections in browser DevTools.
 - Check Redis pub/sub messages: `redis-cli SUBSCRIBE notifications:user:*`
@@ -200,13 +219,11 @@ For manual testing of notifications (e.g., during development):
 
 There are several ways of editing your application.
 
-**Use Lovable**
+### Use Lovable
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f1718176-4080-4bf5-9910-b3d5b66f3fb7) and start prompting.
+Simply visit the [GitHub Project](https://github.com/codesleeps/pixelcraft-bloom) and start editing
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
+### Use your preferred IDE
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
@@ -228,13 +245,13 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Edit a file directly in GitHub
 
 - Navigate to the desired file(s).
 - Click the "Edit" button (pencil icon) at the top right of the file view.
 - Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+### Use GitHub Codespaces
 
 - Navigate to the main page of your repository.
 - Click on the "Code" button (green button) near the top right.
@@ -258,7 +275,6 @@ Backend:
 - AgentScope (Agent orchestration)
 - Ollama (local LLMs, e.g., llama3)
 - Supabase (Postgres) for persistence
-
 
 ## Production Deployment
 
