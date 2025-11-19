@@ -23,12 +23,14 @@ from ..models.analytics import (
 from ..utils.auth import get_current_user, require_admin
 from ..utils.supabase_client import get_supabase_client
 from ..utils.logger import logger
+from ..utils.cache import cache
 import sentry_sdk
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("/leads/summary", response_model=LeadMetrics)
+@cache(ttl=300, prefix="lead_summary")
 async def get_lead_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
@@ -68,6 +70,7 @@ async def get_lead_summary(
 
 
 @router.get("/revenue/summary", response_model=RevenueSummary)
+@cache(ttl=300, prefix="revenue_summary")
 async def get_revenue_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
@@ -290,6 +293,7 @@ async def get_lead_trends(
 
 
 @router.get("/conversations/summary", response_model=ConversationMetrics)
+@cache(ttl=300, prefix="conversation_summary")
 async def get_conversation_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
@@ -393,6 +397,7 @@ async def get_conversation_list(
 
 
 @router.get("/agents/summary", response_model=List[AgentPerformance])
+@cache(ttl=300, prefix="agent_summary")
 async def get_agent_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(require_admin),

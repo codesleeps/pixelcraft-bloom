@@ -19,12 +19,14 @@ from ..models.pricing import (
 )
 from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
+from ..utils.cache import cache
 
 router = APIRouter()
 supabase: Client = get_supabase_client()
 
 
 @router.get("/packages", response_model=List[PricingPackage])
+@cache(ttl=3600, prefix="pricing_packages")
 async def get_pricing_packages():
     """Get all active pricing packages."""
     try:

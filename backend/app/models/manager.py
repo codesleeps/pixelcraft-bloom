@@ -10,6 +10,7 @@ from cachetools import TTLCache
 from .config import MODELS, MODEL_PRIORITIES, ModelProvider, ModelConfig, ModelPriority
 from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
+from ..utils.redis_client import get_redis_client
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ class ModelManager:
         self._hf_api_key = os.getenv("HUGGING_FACE_API_KEY")
         self.ollama_client = get_ollama_client()
         self.supabase = get_supabase_client()
-        self.cache = TTLCache(maxsize=1000, ttl=3600)
+        # self.cache = TTLCache(maxsize=1000, ttl=3600) # Replaced by Redis
         self.metrics: Dict[str, Dict[str, Any]] = {}  # model -> {'requests': 0, 'successes': 0, 'total_latency': 0, 'total_tokens': 0}
         self.circuit_breaker: Dict[str, Dict[str, Any]] = {}  # model -> {'failures': 0, 'last_failure': 0, 'state': 'closed'}
         self.rate_limiter = asyncio.Semaphore(10)  # allow 10 concurrent requests
@@ -96,10 +97,16 @@ class ModelManager:
         return hashlib.md5(key_data.encode()).hexdigest()
 
     def _get_cached_response(self, key: str) -> Optional[str]:
-        return self.cache.get(key)
+        redis = get_redis_client()
+        if redis:
+            val = redis.get(f"model_cache:{key}")
+            return val.decode('utf-8') if val else None
+        return None
 
     def _cache_response(self, key: str, response: str):
-        self.cache[key] = response
+        redis = get_redis_client()
+        if redis:
+            redis.setex(f"model_cache:{key}", 3600, response)
 
     async def _update_metrics(self, model_name: str, latency: float, success: bool, token_usage: int = 0):
         if model_name not in self.metrics:

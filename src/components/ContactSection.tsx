@@ -50,8 +50,19 @@ const ContactSection = () => {
     }
   };
 
+  const sanitizeInput = (input: string): string => {
+    // Basic sanitization to prevent XSS
+    return input
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
   const handleInputChange = (field: keyof ContactFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const sanitizedValue = sanitizeInput(value);
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -130,7 +141,7 @@ const ContactSection = () => {
       <div className="absolute inset-0 bg-gradient-hero opacity-95" />
       <div className="absolute top-10 right-10 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
       <div className="absolute bottom-10 left-10 w-48 h-48 bg-purple-400/10 rounded-full blur-2xl" />
-      
+
       <div className="relative z-10 container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left Content */}
@@ -143,10 +154,10 @@ const ContactSection = () => {
               <span className="block text-purple-200">Your Growth?</span>
             </h2>
             <p className="text-xl text-gray-200 mb-12 leading-relaxed">
-              Let's discuss how we can transform your digital presence and drive 
+              Let's discuss how we can transform your digital presence and drive
               measurable results for your business. Get a free consultation today.
             </p>
-            
+
             {/* Contact Info */}
             <div className="space-y-6">
               <div className="flex items-center gap-4">
@@ -158,7 +169,7 @@ const ContactSection = () => {
                   <div className="text-gray-300">hello@digitalmarketingco.com</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
                   <Phone className="w-6 h-6" />
@@ -168,7 +179,7 @@ const ContactSection = () => {
                   <div className="text-gray-300">+1 (555) 123-4567</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
                   <MapPin className="w-6 h-6" />
@@ -178,7 +189,7 @@ const ContactSection = () => {
                   <div className="text-gray-300">123 Business District, NYC</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6" />
@@ -190,7 +201,7 @@ const ContactSection = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Right Content - Contact Form */}
           <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-glow">
             <CardHeader>

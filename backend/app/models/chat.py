@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
+import re
 
 
 class ChatMessage(BaseModel):
@@ -23,6 +24,15 @@ class ChatRequest(BaseModel):
             raise ValueError("message must not be empty")
         if len(v) > 10000:
             raise ValueError("message too long")
+        # Basic sanitization
+        v = re.sub(r"<script.*?>.*?</script>", "", v, flags=re.IGNORECASE|re.DOTALL)
+        v = re.sub(r"javascript:", "", v, flags=re.IGNORECASE)
+        return v
+
+    @validator("conversation_id")
+    def validate_conversation_id(cls, v):
+        if v and not re.match(r"^[a-zA-Z0-9_\-]+$", v):
+            raise ValueError("Invalid conversation_id format")
         return v
 
 

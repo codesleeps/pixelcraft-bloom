@@ -1,0 +1,27 @@
+{
+    "monitors": [
+        {
+            "friendly_name": "PixelCraft API - Liveness",
+            "url": "https://api.pixelcraft.ai/health/live",
+            "type": "http",
+            "interval": 60,
+            "timeout": 5
+        },
+        {
+            "friendly_name": "PixelCraft API - Readiness",
+            "url": "https://api.pixelcraft.ai/health/ready",
+            "type": "http",
+            "interval": 60,
+            "timeout": 10,
+            "expected_status": 200
+        },
+        {
+            "friendly_name": "PixelCraft API - Detailed Health",
+            "url": "https://api.pixelcraft.ai/health",
+            "type": "http",
+            "interval": 300,
+            "timeout": 30,
+            "keyword": "healthy"
+        }
+    ]
+}

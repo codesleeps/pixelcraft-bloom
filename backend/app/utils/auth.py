@@ -1,4 +1,5 @@
-from fastapi import HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
+from ..utils.logger import logger, audit_logger
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from ..config import settings

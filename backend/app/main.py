@@ -2,6 +2,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import time
 from .config import settings
 
 # Import routers (these will be created in routes/)
@@ -18,7 +19,9 @@ from .routes import models as models_routes
 from .utils.ollama_client import test_ollama_connection, list_available_models, get_ollama_client
 from .utils.supabase_client import get_supabase_client, test_connection as test_supabase_connection
 from .utils.redis_client import get_redis_client, test_redis_connection
+from .utils.redis_client import get_redis_client, test_redis_connection
 from .utils.external_tools import test_external_services
+from .utils.health import health_service
 from .models.manager import ModelManager
 from .routes.models import set_model_manager
 
@@ -26,6 +29,16 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration, SentryAsgiMiddleware
 from sentry_sdk.integrations.logging import LoggingIntegration
 from .middleware.sentry_middleware import SentryContextMiddleware
+from .middleware.correlation import CorrelationIdMiddleware
+from .utils.limiter import limiter, rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from fastapi_csrf_protect import CsrfProtect
+from fastapi_csrf_protect.exceptions import CsrfProtectError
+from .middleware.csrf_config import get_csrf_config
+from fastapi import Request, Depends
+from .config import settings, get_settings
 
 logger = logging.getLogger("pixelcraft.backend")
 
@@ -55,6 +68,16 @@ def create_app() -> FastAPI:
         logger.info("Sentry initialized for environment: %s, release: %s", settings.sentry.environment, settings.sentry.release or "N/A")
 
     app = FastAPI(title="PixelCraft AI Backend", version="1.0.0", description="AI-powered backend for PixelCraft using AgentScope and Ollama")
+    
+    # Initialize Rate Limiter
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+
+    # CSRF Exception Handler
+    @app.exception_handler(CsrfProtectError)
+    def csrf_protect_exception_handler(request: Request, exc: CsrfProtectError):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
     # CORS - parse from settings
     origins = settings.parsed_cors()
@@ -73,6 +96,9 @@ def create_app() -> FastAPI:
     # Add custom Sentry context middleware
     if settings.sentry:
         app.add_middleware(SentryContextMiddleware)
+
+    # Add Correlation ID middleware (should be early to capture all logs)
+    app.add_middleware(CorrelationIdMiddleware)
 
     # Include routers under /api
     app.include_router(chat_routes.router, prefix="/api")
@@ -133,6 +159,18 @@ def create_app() -> FastAPI:
         except Exception as exc:
             logger.exception("ModelManager initialization error: %s", exc)
 
+        # Register Health Checks
+        health_service.register_check("supabase", test_supabase_connection, critical=True)
+        health_service.register_check("redis", test_redis_connection, critical=True)
+        health_service.register_check("ollama", test_ollama_connection, critical=True)
+        health_service.register_check("external_services", test_external_services, critical=False)
+        
+        # Register ModelManager check if initialized
+        if model_manager_instance:
+             async def check_models():
+                 return len(model_manager_instance._health_checks) > 0
+             health_service.register_check("models", check_models, critical=False)
+
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Shutting down PixelCraft AI Backend")
@@ -142,30 +180,42 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["health"])
     async def health():
-        # Provide basic health info from dependencies
-        models_healthy = 0
-        models_total = 0
-        if model_manager_instance:
-            models_total = len(model_manager_instance._health_checks)
-            models_healthy = sum(model_manager_instance._health_checks.values())
-        return {
-            "status": "ok",
-            "service": "pixelcraft-backend",
-            "env": settings.app_env,
-            "ollama_available": test_ollama_connection(),
-            "supabase": test_supabase_connection(),
-            "redis": test_redis_connection(),
-            "external_services": await test_external_services(),
-            "models": {
-                "healthy": models_healthy,
-                "total": models_total,
-            },
-            "sentry_enabled": settings.sentry is not None,
-        }
+        """Detailed health status of all components."""
+        return await health_service.get_health_status()
+
+    @app.get("/health/live", tags=["health"])
+    async def liveness_probe():
+        """Liveness probe: returns 200 if the app is running."""
+        return {"status": "alive", "timestamp": time.time()}
+
+    @app.get("/health/ready", tags=["health"])
+    async def readiness_probe():
+        """Readiness probe: returns 200 if critical dependencies are healthy."""
+        is_ready = await health_service.is_ready()
+        if not is_ready:
+            return JSONResponse(status_code=503, content={"status": "not_ready"})
+        return {"status": "ready"}
 
     @app.get("/", tags=["root"])
     async def root():
         return {"message": "Welcome to PixelCraft AI Backend", "docs": "/docs"}
+
+    @app.get("/api/csrf-token", tags=["security"])
+    async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):
+        """Generate and return a CSRF token"""
+        response = JSONResponse(status_code=200, content={"csrf_token": "set_in_cookie"})
+        csrf_protect.set_csrf_cookie(response)
+        return response
+
+    @app.post("/api/rotate-secrets", tags=["security"])
+    async def rotate_secrets(request: Request):
+        """Reload application settings to apply new secrets without restart"""
+        # In a real scenario, this would trigger a reload of the config module or specific services
+        # For now, we clear the lru_cache of get_settings
+        get_settings.cache_clear()
+        global settings
+        settings = get_settings()
+        return {"status": "secrets_rotated", "timestamp": time.time()}
 
     return app
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Query, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from typing import List, Optional
 import json
@@ -12,6 +12,7 @@ from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
 from ..utils.notification_service import create_notification
 from ..agents.chat_agent import create_chat_agent
+from ..utils.limiter import limiter
   
 logger = logging.getLogger("pixelcraft.routes.chat")
   
@@ -19,7 +20,8 @@ router = APIRouter(prefix="/chat", tags=["chat"])
   
   
 @router.post("/message", response_model=ChatResponse)
-async def post_message(req: ChatRequest, model: Optional[str] = Query(None, description="Optional model to use for generation")):
+@limiter.limit("100/minute")
+async def post_message(req: ChatRequest, request: Request, model: Optional[str] = Query(None, description="Optional model to use for generation")):
     """Handle a chat message and return a single aggregated response using ChatAgent with ModelManager."""
     conversation_id = req.conversation_id or f"conv_{int(time.time())}"
       
@@ -103,7 +105,8 @@ def _sse_generator(message: str):
   
   
 @router.post("/stream")
-async def post_stream(req: ChatRequest, model: Optional[str] = Query(None, description="Optional model to use for generation")):
+@limiter.limit("100/minute")
+async def post_stream(req: ChatRequest, request: Request, model: Optional[str] = Query(None, description="Optional model to use for generation")):
     """Return a streaming response (SSE-like simple implementation) using ChatAgent with ModelManager.
   
     The frontend can consume this chunked JSON stream. Replace with proper EventSourceResponse in production.

@@ -207,6 +207,8 @@ create_env_template() {
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_DB_URL=postgresql://postgres:password@db.project.supabase.co:5432/postgres
+BACKUP_ENCRYPTION_KEY=your-backup-encryption-passphrase
 
 # Redis
 REDIS_URL=redis://localhost:6379

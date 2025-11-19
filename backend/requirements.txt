@@ -17,6 +17,9 @@ aiohttp>=3.9.0
 tenacity>=8.0.0
 cachetools>=5.0.0
 sentry-sdk[fastapi]>=2.0.0
+slowapi>=0.1.9
+fastapi-csrf-protect>=0.3.3
+python-json-logger>=2.0.7
 
 # Payments
 stripe>=10.0.0

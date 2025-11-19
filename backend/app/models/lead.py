@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, conint
+from pydantic import BaseModel, EmailStr, Field, conint, validator
+import re
 
 
 class LeadData(BaseModel):
@@ -14,6 +15,24 @@ class LeadData(BaseModel):
     budget_range: Optional[str] = None
     timeline: Optional[str] = None
     source: str = Field(..., description="contact_form|strategy_session|partnership")
+
+    @validator("name")
+    def validate_name(cls, v):
+        if not re.match(r"^[a-zA-Z0-9\s\-\.]+$", v):
+            raise ValueError("Name contains invalid characters")
+        return v
+
+    @validator("phone")
+    def validate_phone(cls, v):
+        if v and not re.match(r"^\+?[\d\s\-\(\)]+$", v):
+            raise ValueError("Invalid phone number format")
+        return v
+
+    @validator("message")
+    def sanitize_message(cls, v):
+        # Basic sanitization: remove potential script tags
+        clean = re.sub(r"<[^>]*>", "", v)
+        return clean
 
 
 class LeadRequest(BaseModel):

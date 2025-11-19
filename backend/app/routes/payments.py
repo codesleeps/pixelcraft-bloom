@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from ..config import settings
 from ..utils.supabase_client import get_supabase_client
+from ..utils.logger import logger, audit_logger
 
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -160,10 +161,12 @@ async def create_checkout_session(body: CheckoutRequest):
             customer_email=body.customer_email,
             metadata=body.metadata or {},
         )
+        audit_logger.log_event("checkout_session_created", None, {"mode": mode, "price_id": price_id, "customer_email": body.customer_email}, status="success")
         return {"id": session.id, "url": session.url}
-    except Exception as exc:
-        logger.exception("Failed to create Stripe checkout session: %s", exc)
-        raise HTTPException(status_code=500, detail="Stripe error creating checkout session")
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {e}")
+        audit_logger.log_event("checkout_session_failed", None, {"error": str(e), "customer_email": body.customer_email}, status="failure")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/webhook")
@@ -180,6 +183,7 @@ async def stripe_webhook(request: Request):
         event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe.webhook_secret)
     except Exception as exc:
         logger.warning("Invalid Stripe webhook signature: %s", exc)
+        audit_logger.log_event("webhook_signature_invalid", None, {"error": str(exc)}, status="failure")
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     event_type = event.get("type")
@@ -207,8 +211,10 @@ async def stripe_webhook(request: Request):
                     if rec_id and hasattr(client, "table") and extra:
                         client.table("user_subscriptions").update(extra).eq("id", rec_id).execute()
                     logger.info("Recorded subscription via checkout: sub_id=%s email=%s", subscription_id, email)
+                    audit_logger.log_event("checkout_session_completed_subscription", user_id, {"subscription_id": subscription_id, "email": email, "mode": mode, "amount_total": amount_total}, status="success")
                 except Exception as e:
                     logger.exception("Failed retrieving subscription after checkout: %s", e)
+                    audit_logger.log_event("checkout_session_completed_subscription_failed", None, {"subscription_id": subscription_id, "email": email, "error": str(e)}, status="failure")
             else:
                 # Non-subscription checkout: still record a payment
                 user_id = _find_user_id_by_email(client, email)
@@ -224,11 +230,13 @@ async def stripe_webhook(request: Request):
                 if hasattr(client, "table"):
                     client.table("user_subscriptions").insert(record).execute()
                 logger.info("Recorded one-time payment for email=%s", email)
+                audit_logger.log_event("checkout_session_completed_one_time_payment", user_id, {"email": email, "mode": mode, "amount_total": amount_total}, status="success")
 
         elif event_type == "customer.subscription.updated":
             # Map pause/resume and general updates
             rec_id, user_id = _upsert_subscription(client, obj)
             logger.info("Updated subscription %s for user_id=%s", obj.get("id"), user_id)
+            audit_logger.log_event("subscription_updated", user_id, {"subscription_id": obj.get("id"), "status": obj.get("status")}, status="success")
 
         elif event_type in ("customer.subscription.deleted", "customer.subscription.cancelled", "customer.subscription.canceled"):
             sub_id = obj.get("id")
@@ -244,9 +252,9 @@ async def stripe_webhook(request: Request):
                 if hasattr(client, "table"):
                     client.table("user_subscriptions").update(update).eq("stripe_subscription_id", sub_id).execute()
                 logger.info("Cancelled subscription %s", sub_id)
+                audit_logger.log_event("subscription_canceled", None, {"subscription_id": sub_id}, status="success")
             except Exception as e:
                 logger.exception("Failed to update cancellation for subscription %s: %s", sub_id, e)
-
         elif event_type in ("invoice.payment_succeeded", "invoice.payment_failed"):
             inv = obj
             sub_id = inv.get("subscription")
@@ -267,8 +275,15 @@ async def stripe_webhook(request: Request):
                 if hasattr(client, "table") and sub_id:
                     client.table("user_subscriptions").update(update).eq("stripe_subscription_id", sub_id).execute()
                 logger.info("Updated invoice %s status=%s for subscription %s", inv.get("id"), status, sub_id)
+                
+                if status == "succeeded":
+                    audit_logger.log_event("payment_succeeded", None, {"invoice_id": inv.get("id"), "amount": amount_paid, "subscription_id": sub_id}, status="success")
+                else:
+                    audit_logger.log_event("payment_failed", None, {"invoice_id": inv.get("id"), "subscription_id": sub_id}, status="failure")
+                    
             except Exception as e:
                 logger.exception("Failed to update invoice status for subscription %s: %s", sub_id, e)
+                audit_logger.log_event("payment_processing_error", None, {"error": str(e), "invoice_id": inv.get("id")}, status="failure")
 
     except Exception as exc:
         logger.exception("Error handling Stripe webhook: %s", exc)

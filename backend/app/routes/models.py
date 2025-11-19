@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 import time
 from ..models.manager import ModelManager
 from ..models.config import MODELS, MODEL_PRIORITIES
+from ..utils.limiter import limiter
 
 # TODO: Implement proper authentication dependency
 # from ..dependencies import get_current_user
@@ -134,9 +135,10 @@ async def get_model(model_name: str, mm: ModelManager = Depends(get_model_manage
     )
 
 @router.post("/models/test", response_model=ModelTestResponse)
-async def test_model(request: ModelTestRequest, mm: ModelManager = Depends(get_model_manager)):
+@limiter.limit("10/minute")
+async def test_model(request: Request, request_body: ModelTestRequest, mm: ModelManager = Depends(get_model_manager)):
     """Test a model with sample input"""
-    if request.model_name not in MODELS:
+    if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
     start_time = time.time()
@@ -145,9 +147,9 @@ async def test_model(request: ModelTestRequest, mm: ModelManager = Depends(get_m
         # Note: This assumes ModelManager has a method to generate with specific model
         # For now, using task_type selection - TODO: enhance ModelManager to support specific model
         response = await mm.generate(
-            request.prompt, 
-            request.task_type, 
-            request.system_prompt
+            request_body.prompt, 
+            request_body.task_type, 
+            request_body.system_prompt
         )
         latency = time.time() - start_time
         tokens = len(response.split())  # Rough token estimate
@@ -161,9 +163,10 @@ async def test_model(request: ModelTestRequest, mm: ModelManager = Depends(get_m
         raise HTTPException(status_code=500, detail=f"Model test failed: {str(e)}")
 
 @router.post("/models/generate", response_model=ModelGenerateResponse)
-async def generate_completion(request: ModelGenerateRequest, mm: ModelManager = Depends(get_model_manager)):
+@limiter.limit("10/minute")
+async def generate_completion(request: Request, request_body: ModelGenerateRequest, mm: ModelManager = Depends(get_model_manager)):
     """Generate completion using specified model"""
-    if request.model_name not in MODELS:
+    if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
     start_time = time.time()
@@ -171,11 +174,11 @@ async def generate_completion(request: ModelGenerateRequest, mm: ModelManager = 
         # TODO: Modify ModelManager.generate to accept specific model_name
         # For now, using task_type selection
         response = await mm.generate(
-            request.prompt,
-            request.task_type,
-            request.system_prompt,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens
+            request_body.prompt,
+            request_body.task_type,
+            request_body.system_prompt,
+            temperature=request_body.temperature,
+            max_tokens=request_body.max_tokens
         )
         latency = time.time() - start_time
         
@@ -189,21 +192,22 @@ async def generate_completion(request: ModelGenerateRequest, mm: ModelManager = 
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 @router.post("/models/chat", response_model=ModelChatResponse)
-async def chat_completion(request: ModelChatRequest, mm: ModelManager = Depends(get_model_manager)):
+@limiter.limit("10/minute")
+async def chat_completion(request: Request, request_body: ModelChatRequest, mm: ModelManager = Depends(get_model_manager)):
     """Chat completion using specified model"""
-    if request.model_name not in MODELS:
+    if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
     start_time = time.time()
     try:
         # Convert messages to prompt format
         # TODO: Enhance ModelManager to support chat format directly
-        prompt = "\n".join([f"{msg['role']}: {msg['content']}" for msg in request.messages])
+        prompt = "\n".join([f"{msg['role']}: {msg['content']}" for msg in request_body.messages])
         
         response = await mm.generate(
             prompt,
-            request.task_type,
-            temperature=request.temperature
+            request_body.task_type,
+            temperature=request_body.temperature
         )
         latency = time.time() - start_time
         
