@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import * as Sentry from '@sentry/react';
 
 interface AuthContextType {
   user: User | null;
@@ -84,6 +85,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
     */
   }, []);
+
+  // Sentry integration for user context and breadcrumbs on auth state changes
+  useEffect(() => {
+    if (user) {
+      // User logged in or session refreshed: set user context with safe attributes
+      Sentry.setUser({
+        id: user.id,
+        email: user.email,
+        username: user.user_metadata?.name || user.email, // Use display name or fallback to email
+        role: role || undefined, // Include role if available
+        // Note: No sensitive info like passwords, tokens, or access_token is included
+      });
+      // Add breadcrumb for login or session refresh
+      Sentry.addBreadcrumb({
+        message: 'User authentication state updated',
+        category: 'auth',
+        level: 'info',
+        data: {
+          event: session ? 'login' : 'session_refresh', // Distinguish login from refresh
+          user_id: user.id,
+        },
+      });
+    } else {
+      // User logged out: clear user context
+      Sentry.setUser(null);
+      // Add breadcrumb for logout
+      Sentry.addBreadcrumb({
+        message: 'User logged out',
+        category: 'auth',
+        level: 'info',
+      });
+    }
+  }, [user, session, role]); // Watch user, session, and role for changes
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     // For demo purposes, just return success

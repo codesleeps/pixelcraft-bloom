@@ -2,8 +2,92 @@ from functools import lru_cache
 from typing import Any
 from ..config import settings
 import logging
+import sentry_sdk
 
 logger = logging.getLogger("pixelcraft.supabase")
+
+
+def instrument_supabase_query(func, table_name, operation_type, **tags):
+    """Wrapper function to instrument Supabase queries with Sentry spans.
+    
+    Only activates if Sentry is initialized. Creates a database span with operation 'db.query',
+    description including table/operation details, and custom tags.
+    """
+    def wrapper():
+        if sentry_sdk.Hub.current.client:
+            description = f"{operation_type} on {table_name}" if table_name else f"{operation_type}"
+            with sentry_sdk.start_span(op="db.query", description=description) as span:
+                for tag, value in tags.items():
+                    span.set_tag(tag, value)
+                return func()
+        else:
+            return func()
+    return wrapper
+
+
+class WrappedQuery:
+    """Wrapper for Supabase query objects to instrument execute() calls."""
+    
+    def __init__(self, query, table_name):
+        self._query = query
+        self._table_name = table_name
+        self._operation = None
+        self._function_name = None
+    
+    def select(self, *args, **kwargs):
+        self._operation = "select"
+        return self._query.select(*args, **kwargs)
+    
+    def insert(self, *args, **kwargs):
+        self._operation = "insert"
+        return self._query.insert(*args, **kwargs)
+    
+    def update(self, *args, **kwargs):
+        self._operation = "update"
+        return self._query.update(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        self._operation = "delete"
+        return self._query.delete(*args, **kwargs)
+    
+    def execute(self):
+        wrapped_execute = instrument_supabase_query(
+            self._query.execute,
+            self._table_name,
+            self._operation,
+            db_system="supabase",
+            db_operation=self._operation,
+            db_table=self._table_name
+        )
+        return wrapped_execute()
+
+
+class WrappedSupabaseClient:
+    """Wrapper for Supabase client to instrument table() and rpc() operations."""
+    
+    def __init__(self, client):
+        self._client = client
+    
+    def table(self, table_name):
+        original_query = self._client.table(table_name)
+        return WrappedQuery(original_query, table_name)
+    
+    def rpc(self, function_name, *args, **kwargs):
+        def original_rpc():
+            return self._client.rpc(function_name, *args, **kwargs)
+        wrapped_rpc = instrument_supabase_query(
+            original_rpc,
+            None,
+            "rpc",
+            db_system="supabase",
+            db_operation="rpc",
+            db_function=function_name
+        )
+        return wrapped_rpc()
+    
+    # Delegate other methods to the original client
+    def __getattr__(self, name):
+        return getattr(self._client, name)
 
 
 @lru_cache()
@@ -48,7 +132,7 @@ def get_supabase_client() -> Any:
     client = create_client(supabase_url, supabase_key)
     # Optionally test connection here
     logger.info("Supabase client initialized")
-    return client
+    return WrappedSupabaseClient(client)
 
 
 def test_connection() -> bool:

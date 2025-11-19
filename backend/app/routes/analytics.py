@@ -23,6 +23,7 @@ from ..models.analytics import (
 from ..utils.auth import get_current_user, require_admin
 from ..utils.supabase_client import get_supabase_client
 from ..utils.logger import logger
+import sentry_sdk
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -32,19 +33,27 @@ async def get_lead_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc(
-            "get_lead_conversion_metrics",
-            {
-                "start_date": time_range.start_date,
-                "end_date": time_range.end_date,
-                "user_uuid": user_uuid,
-            },
-        ).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_lead_conversion_metrics") as span:
+            span.set_tag("analytics.metric", "lead_summary")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc(
+                "get_lead_conversion_metrics",
+                {
+                    "start_date": time_range.start_date,
+                    "end_date": time_range.end_date,
+                    "user_uuid": user_uuid,
+                },
+            ).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         if result.data:
             data = result.data[0]
+            sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
             return LeadMetrics(
                 total_leads=data["total_leads"],
                 qualified_leads=data["qualified_leads"],
@@ -54,6 +63,7 @@ async def get_lead_summary(
         else:
             raise HTTPException(status_code=500, detail="No data returned from analytics function")
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -62,12 +72,20 @@ async def get_revenue_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc('get_revenue_summary', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_revenue_summary") as span:
+            span.set_tag("analytics.metric", "revenue_summary")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc('get_revenue_summary', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         if result.data and len(result.data) > 0:
             data = result.data[0]
+            sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
             return RevenueSummary(
                 mrr=data["mrr"],
                 arr=data["arr"],
@@ -80,6 +98,7 @@ async def get_revenue_summary(
             logger.error("Revenue summary RPC returned no data", extra={"user_uuid": user_uuid, "time_range": time_range.dict()})
             raise HTTPException(status_code=500, detail="No revenue summary data available for the specified time range")
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.error(f"Revenue analytics error in get_revenue_summary: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
@@ -89,12 +108,21 @@ async def get_revenue_by_package(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc('get_revenue_by_package', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_revenue_by_package") as span:
+            span.set_tag("analytics.metric", "revenue_by_package")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc('get_revenue_by_package', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'user_uuid': user_uuid}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         if not result.data:
+            sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
             return []
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return [
             RevenueByPackage(
                 package_id=row["package_id"],
@@ -106,6 +134,7 @@ async def get_revenue_by_package(
             for row in result.data
         ]
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.error(f"Revenue analytics error in get_revenue_by_package: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
@@ -116,10 +145,17 @@ async def get_subscription_trends(
     aggregation: str = Query('daily', regex='^(daily|weekly)$'),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc('get_subscription_trends', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'aggregation': aggregation, 'user_uuid': user_uuid}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_subscription_trends") as span:
+            span.set_tag("analytics.metric", "subscription_trends")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc('get_subscription_trends', {'start_date': time_range.start_date, 'end_date': time_range.end_date, 'aggregation': aggregation, 'user_uuid': user_uuid}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         data_points = [
             SubscriptionTrendPoint(
                 period=row["period"],
@@ -130,11 +166,13 @@ async def get_subscription_trends(
             )
             for row in result.data
         ]
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return SubscriptionTrendsResponse(
             data=data_points,
             aggregation=aggregation
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.error(f"Revenue analytics error in get_subscription_trends: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
@@ -144,15 +182,23 @@ async def get_customer_ltv(
     pagination: PaginationParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc('get_customer_ltv', {'user_uuid': user_uuid}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_customer_ltv") as span:
+            span.set_tag("analytics.metric", "customer_ltv")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc('get_customer_ltv', {'user_uuid': user_uuid}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         if not result.data:
+            sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
             return []
         if pagination.offset >= len(result.data):
             raise HTTPException(status_code=400, detail="Pagination offset exceeds available data")
         paginated_data = result.data[pagination.offset:pagination.offset + pagination.limit]
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return [
             CustomerLTV(
                 user_id=row["user_id"],
@@ -165,6 +211,7 @@ async def get_customer_ltv(
             for row in paginated_data
         ]
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         logger.error(f"Revenue analytics error in get_customer_ltv: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
@@ -175,30 +222,38 @@ async def get_subscriptions_list(
     filters: AnalyticsFilterParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        query = sb.table("user_subscriptions").select("*, pricing_packages(name)")
-        if current_user["role"] == "user":
-            query = query.eq("user_id", current_user["user_id"])
-        if filters.subscription_status:
-            query = query.eq("status", filters.subscription_status)
-        if filters.package_id:
-            query = query.eq("package_id", filters.package_id)
-        sort_by = filters.sort_by or "created_at"
-        sort_order = filters.sort_order or "desc"
-        query = query.order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
-        result = query.execute()
-        total_query = sb.table("user_subscriptions").select("id", count="exact")
-        if current_user["role"] == "user":
-            total_query = total_query.eq("user_id", current_user["user_id"])
-        if filters.subscription_status:
-            total_query = total_query.eq("status", filters.subscription_status)
-        if filters.package_id:
-            total_query = total_query.eq("package_id", filters.package_id)
-        total_result = total_query.execute()
+        with sentry_sdk.start_span(op="db.query", description="user_subscriptions select") as span:
+            span.set_tag("analytics.metric", "subscriptions_list")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            query = sb.table("user_subscriptions").select("*, pricing_packages(name)")
+            if current_user["role"] == "user":
+                query = query.eq("user_id", current_user["user_id"])
+            if filters.subscription_status:
+                query = query.eq("status", filters.subscription_status)
+            if filters.package_id:
+                query = query.eq("package_id", filters.package_id)
+            sort_by = filters.sort_by or "created_at"
+            sort_order = filters.sort_order or "desc"
+            query = query.order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
+            result = query.execute()
+            total_query = sb.table("user_subscriptions").select("id", count="exact")
+            if current_user["role"] == "user":
+                total_query = total_query.eq("user_id", current_user["user_id"])
+            if filters.subscription_status:
+                total_query = total_query.eq("status", filters.subscription_status)
+            if filters.package_id:
+                total_query = total_query.eq("package_id", filters.package_id)
+            total_result = total_query.execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         total = total_result.count if hasattr(total_result, 'count') else len(total_result.data)
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return {"items": result.data, "total": total}
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -208,20 +263,29 @@ async def get_lead_trends(
     aggregation: str = Query("daily", regex="^(daily|weekly)$"),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc("get_lead_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_lead_trends") as span:
+            span.set_tag("analytics.metric", "lead_trends")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc("get_lead_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         data_points = [
             TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return TimeSeriesResponse(
             data=data_points,
             metric_name="lead_creation_trends",
             aggregation=aggregation,
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -230,19 +294,27 @@ async def get_conversation_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc(
-            "get_conversation_analytics",
-            {
-                "start_date": time_range.start_date,
-                "end_date": time_range.end_date,
-                "user_uuid": user_uuid,
-            },
-        ).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_conversation_analytics") as span:
+            span.set_tag("analytics.metric", "conversation_summary")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc(
+                "get_conversation_analytics",
+                {
+                    "start_date": time_range.start_date,
+                    "end_date": time_range.end_date,
+                    "user_uuid": user_uuid,
+                },
+            ).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         if result.data:
             data = result.data[0]
+            sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
             return ConversationMetrics(
                 total_conversations=data["total_conversations"],
                 avg_messages_per_conversation=data["avg_messages_per_conversation"],
@@ -252,6 +324,7 @@ async def get_conversation_summary(
         else:
             raise HTTPException(status_code=500, detail="No data returned from analytics function")
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -262,20 +335,29 @@ async def get_conversation_trends(
     filters: AnalyticsFilterParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
         user_uuid = current_user["user_id"] if current_user["role"] == "user" else None
-        result = sb.rpc("get_conversation_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid, "status_filter": filters.status, "channel_filter": filters.channel}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_conversation_trends") as span:
+            span.set_tag("analytics.metric", "conversation_trends")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc("get_conversation_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "aggregation": aggregation, "user_uuid": user_uuid, "status_filter": filters.status, "channel_filter": filters.channel}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         data_points = [
             TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return TimeSeriesResponse(
             data=data_points,
             metric_name="conversation_trends",
             aggregation=aggregation,
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -285,20 +367,28 @@ async def get_conversation_list(
     filters: AnalyticsFilterParams = Depends(),
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        user_filter = {"user_id": {"eq": current_user["user_id"]}} if current_user["role"] == "user" else {}
-        status_filter = {"status": {"eq": filters.status}} if filters.status else {}
-        channel_filter = {"channel": {"eq": filters.channel}} if filters.channel else {}
-        sort_by = filters.sort_by or "created_at"
-        sort_order = filters.sort_order or "desc"
-        query = sb.table("conversations").select("*").match({**user_filter, **status_filter, **channel_filter}).order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
-        result = query.execute()
-        total_query = sb.table("conversations").select("id", count="exact").match({**user_filter, **status_filter, **channel_filter})
-        total_result = total_query.execute()
+        with sentry_sdk.start_span(op="db.query", description="conversations select") as span:
+            span.set_tag("analytics.metric", "conversation_list")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            user_filter = {"user_id": {"eq": current_user["user_id"]}} if current_user["role"] == "user" else {}
+            status_filter = {"status": {"eq": filters.status}} if filters.status else {}
+            channel_filter = {"channel": {"eq": filters.channel}} if filters.channel else {}
+            sort_by = filters.sort_by or "created_at"
+            sort_order = filters.sort_order or "desc"
+            query = sb.table("conversations").select("*").match({**user_filter, **status_filter, **channel_filter}).order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
+            result = query.execute()
+            total_query = sb.table("conversations").select("id", count="exact").match({**user_filter, **status_filter, **channel_filter})
+            total_result = total_query.execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         total = total_result.count if hasattr(total_result, 'count') else len(total_result.data)
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return {"items": result.data, "total": total}
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -307,15 +397,23 @@ async def get_agent_summary(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(require_admin),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        result = sb.rpc(
-            "get_agent_performance_metrics",
-            {
-                "start_date": time_range.start_date,
-                "end_date": time_range.end_date,
-            },
-        ).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_agent_performance_metrics") as span:
+            span.set_tag("analytics.metric", "agent_summary")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc(
+                "get_agent_performance_metrics",
+                {
+                    "start_date": time_range.start_date,
+                    "end_date": time_range.end_date,
+                },
+            ).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return [
             AgentPerformance(
                 agent_type=row["agent_type"],
@@ -327,6 +425,7 @@ async def get_agent_summary(
             for row in result.data
         ]
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -336,19 +435,28 @@ async def get_agent_trends(
     agent_type: Optional[str] = Query(None),
     current_user: dict = Depends(require_admin),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        result = sb.rpc("get_agent_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "agent_type_filter": agent_type}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_agent_trends") as span:
+            span.set_tag("analytics.metric", "agent_trends")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            result = sb.rpc("get_agent_trends", {"start_date": time_range.start_date, "end_date": time_range.end_date, "agent_type_filter": agent_type}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         data_points = [
             TimeSeriesDataPoint(date=row["date"].date(), value=float(row["value"]), label=None)
             for row in result.data
         ]
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return TimeSeriesResponse(
             data=data_points,
             metric_name="agent_success_rate_trends",
             aggregation="daily",
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -358,19 +466,27 @@ async def get_agent_logs(
     filters: AnalyticsFilterParams = Depends(),
     current_user: dict = Depends(require_admin),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        agent_type_filter = {"agent_type": {"eq": filters.agent_type}} if filters.agent_type else {}
-        status_filter = {"status": {"eq": filters.status}} if filters.status else {}
-        sort_by = filters.sort_by or "created_at"
-        sort_order = filters.sort_order or "desc"
-        query = sb.table("agent_logs").select("*").match({**agent_type_filter, **status_filter}).order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
-        result = query.execute()
-        total_query = sb.table("agent_logs").select("id", count="exact").match({**agent_type_filter, **status_filter})
-        total_result = total_query.execute()
+        with sentry_sdk.start_span(op="db.query", description="agent_logs select") as span:
+            span.set_tag("analytics.metric", "agent_logs")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            agent_type_filter = {"agent_type": {"eq": filters.agent_type}} if filters.agent_type else {}
+            status_filter = {"status": {"eq": filters.status}} if filters.status else {}
+            sort_by = filters.sort_by or "created_at"
+            sort_order = filters.sort_order or "desc"
+            query = sb.table("agent_logs").select("*").match({**agent_type_filter, **status_filter}).order(sort_by, desc=(sort_order == "desc")).limit(pagination.limit).offset(pagination.offset)
+            result = query.execute()
+            total_query = sb.table("agent_logs").select("id", count="exact").match({**agent_type_filter, **status_filter})
+            total_result = total_query.execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
         total = total_result.count if hasattr(total_result, 'count') else len(total_result.data)
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return {"items": result.data, "total": total}
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
@@ -378,12 +494,19 @@ async def get_agent_logs(
 async def get_service_recommendations(
     current_user: dict = Depends(get_current_user),
 ):
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
     sb = get_supabase_client()
     try:
-        if current_user["role"] == "admin":
-            result = sb.rpc("get_service_recommendations_insights").execute()
-        else:
-            result = sb.rpc("get_service_recommendations_insights_for_user", {"user_uuid": current_user["user_id"]}).execute()
+        with sentry_sdk.start_span(op="db.rpc", description="get_service_recommendations_insights" if current_user["role"] == "admin" else "get_service_recommendations_insights_for_user") as span:
+            span.set_tag("analytics.metric", "service_recommendations")
+            span.set_tag("analytics.user_role", current_user["role"])
+            sentry_sdk.add_breadcrumb(message="Query started", category="db", level="info")
+            if current_user["role"] == "admin":
+                result = sb.rpc("get_service_recommendations_insights").execute()
+            else:
+                result = sb.rpc("get_service_recommendations_insights_for_user", {"user_uuid": current_user["user_id"]}).execute()
+        sentry_sdk.add_breadcrumb(message="Data processing", category="analytics", level="info")
+        sentry_sdk.add_breadcrumb(message="Response formatting", category="analytics", level="info")
         return [
             ServiceRecommendation(
                 service_name=row["service_name"],
@@ -395,4 +518,5 @@ async def get_service_recommendations(
             for row in result.data
         ]
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

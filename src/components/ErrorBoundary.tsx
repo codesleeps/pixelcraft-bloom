@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
@@ -13,6 +14,8 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{ error: Error; resetError: () => void }>;
   /** Optional callback for error reporting (e.g., to Sentry or LogRocket). */
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  /** Optional user data for Sentry context. */
+  user?: { id: string; email?: string; username?: string };
 }
 
 /**
@@ -67,12 +70,40 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   /**
    * Lifecycle method called after an error has been thrown by a descendant component.
-   * Logs the error and calls the optional onError callback.
+   * Captures the error with Sentry and calls the optional onError callback.
    * @param error The error that was thrown.
    * @param errorInfo Information about the component stack.
    */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Set custom context
+    Sentry.setContext('error_boundary', {
+      componentName: 'ErrorBoundary',
+      location: window.location.href,
+      props: this.props,
+    });
+
+    // Set user context if available
+    if (this.props.user) {
+      Sentry.setUser(this.props.user);
+    }
+
+    // Add breadcrumb
+    Sentry.addBreadcrumb({
+      message: 'Error boundary caught an error',
+      level: 'error',
+      category: 'error',
+    });
+
+    // Capture exception with React context
+    Sentry.captureException(error, {
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+    });
+
+    // Call onError for backward compatibility
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
@@ -130,6 +161,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                     }
                   >
                     Report Issue
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => Sentry.showReportDialog()}
+                  >
+                    Send Feedback
                   </Button>
                 </div>
               </CardContent>

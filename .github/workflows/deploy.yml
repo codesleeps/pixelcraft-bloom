@@ -32,6 +32,33 @@ jobs:
         env:
           NODE_ENV: production
 
+      # Sentry release tracking steps (frontend only; backend handled separately)
+      # Required GitHub secrets: SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        continue-on-error: true  # Ensure deployment continues if Sentry fails
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          version: ${{ github.sha }}
+          environment: production
+          set_commits: auto
+          finalize: true
+          deploy: true
+
+      - name: Upload source maps to Sentry
+        uses: getsentry/action-upload-sourcemaps@v1
+        continue-on-error: true  # Ensure deployment continues if Sentry fails
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          sourcemaps: ./dist
+          release: ${{ github.sha }}
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

@@ -66,6 +66,21 @@ class StripeConfig(BaseSettings):
     cancel_url: Optional[AnyHttpUrl] = Field(None, description="Post-checkout cancel URL")
 
 
+class SentryConfig(BaseSettings):
+    dsn: Optional[str]
+    environment: str
+    traces_sample_rate: float = Field(0.1, description="Performance monitoring sample rate")
+    profiles_sample_rate: float = Field(0.1, description="Profiling sample rate")
+    release: Optional[str]
+    enable_tracing: bool = Field(True, description="Enable performance tracing")
+
+    @validator('traces_sample_rate', 'profiles_sample_rate')
+    def validate_sample_rate(cls, v):
+        if not (0.0 <= v <= 1.0):
+            raise ValueError("Sample rate must be between 0.0 and 1.0")
+        return v
+
+
 class AppConfig(BaseSettings):
     app_env: str = Field("development", description="Application environment")
     app_host: str = Field("0.0.0.0", description="Host to bind the server")
@@ -80,6 +95,7 @@ class AppConfig(BaseSettings):
     email: Optional[EmailConfig] = None
     calendar: Optional[CalendarConfig] = None
     stripe: Optional[StripeConfig] = None
+    sentry: Optional[SentryConfig] = None
 
     @validator("app_port")
     def port_range(cls, v):
@@ -156,6 +172,22 @@ def get_settings() -> AppConfig:
         )
     elif any(environ.get(k) for k in ["STRIPE_WEBHOOK_SECRET", "STRIPE_PRICE_ID", "STRIPE_SUCCESS_URL", "STRIPE_CANCEL_URL"]):
         logging.warning("STRIPE_API_KEY is not set. Payments integration will not work properly.")
+
+    # Sentry (optional; configure when enabling error monitoring)
+    sentry_env_vars = [k for k in environ.keys() if k.startswith('SENTRY_') and k != 'SENTRY_DSN']
+    if 'SENTRY_DSN' not in environ and sentry_env_vars:
+        logging.warning("SENTRY_DSN is not set but other Sentry environment variables are configured. Sentry will not be enabled.")
+
+    sentry_dsn = environ.get("SENTRY_DSN")
+    if sentry_dsn:
+        settings.sentry = SentryConfig(
+            dsn=sentry_dsn,
+            environment=environ.get("SENTRY_ENVIRONMENT", settings.app_env),
+            traces_sample_rate=float(environ.get("SENTRY_TRACES_SAMPLE_RATE", 0.1)),
+            profiles_sample_rate=float(environ.get("SENTRY_PROFILES_SAMPLE_RATE", 0.1)),
+            release=environ.get("SENTRY_RELEASE"),
+            enable_tracing=environ.get("SENTRY_ENABLE_TRACING", "true").lower() == "true"
+        )
 
     return settings
 

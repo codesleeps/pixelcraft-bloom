@@ -22,10 +22,38 @@ from .utils.external_tools import test_external_services
 from .models.manager import ModelManager
 from .routes.models import set_model_manager
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration, SentryAsgiMiddleware
+from sentry_sdk.integrations.logging import LoggingIntegration
+from .middleware.sentry_middleware import SentryContextMiddleware
+
 logger = logging.getLogger("pixelcraft.backend")
 
 
 def create_app() -> FastAPI:
+    # Initialize Sentry if configured
+    if settings.sentry:
+        def before_send(event, hint):
+            # Filter sensitive data from events
+            if 'extra' in event:
+                sensitive_keys = [key for key in event['extra'].keys() if 'password' in key.lower() or 'token' in key.lower() or 'secret' in key.lower()]
+                for key in sensitive_keys:
+                    del event['extra'][key]
+            return event
+
+        sentry_sdk.init(
+            dsn=settings.sentry.dsn,
+            environment=settings.sentry.environment,
+            traces_sample_rate=settings.sentry.traces_sample_rate,
+            profiles_sample_rate=settings.sentry.profiles_sample_rate,
+            release=settings.sentry.release,
+            integrations=[FastApiIntegration(transaction_style='endpoint'), LoggingIntegration(level=logging.INFO, event_level=logging.ERROR)],
+            send_default_pii=False,
+            attach_stacktrace=True,
+            before_send=before_send
+        )
+        logger.info("Sentry initialized for environment: %s, release: %s", settings.sentry.environment, settings.sentry.release or "N/A")
+
     app = FastAPI(title="PixelCraft AI Backend", version="1.0.0", description="AI-powered backend for PixelCraft using AgentScope and Ollama")
 
     # CORS - parse from settings
@@ -37,6 +65,14 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Add Sentry ASGI middleware after CORS
+    if settings.sentry:
+        app.add_middleware(SentryAsgiMiddleware)
+
+    # Add custom Sentry context middleware
+    if settings.sentry:
+        app.add_middleware(SentryContextMiddleware)
 
     # Include routers under /api
     app.include_router(chat_routes.router, prefix="/api")
@@ -124,6 +160,7 @@ def create_app() -> FastAPI:
                 "healthy": models_healthy,
                 "total": models_total,
             },
+            "sentry_enabled": settings.sentry is not None,
         }
 
     @app.get("/", tags=["root"])
