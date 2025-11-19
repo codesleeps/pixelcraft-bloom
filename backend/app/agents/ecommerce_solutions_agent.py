@@ -10,7 +10,6 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.ecommerce")
@@ -100,7 +99,6 @@ def create_ecommerce_solutions_agent() -> 'EcommerceSolutionsAgent':
         agent_id="ecommerce_solutions",
         name="E-commerce Solutions Specialist",
         description="Expert e-commerce consultant for PixelCraft",
-        default_model="llama2",
         temperature=0.3,  # Technical and precise
         max_tokens=1500,
         system_prompt="""You are PixelCraft's e-commerce solutions specialist.
@@ -139,7 +137,8 @@ def create_ecommerce_solutions_agent() -> 'EcommerceSolutionsAgent':
                 parameters={"products": "str", "monthly_sales": "str", "features": "str"},
                 required_params=["products", "monthly_sales"]
             )
-        ]
+        ],
+        task_type="ecommerce_solutions"
     )
     return EcommerceSolutionsAgent(config)
 
@@ -158,26 +157,24 @@ class EcommerceSolutionsAgent(BaseAgent):
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Context: {context}\n\nE-commerce Query: {message}"}
-                ],
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens
-            )
-
-            # Extract assistant's message
-            assistant_message = response["message"]["content"]
+            # Generate response using ModelManager with automatic model selection and fallback
+            try:
+                assistant_message = await self._chat_with_model(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Context: {context}\n\nE-commerce Query: {message}"}
+                    ],
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens
+                )
+                model_used = None  # Model info not available from helper
+            except Exception as e:
+                logger.error(f"Model call failed for task_type '{self.config.task_type}': {e}")
+                raise
 
             # Add response to memory
             memory.add_message("assistant", assistant_message)
@@ -211,11 +208,11 @@ class EcommerceSolutionsAgent(BaseAgent):
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
                     "temperature": self.config.temperature,
                     "specialization": "ecommerce_solutions"
                 },
                 tools_used=[],
+                model_used=model_used,
                 timestamp=datetime.utcnow()
             )
 

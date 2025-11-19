@@ -1,12 +1,37 @@
-import { models, ModelConfig } from '../config/models';
 import { supabase } from '@/integrations/supabase/client';
+
+interface ModelInfo {
+  name: string;
+  provider: string;
+  health: boolean;
+  metrics: Record<string, any>;
+}
+
+interface ModelHealthResponse {
+  healthy: number;
+  total: number;
+  status: string;
+}
+
+interface ModelGenerateResponse {
+  response: string;
+  model_used: string;
+  latency: number;
+}
+
+interface ModelChatResponse {
+  response: string;
+  model_used: string;
+  latency: number;
+}
 
 export class ModelManager {
   private static instance: ModelManager;
-  private models: Record<string, ModelConfig>;
+  private models: Record<string, ModelInfo> = {};
+  private baseUrl: string;
 
   private constructor() {
-    this.models = models;
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   }
 
   public static getInstance(): ModelManager {
@@ -14,6 +39,59 @@ export class ModelManager {
       ModelManager.instance = new ModelManager();
     }
     return ModelManager.instance;
+  }
+
+  private async getAuthHeaders(): Promise<Record<string, string>> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`,
+    };
+  }
+
+  private async apiCall(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const headers = await this.getAuthHeaders();
+    const config: RequestInit = {
+      ...options,
+      headers: { ...headers, ...options.headers },
+    };
+
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const response = await fetch(url, config);
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        return await response.json();
+      } catch (error) {
+        retries--;
+        if (retries === 0) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries))); // Exponential backoff
+      }
+    }
+  }
+
+  public async fetchModels(): Promise<void> {
+    try {
+      const data = await this.apiCall('/api/models');
+      this.models = {};
+      data.models.forEach((model: ModelInfo) => {
+        this.models[model.name] = model;
+      });
+    } catch (error) {
+      console.error('Failed to fetch models:', error);
+      throw error;
+    }
+  }
+
+  public getModels(): Record<string, ModelInfo> {
+    return this.models;
+  }
+
+  public async getModelHealth(): Promise<ModelHealthResponse> {
+    return await this.apiCall('/api/models/health');
   }
 
   private async trackModelUsage(
@@ -98,70 +176,55 @@ export class ModelManager {
       temperature?: number;
       maxTokens?: number;
       stream?: boolean;
+      taskType?: string;
+      systemPrompt?: string;
     } = {}
-  ) {
+  ): Promise<string | ReadableStream> {
     const startTime = Date.now();
     let success = false;
     let tokensUsed = 0;
     let cacheHit = false;
     let response: string | null = null;
+    let actualModelUsed = modelName;
 
     try {
       // Check cache first
-      response = await this.checkCache(modelName, prompt, 'completion');
-      
+      response = await this.checkCache(modelName, prompt, options.taskType || 'completion');
+
       if (response) {
         cacheHit = true;
         success = true;
-        // Estimate tokens for cached response
         tokensUsed = Math.ceil(response.length / 4);
       } else {
-        // Get model configuration
-        const model = this.models[modelName];
-        if (!model) throw new Error(`Model ${modelName} not found`);
-
-        // Prepare request to Ollama
+        // Call backend API
         const requestBody = {
-          model: modelName,
+          model_name: modelName,
           prompt,
-          stream: options.stream || false,
-          options: {
-            temperature: options.temperature || model.parameters.temperature,
-            num_predict: options.maxTokens || model.parameters.maxTokens,
-          }
+          task_type: options.taskType || 'completion',
+          system_prompt: options.systemPrompt,
+          temperature: options.temperature,
+          max_tokens: options.maxTokens,
         };
 
-        // Make request to Ollama
-        const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
+        const data: ModelGenerateResponse = await this.apiCall('/api/models/generate', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify(requestBody),
         });
 
-        if (!ollamaResponse.ok) {
-          throw new Error(`Ollama API error: ${ollamaResponse.statusText}`);
-        }
+        response = data.response;
+        tokensUsed = Math.ceil(response.length / 4); // Estimate tokens
+        success = true;
+        actualModelUsed = data.model_used;
 
-        if (options.stream) {
-          return ollamaResponse.body;
-        } else {
-          const result = await ollamaResponse.json();
-          response = result.response;
-          tokensUsed = result.total_tokens || Math.ceil(response.length / 4);
-          success = true;
-
-          // Cache successful response
-          await this.cacheResponse(modelName, prompt, response, tokensUsed, 'completion');
-        }
+        // Cache successful response using the actual model used
+        await this.cacheResponse(actualModelUsed, prompt, response, tokensUsed, options.taskType || 'completion');
       }
 
-      // Track usage
+      // Track usage with the actual model used
       const responseTime = Date.now() - startTime;
       await this.trackModelUsage(
-        modelName,
-        'completion',
+        actualModelUsed,
+        options.taskType || 'completion',
         success,
         responseTime,
         tokensUsed,
@@ -173,8 +236,8 @@ export class ModelManager {
     } catch (error) {
       const responseTime = Date.now() - startTime;
       await this.trackModelUsage(
-        modelName,
-        'completion',
+        actualModelUsed,
+        options.taskType || 'completion',
         false,
         responseTime,
         0,
@@ -192,92 +255,69 @@ export class ModelManager {
       temperature?: number;
       maxTokens?: number;
       stream?: boolean;
+      taskType?: string;
+      systemPrompt?: string;
     } = {}
-  ) {
+  ): Promise<string | ReadableStream> {
     const startTime = Date.now();
     let success = false;
     let tokensUsed = 0;
     let response: string | null = null;
+    let actualModelUsed = modelName;
 
     try {
-      // Get model configuration
-      const model = this.models[modelName];
-      if (!model) throw new Error(`Model ${modelName} not found`);
-
-      // Format messages for Ollama
-      const prompt = messages.map(msg => {
-        switch (msg.role) {
-          case 'system':
-            return `System: ${msg.content}\n`;
-          case 'user':
-            return `User: ${msg.content}\n`;
-          case 'assistant':
-            return `Assistant: ${msg.content}\n`;
-        }
-      }).join('');
+      // Format messages for prompt-based caching
+      const prompt = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 
       // Check cache for exact conversation
-      response = await this.checkCache(modelName, prompt, 'chat');
-      
+      response = await this.checkCache(modelName, prompt, options.taskType || 'chat');
+
       if (response) {
         success = true;
         tokensUsed = Math.ceil(response.length / 4);
-        
+
         // Track cached response usage
         const responseTime = Date.now() - startTime;
         await this.trackModelUsage(
-          modelName,
-          'chat',
+          actualModelUsed,
+          options.taskType || 'chat',
           true,
           responseTime,
           tokensUsed,
           true
         );
-        
+
         return response;
       }
 
-      // Prepare request to Ollama
+      // Call backend API
       const requestBody = {
-        model: modelName,
-        messages: messages,
-        stream: options.stream || false,
-        options: {
-          temperature: options.temperature || model.parameters.temperature,
-          num_predict: options.maxTokens || model.parameters.maxTokens,
-        }
+        model_name: modelName,
+        messages,
+        task_type: options.taskType || 'chat',
+        system_prompt: options.systemPrompt,
+        temperature: options.temperature,
+        max_tokens: options.maxTokens,
       };
 
-      // Make request to Ollama
-      const ollamaResponse = await fetch('http://localhost:11434/api/chat', {
+      const data: ModelChatResponse = await this.apiCall('/api/models/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(requestBody),
       });
 
-      if (!ollamaResponse.ok) {
-        throw new Error(`Ollama API error: ${ollamaResponse.statusText}`);
-      }
+      response = data.response;
+      tokensUsed = Math.ceil(response.length / 4); // Estimate tokens
+      success = true;
+      actualModelUsed = data.model_used;
 
-      if (options.stream) {
-        return ollamaResponse.body;
-      } else {
-        const result = await ollamaResponse.json();
-        response = result.message.content;
-        tokensUsed = result.total_tokens || Math.ceil(response.length / 4);
-        success = true;
+      // Cache successful response using the actual model used
+      await this.cacheResponse(actualModelUsed, prompt, response, tokensUsed, options.taskType || 'chat');
 
-        // Cache successful response
-        await this.cacheResponse(modelName, prompt, response, tokensUsed, 'chat');
-      }
-
-      // Track usage
+      // Track usage with the actual model used
       const responseTime = Date.now() - startTime;
       await this.trackModelUsage(
-        modelName,
-        'chat',
+        actualModelUsed,
+        options.taskType || 'chat',
         success,
         responseTime,
         tokensUsed,
@@ -289,8 +329,8 @@ export class ModelManager {
     } catch (error) {
       const responseTime = Date.now() - startTime;
       await this.trackModelUsage(
-        modelName,
-        'chat',
+        actualModelUsed,
+        options.taskType || 'chat',
         false,
         responseTime,
         0,
@@ -299,5 +339,20 @@ export class ModelManager {
       );
       throw error;
     }
+  }
+
+  // Placeholder for WebSocket streaming - to be implemented when backend supports it
+  public async generateChatStream(
+    modelName: string,
+    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+    options: {
+      temperature?: number;
+      maxTokens?: number;
+      taskType?: string;
+      systemPrompt?: string;
+    } = {}
+  ): Promise<ReadableStream> {
+    // TODO: Implement WebSocket connection to backend for streaming
+    throw new Error('Streaming not yet implemented');
   }
 }

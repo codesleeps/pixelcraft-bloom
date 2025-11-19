@@ -14,6 +14,7 @@ import time
 from supabase import Client, create_client
 import os
 from dotenv import load_dotenv
+from ..models.manager import ModelManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -96,6 +97,8 @@ class BaseAgentConfig:
     system_prompt: str = ""
     capabilities: List[str] = field(default_factory=list)
     tools: List[AgentTool] = field(default_factory=list)
+    task_type: str = "general"
+    model_manager: Optional[ModelManager] = None
 
 
 @dataclass
@@ -106,6 +109,7 @@ class AgentResponse:
     conversation_id: str
     metadata: Dict[str, Any]
     tools_used: List[str]
+    model_used: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -116,6 +120,7 @@ class AgentResponse:
             "conversation_id": self.conversation_id,
             "metadata": self.metadata,
             "tools_used": self.tools_used,
+            "model_used": self.model_used,
             "timestamp": self.timestamp.isoformat()
         }
 
@@ -127,6 +132,7 @@ class BaseAgent:
         self.config = config
         self.memory_store: Dict[str, AgentMemory] = {}
         self.tools: Dict[str, AgentTool] = {tool.name: tool for tool in config.tools}
+        self.model_manager = config.model_manager
         self.logger = logging.getLogger(f"agent.{config.agent_id}")
 
     async def set_shared_memory(self, conversation_id: str, key: str, value: Any, scope: str = 'conversation', workflow_execution_id: Optional[str] = None, expires_at: Optional[datetime] = None) -> None:
@@ -252,6 +258,8 @@ class BaseAgent:
                 if tool.required_params:
                     prompt_parts.append(f"  Required parameters: {', '.join(tool.required_params)}")
 
+        prompt_parts.append("\nModel Optimization: Leverage the selected AI model's capabilities for optimal performance.")
+
         return "\n".join(prompt_parts)
 
     async def _log_interaction(self, 
@@ -308,6 +316,15 @@ class BaseAgent:
             await supabase.table("agent_logs").insert(log_entry).execute()
         except Exception as e:
             self.logger.warning(f"Failed to log tool execution: {e}")
+
+    async def _generate_with_model(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
+        """Generate response using ModelManager with automatic model selection and fallback."""
+        return await self.model_manager.generate(prompt, self.config.task_type, system_prompt, **kwargs)
+
+    async def _chat_with_model(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        """Chat completion using ModelManager with automatic model selection and fallback."""
+        response = await self.model_manager.chat(messages, self.config.task_type, **kwargs)
+        return response["message"]["content"]
 
     async def process_message(self, conversation_id: str, message: str, metadata: Optional[Dict[str, Any]] = None) -> AgentResponse:
         """Process a message and return a response. To be implemented by subclasses."""

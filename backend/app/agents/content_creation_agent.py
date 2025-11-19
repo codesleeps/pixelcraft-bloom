@@ -10,7 +10,6 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.content_creation")
@@ -134,7 +133,8 @@ def create_content_creation_agent() -> 'ContentCreationAgent':
                 parameters={"goals": "str", "audience": "str", "channels": "str", "budget": "str"},
                 required_params=["goals", "audience"]
             )
-        ]
+        ],
+        task_type="content_creation"
     )
     return ContentCreationAgent(config)
 
@@ -148,31 +148,33 @@ class ContentCreationAgent(BaseAgent):
         metadata: Optional[Dict[str, Any]] = None
     ) -> AgentResponse:
         """Process a content creation consultation message."""
+        if not self.model_manager:
+            raise ValueError("ModelManager not configured for ContentCreationAgent")
+
         try:
             # Get or create conversation memory
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Context: {context}\n\nContent Query: {message}"}
-                ],
+            # Generate response using ModelManager
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Context: {context}\n\nContent Query: {message}"}
+            ]
+            response = await self.model_manager.chat(
+                messages,
+                self.config.task_type,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens
             )
 
-            # Extract assistant's message
+            # Extract assistant's message and model used
             assistant_message = response["message"]["content"]
+            model_used = response.get("model_used")
 
             # Add response to memory
             memory.add_message("assistant", assistant_message)
@@ -206,11 +208,11 @@ class ContentCreationAgent(BaseAgent):
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
                     "temperature": self.config.temperature,
                     "specialization": "content_creation"
                 },
                 tools_used=[],
+                model_used=model_used,
                 timestamp=datetime.utcnow()
             )
 

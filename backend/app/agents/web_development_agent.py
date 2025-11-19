@@ -11,9 +11,8 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
-from ..utils.external_tools import create_crm_contact, send_email, create_calendar_event
+from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, create_calendar_event
 
 logger = logging.getLogger("pixelcraft.agents.web_development")
 
@@ -272,7 +271,8 @@ def create_web_development_agent() -> 'WebDevelopmentAgent':
                 parameters={"client_email": "str", "client_name": "str", "preferred_date": "str", "project_type": "str"},
                 required_params=["client_email", "client_name", "preferred_date", "project_type"]
             )
-        ]
+        ],
+        task_type="web_development"
     )
     return WebDevelopmentAgent(config)
 
@@ -291,31 +291,30 @@ class WebDevelopmentAgent(BaseAgent):
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
+            # Generate response using ModelManager
+            response = await self.model_manager.chat(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Context: {context}\n\nUser Query: {message}"}
                 ],
+                task_type=self.config.task_type,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens
             )
 
-            # Extract assistant's message
+            # Extract assistant's message and model used
             assistant_message = response["message"]["content"]
+            model_used = response.get("model", self.config.default_model)
 
             # Analyze message for tool triggers
             tools_used = []
             tool_results = {}
-            
+            tool_errors = []
+
             # Check for project inquiry intent (email and requirements mentioned)
             if ("email" in message.lower() or "@" in message) and ("project" in message.lower() or "website" in message.lower() or "development" in message.lower()):
                 # Extract parameters from message and metadata
@@ -325,7 +324,7 @@ class WebDevelopmentAgent(BaseAgent):
                 requirements = message  # Use full message as requirements
                 budget = metadata.get("budget", "") if metadata else ""
                 timeline = metadata.get("timeline", "") if metadata else ""
-                
+
                 if name and email and company and requirements:
                     try:
                         lead_result = await self.use_tool(conversation_id, "create_project_lead", {
@@ -339,8 +338,11 @@ class WebDevelopmentAgent(BaseAgent):
                         tools_used.append("create_project_lead")
                         tool_results["create_project_lead"] = lead_result
                     except Exception as e:
-                        logger.error(f"Failed to create project lead: {e}")
-            
+                        error_msg = f"Failed to create project lead: {str(e)}"
+                        logger.error(error_msg)
+                        tool_errors.append(error_msg)
+                        assistant_message += f"\n\nNote: {error_msg}. Please contact support if needed."
+
             # Check for scheduling intent
             if "schedule" in message.lower() or "consultation" in message.lower() or "meeting" in message.lower():
                 # Extract parameters
@@ -348,7 +350,7 @@ class WebDevelopmentAgent(BaseAgent):
                 client_name = metadata.get("name", "") if metadata else ""
                 preferred_date = metadata.get("preferred_date", "") if metadata else ""
                 project_type = metadata.get("project_type", "web development") if metadata else "web development"
-                
+
                 if client_email and client_name and preferred_date:
                     try:
                         schedule_result = await self.use_tool(conversation_id, "schedule_technical_consultation", {
@@ -360,7 +362,10 @@ class WebDevelopmentAgent(BaseAgent):
                         tools_used.append("schedule_technical_consultation")
                         tool_results["schedule_technical_consultation"] = schedule_result
                     except Exception as e:
-                        logger.error(f"Failed to schedule consultation: {e}")
+                        error_msg = f"Failed to schedule consultation: {str(e)}"
+                        logger.error(error_msg)
+                        tool_errors.append(error_msg)
+                        assistant_message += f"\n\nNote: {error_msg}. Please try again or contact support."
 
             # Add response to memory
             memory.add_message("assistant", assistant_message)
@@ -386,7 +391,7 @@ class WebDevelopmentAgent(BaseAgent):
                 conversation_id=conversation_id,
                 action="web_dev_consultation",
                 input_data={"message": message, "metadata": metadata},
-                output_data={"response": assistant_message}
+                output_data={"response": assistant_message, "tool_results": tool_results, "tool_errors": tool_errors}
             )
 
             return AgentResponse(
@@ -394,12 +399,14 @@ class WebDevelopmentAgent(BaseAgent):
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
+                    "model": model_used,
                     "temperature": self.config.temperature,
                     "specialization": "web_development",
-                    "tool_results": tool_results
+                    "tool_results": tool_results,
+                    "tool_errors": tool_errors
                 },
                 tools_used=tools_used,
+                model_used=model_used,
                 timestamp=datetime.utcnow()
             )
 

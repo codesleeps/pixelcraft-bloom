@@ -10,9 +10,8 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
-from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, send_template_email
+from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, send_template_email, create_calendar_event
 
 logger = logging.getLogger("pixelcraft.agents.digital_marketing")
 
@@ -210,7 +209,6 @@ def create_digital_marketing_agent() -> 'DigitalMarketingAgent':
         agent_id="digital_marketing",
         name="Digital Marketing Strategist",
         description="Expert digital marketing consultant for PixelCraft",
-        default_model="llama2",
         temperature=0.4,  # Balanced for strategic thinking
         max_tokens=1500,
         system_prompt="""You are PixelCraft's digital marketing strategist.
@@ -234,6 +232,7 @@ def create_digital_marketing_agent() -> 'DigitalMarketingAgent':
             "Performance analytics",
             "Conversion optimization"
         ],
+        task_type="digital_marketing",
         tools=[
             AgentTool(
                 name="get_digital_marketing_services",
@@ -289,26 +288,28 @@ class DigitalMarketingAgent(BaseAgent):
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Context: {context}\n\nMarketing Query: {message}"}
-                ],
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens
-            )
-
-            # Extract assistant's message
-            assistant_message = response["message"]["content"]
+            # Generate response using ModelManager with automatic model selection and fallback
+            try:
+                response = await self.model_manager.chat(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Context: {context}\n\nMarketing Query: {message}"}
+                    ],
+                    task_type=self.config.task_type,
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens
+                )
+                # Extract assistant's message
+                assistant_message = response["message"]["content"]
+                model_used = response.get("model_used")
+            except Exception as e:
+                logger.error(f"ModelManager chat failed, falling back to error response: {e}")
+                assistant_message = "I'm sorry, I'm experiencing technical difficulties with my AI models right now. Please try again later or contact support."
+                model_used = None
 
             # Analyze conversation for tool usage
             tools_used = []
@@ -389,12 +390,13 @@ class DigitalMarketingAgent(BaseAgent):
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
+                    "model": model_used,
                     "temperature": self.config.temperature,
                     "specialization": "digital_marketing",
                     "tool_results": tool_results
                 },
                 tools_used=tools_used,
+                model_used=model_used,
                 timestamp=datetime.utcnow()
             )
 

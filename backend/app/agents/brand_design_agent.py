@@ -1,20 +1,19 @@
 """Brand Design Agent implementation.
-
+  
 This agent specializes in brand design services, providing expertise
 in visual identity, brand strategy, and creative design solutions.
 """
-
+  
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
 import logging
-
+  
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
-
+  
 logger = logging.getLogger("pixelcraft.agents.brand_design")
-
+  
 # Brand design service details
 BRAND_DESIGN_SERVICES = {
     "logo_design": {
@@ -48,11 +47,11 @@ BRAND_DESIGN_SERVICES = {
         "starting_price": "$2,000"
     }
 }
-
+  
 async def get_brand_design_services() -> Dict[str, Any]:
     """Tool function to retrieve brand design services information."""
     return BRAND_DESIGN_SERVICES
-
+  
 async def analyze_brand_needs(industry: str, target_audience: str, current_brand: str) -> Dict[str, Any]:
     """Tool function to analyze brand design needs."""
     # Industry-specific recommendations
@@ -78,10 +77,10 @@ async def analyze_brand_needs(industry: str, target_audience: str, current_brand
             "priority_services": ["brand_identity", "visual_guidelines"]
         }
     }
-
+  
     industry_key = industry.lower() if industry.lower() in industry_recommendations else "professional_services"
     rec = industry_recommendations[industry_key]
-
+  
     return {
         "recommended_style": rec["style"],
         "color_recommendations": rec["colors"],
@@ -93,7 +92,7 @@ async def analyze_brand_needs(industry: str, target_audience: str, current_brand
             f"Current brand status: {current_brand}"
         ]
     }
-
+  
 def create_brand_design_agent() -> 'BrandDesignAgent':
     """Factory function to create a BrandDesignAgent instance."""
     config = BaseAgentConfig(
@@ -105,7 +104,7 @@ def create_brand_design_agent() -> 'BrandDesignAgent':
         max_tokens=1500,
         system_prompt="""You are PixelCraft's brand design specialist.
         Provide expert guidance on brand identity, visual design, and creative strategy.
-
+  
         Focus on:
         1. Brand strategy and positioning
         2. Visual identity development
@@ -113,7 +112,7 @@ def create_brand_design_agent() -> 'BrandDesignAgent':
         4. Brand consistency and application
         5. Industry-specific design approaches
         6. Creative concept development
-
+  
         Always consider the target audience, industry context, and brand personality.
         Provide practical design recommendations with clear deliverables and timelines.""",
         capabilities=[
@@ -139,13 +138,14 @@ def create_brand_design_agent() -> 'BrandDesignAgent':
                 parameters={"industry": "str", "target_audience": "str", "current_brand": "str"},
                 required_params=["industry", "target_audience"]
             )
-        ]
+        ],
+        task_type="brand_design"
     )
     return BrandDesignAgent(config)
-
+  
 class BrandDesignAgent(BaseAgent):
     """Brand Design Agent for creative brand consultations."""
-
+  
     async def process_message(
         self,
         conversation_id: str,
@@ -157,31 +157,25 @@ class BrandDesignAgent(BaseAgent):
             # Get or create conversation memory
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
-
-            # Get Ollama client
-            ollama = get_ollama_client()
-
+  
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
-
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Context: {context}\n\nDesign Query: {message}"}
-                ],
+  
+            # Generate response using ModelManager
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Context: {context}\n\nDesign Query: {message}"}
+            ]
+            assistant_message = await self._chat_with_model(
+                messages,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens
             )
-
-            # Extract assistant's message
-            assistant_message = response["message"]["content"]
-
+  
             # Add response to memory
             memory.add_message("assistant", assistant_message)
-
+  
             # Persist conversation to Supabase
             try:
                 supabase = get_supabase_client()
@@ -193,11 +187,11 @@ class BrandDesignAgent(BaseAgent):
                     "created_at": datetime.utcnow().isoformat(),
                     "updated_at": datetime.utcnow().isoformat()
                 }
-
+  
                 await supabase.table("conversations").upsert(conversation_data).execute()
             except Exception as e:
                 logger.error(f"Failed to persist conversation: {e}")
-
+  
             # Log the interaction
             await self._log_interaction(
                 conversation_id=conversation_id,
@@ -205,20 +199,21 @@ class BrandDesignAgent(BaseAgent):
                 input_data={"message": message, "metadata": metadata},
                 output_data={"response": assistant_message}
             )
-
+  
             return AgentResponse(
                 content=assistant_message,
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
                     "temperature": self.config.temperature,
-                    "specialization": "brand_design"
+                    "specialization": "brand_design",
+                    "model_selection": "managed_by_model_manager"
                 },
                 tools_used=[],
+                model_used=None,  # Model determined by ModelManager
                 timestamp=datetime.utcnow()
             )
-
+  
         except Exception as e:
             logger.exception(f"Brand design consultation failed: {e}")
             await self._log_interaction(

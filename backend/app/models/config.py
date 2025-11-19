@@ -1,11 +1,11 @@
 from enum import Enum
 from typing import Dict, Optional, List
 from pydantic import BaseModel, Field
-
+  
 class ModelProvider(str, Enum):
     OLLAMA = "ollama"
     HUGGING_FACE = "huggingface"
-
+  
 class ModelConfig(BaseModel):
     name: str
     provider: ModelProvider
@@ -15,12 +15,25 @@ class ModelConfig(BaseModel):
     timeout: int = 30
     max_tokens: int = 2048
     temperature: float = 0.7
-
+    context_window: int = 4096
+    capabilities: Dict[str, bool] = Field(default_factory=lambda: {
+        "chat": False,
+        "completion": False,
+        "embedding": False,
+        "code_completion": False,
+        "vision": False  # Added for enhanced capability flags
+    })
+    health_check_interval: int = 300  # seconds
+    retry_attempts: int = 3
+    cost_per_token: Optional[float] = None  # For HuggingFace API usage
+    supports_streaming: bool = False
+    supports_functions: bool = False
+  
 class ModelPriority(BaseModel):
     task_type: str
     models: List[str]  # In order of preference
     fallback_model: str
-
+  
 # Model configurations
 MODELS = {
     "mistral": ModelConfig(
@@ -33,7 +46,17 @@ MODELS = {
             "top_k": 50,
             "top_p": 0.9,
             "repeat_penalty": 1.1
-        }
+        },
+        max_tokens=4096,
+        context_window=8192,
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": True,
+            "code_completion": True,
+            "vision": False
+        },
+        supports_streaming=True
     ),
     "llama2": ModelConfig(
         name="llama2",
@@ -45,7 +68,37 @@ MODELS = {
             "top_k": 40,
             "top_p": 0.9,
             "repeat_penalty": 1.1
-        }
+        },
+        context_window=4096,
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": True,
+            "code_completion": True,
+            "vision": False
+        },
+        supports_streaming=True
+    ),
+    "llama3": ModelConfig(
+        name="llama3",
+        provider=ModelProvider.OLLAMA,
+        endpoint="http://localhost:11434/api/generate",
+        parameters={
+            "num_ctx": 8192,
+            "num_thread": 4,
+            "top_k": 40,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        },
+        context_window=8192,
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": True,
+            "code_completion": True,
+            "vision": False
+        },
+        supports_streaming=True
     ),
     "codellama": ModelConfig(
         name="codellama",
@@ -55,9 +108,19 @@ MODELS = {
             "num_ctx": 4096,
             "num_thread": 4,
             "top_k": 40,
-            "top_p": 0.9,
+            "top_p": 0.95,
             "repeat_penalty": 1.1
-        }
+        },
+        temperature=0.5,
+        context_window=4096,
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": True,
+            "code_completion": True,
+            "vision": False
+        },
+        supports_streaming=True
     ),
     "mixtral-8x7b": ModelConfig(
         name="mixtral-8x7b",
@@ -69,30 +132,69 @@ MODELS = {
             "temperature": 0.7,
             "top_p": 0.9,
             "repetition_penalty": 1.1
-        }
+        },
+        context_window=32768,  # Mixtral has large context
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": False,
+            "code_completion": True,
+            "vision": False
+        },
+        cost_per_token=0.0001  # Example cost per token for HuggingFace
     )
 }
-
+  
 # Task-specific model priorities
 MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
-        models=["mistral", "llama2"],
+        models=["mistral", "llama3", "llama2"],
         fallback_model="mixtral-8x7b"
     ),
     "code": ModelPriority(
         task_type="code",
-        models=["codellama", "mistral"],
+        models=["codellama", "mistral", "llama3"],
         fallback_model="mixtral-8x7b"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
-        models=["mistral", "llama2"],
+        models=["mistral", "llama3", "llama2"],
         fallback_model="mixtral-8x7b"
     ),
     "service_recommendation": ModelPriority(
         task_type="service_recommendation",
-        models=["mistral", "llama2"],
+        models=["mistral", "llama3", "llama2"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "web_development": ModelPriority(  # Added for web_development agent task type
+        task_type="web_development",
+        models=["codellama", "mistral", "llama3"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "digital_marketing": ModelPriority(
+        task_type="digital_marketing",
+        models=["mistral", "llama3", "llama2"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "brand_design": ModelPriority(
+        task_type="brand_design",
+        models=["mistral", "llama3", "llama2"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "ecommerce_solutions": ModelPriority(
+        task_type="ecommerce_solutions",
+        models=["mistral", "llama3", "codellama"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "content_creation": ModelPriority(
+        task_type="content_creation",
+        models=["mistral", "llama3", "llama2"],
+        fallback_model="mixtral-8x7b"
+    ),
+    "analytics_consulting": ModelPriority(
+        task_type="analytics_consulting",
+        models=["mistral", "llama3", "codellama"],
         fallback_model="mixtral-8x7b"
     )
 }

@@ -13,7 +13,6 @@ import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from .orchestrator import orchestrator
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.chat")
@@ -125,10 +124,9 @@ def create_chat_agent() -> 'ChatAgent':
         agent_id="pixelcraft_chat",
         name="PixelCraft Chat Assistant",
         description="AI assistant for PixelCraft digital marketing agency",
-        default_model="llama2",  # or other model configured in Ollama
         temperature=0.7,
         max_tokens=1000,
-        system_prompt="""You are PixelCraft's friendly AI assistant, helping potential clients 
+        system_prompt="""You are PixelCraft's friendly AI assistant, helping potential clients
         learn about our digital marketing agency services. Focus on understanding client needs,
         providing accurate service information, and guiding them towards appropriate solutions.
         Always be professional, knowledgeable, and solution-oriented.""",
@@ -155,7 +153,8 @@ def create_chat_agent() -> 'ChatAgent':
                 parameters={"date": "str", "service_type": "str"},
                 required_params=["date"]
             )
-        ]
+        ],
+        task_type="chat"
     )
     return ChatAgent(config)
 
@@ -180,28 +179,27 @@ class ChatAgent(BaseAgent):
             if workflow_execution_id:
                 shared_context = await self.get_shared_memory(conversation_id, "workflow_context", scope="workflow", workflow_execution_id=workflow_execution_id)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             if shared_context:
                 context = f"Shared workflow context: {shared_context}\n\n{context}"
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": context}
-                ],
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens
-            )
-
-            # Extract assistant's message
-            assistant_message = response["message"]["content"]
+            # Generate response using ModelManager
+            try:
+                response = await self._generate_with_model(
+                    prompt=context,
+                    system_prompt=system_prompt,
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens
+                )
+                assistant_message = response['content']
+                model_used = response['model_used']
+            except Exception as e:
+                logger.error(f"ModelManager failed for chat generation: {e}")
+                # Fallback response on model failure
+                assistant_message = "I'm sorry, I'm currently experiencing technical difficulties. Please try again later or contact our support team."
+                model_used = None
 
             # Check if specialist help is needed
             specialist_needed = any(keyword in assistant_message.lower() or keyword in message.lower()
@@ -274,7 +272,7 @@ class ChatAgent(BaseAgent):
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
+                    "model_used": model_used,
                     "temperature": self.config.temperature,
                 },
                 tools_used=[],

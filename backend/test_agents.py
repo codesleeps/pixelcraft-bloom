@@ -47,7 +47,8 @@ async def test_chat_agent() -> bool:
         
         result = response.to_dict()
         print_result("Chat Response", True, {
-            "content": result["content"][:200] + "..." if len(result["content"]) > 200 else result["content"]
+            "content": result["content"][:200] + "..." if len(result["content"]) > 200 else result["content"],
+            "model_used": result.get("model_used")
         })
         return True
         
@@ -85,7 +86,8 @@ async def test_lead_qualification() -> bool:
         print_result("Lead Qualification", True, {
             "score": json.loads(result["content"]).get("score"),
             "priority": json.loads(result["content"]).get("priority"),
-            "suggested_actions": json.loads(result["content"]).get("suggested_actions")
+            "suggested_actions": json.loads(result["content"]).get("suggested_actions"),
+            "model_used": result.get("model_used")
         })
         return True
         
@@ -113,12 +115,41 @@ async def test_recommendation_agent() -> bool:
         
         result = response.to_dict()
         print_result("Service Recommendations", True, {
-            "recommendations": json.loads(result["content"])[:2]  # Show first 2 recommendations
+            "recommendations": json.loads(result["content"])[:2],  # Show first 2 recommendations
+            "model_used": result.get("model_used")
         })
         return True
         
     except Exception as e:
         print_result("Recommendation Agent Test", False, {"error": str(e)})
+        return False
+
+async def test_web_development_agent() -> bool:
+    """Test the web development agent with external tools."""
+    try:
+        print_header("Testing Web Development Agent")
+        
+        response = await orchestrator.invoke(
+            "web_development",
+            {
+                "message": "Build a website for our company",
+                "conversation_id": str(uuid.uuid4())
+            }
+        )
+        
+        result = response.to_dict()
+        if not result["content"]:
+            print_result("Web Development Agent", False, {"error": "no content"})
+            return False
+        print_result("Web Development Agent", True, {
+            "content": result["content"][:200] + "..." if len(result["content"]) > 200 else result["content"],
+            "model_used": result.get("model_used"),
+            "tools_used": result.get("tools_used")
+        })
+        return True
+        
+    except Exception as e:
+        print_result("Web Development Agent Test", False, {"error": str(e)})
         return False
 
 async def test_multi_agent_workflow() -> bool:
@@ -172,7 +203,10 @@ async def test_multi_agent_workflow() -> bool:
             "chat_response": results["chat"]["content"][:100] + "...",
             "recommendations": len(json.loads(results["recommendations"]["content"])),
             "lead_score": json.loads(results["lead_qualification"]["content"]).get("score"),
-            "workflow_id": workflow_id
+            "workflow_id": workflow_id,
+            "chat_model": results["chat"].get("model_used"),
+            "recommendations_model": results["recommendations"].get("model_used"),
+            "lead_model": results["lead_qualification"].get("model_used")
         }
         
         print_result("Multi-Agent Workflow", True, workflow_summary)
@@ -205,7 +239,8 @@ async def test_agent_routing() -> bool:
                 "message": message,
                 "expected": expected_agent,
                 "routed_to": routed_to,
-                "correct": success
+                "correct": success,
+                "model_used": response.model_used
             })
         
         all_correct = all(r["correct"] for r in results)
@@ -362,6 +397,105 @@ async def test_shared_memory() -> bool:
         print_result("Shared Memory Test", False, {"error": str(e)})
         return False
 
+async def test_model_fallback() -> bool:
+    """Test model fallback scenarios in ModelManager."""
+    try:
+        print_header("Testing Model Fallback")
+        
+        # Run chat agent to trigger ModelManager's model selection and potential fallback
+        response = await orchestrator.invoke(
+            "chat",
+            {
+                "message": "Test message for model fallback",
+                "conversation_id": str(uuid.uuid4())
+            }
+        )
+        
+        result = response.to_dict()
+        if not result.get("model_used"):
+            print_result("Model Fallback", False, {"error": "no model selected or fallback failed"})
+            return False
+        
+        print_result("Model Fallback", True, {
+            "model_used": result.get("model_used"),
+            "content_length": len(result["content"])
+        })
+        return True
+        
+    except Exception as e:
+        print_result("Model Fallback Test", False, {"error": str(e)})
+        return False
+
+async def test_model_performance_tracking() -> bool:
+    """Test model performance tracking via ModelManager."""
+    try:
+        print_header("Testing Model Performance Tracking")
+        
+        supabase = get_supabase_client()
+        
+        # Count initial model metrics
+        initial_result = await supabase.table("model_metrics").select("*", count="exact").execute()
+        initial_count = initial_result.count or 0
+        
+        # Run an agent to generate metrics
+        response = await orchestrator.invoke(
+            "chat",
+            {
+                "message": "Test message for performance tracking",
+                "conversation_id": str(uuid.uuid4())
+            }
+        )
+        
+        # Check if metrics were added
+        after_result = await supabase.table("model_metrics").select("*", count="exact").execute()
+        after_count = after_result.count or 0
+        
+        if after_count <= initial_count:
+            print_result("Model Performance Tracking", False, {"error": "no new metrics recorded"})
+            return False
+        
+        print_result("Model Performance Tracking", True, {
+            "metrics_added": after_count - initial_count,
+            "model_used": response.to_dict().get("model_used")
+        })
+        return True
+        
+    except Exception as e:
+        print_result("Model Performance Tracking Test", False, {"error": str(e)})
+        return False
+
+async def test_external_tool_graceful_degradation() -> bool:
+    """Test graceful degradation of external tools in agents."""
+    try:
+        print_header("Testing External Tool Graceful Degradation")
+        
+        # Run web development agent, which may invoke external tools
+        response = await orchestrator.invoke(
+            "web_development",
+            {
+                "message": "Build a website with CRM integration",
+                "conversation_id": str(uuid.uuid4())
+            }
+        )
+        
+        result = response.to_dict()
+        if not result["content"]:
+            print_result("External Tool Graceful Degradation", False, {"error": "no content generated"})
+            return False
+        
+        # Verify tools were attempted (even if degraded)
+        tools_used = result.get("tools_used", [])
+        print_result("External Tool Graceful Degradation", True, {
+            "content_length": len(result["content"]),
+            "tools_used": tools_used,
+            "model_used": result.get("model_used")
+        })
+        return True
+        
+    except Exception as e:
+        print_result("External Tool Graceful Degradation Test", False, {"error": str(e)})
+        return False
+
 async def test_workflow_visualization() -> bool:
     """Test workflow visualization endpoint."""
     try:
@@ -438,11 +572,15 @@ async def main() -> None:
             ("Chat Agent", test_chat_agent()),
             ("Lead Qualification", test_lead_qualification()),
             ("Service Recommendation", test_recommendation_agent()),
+            ("Web Development Agent", test_web_development_agent()),
             ("Multi-Agent Workflow", test_multi_agent_workflow()),
             ("Agent Routing", test_agent_routing()),
             ("Conditional Workflow", test_conditional_workflow()),
             ("Agent Messaging", test_agent_messaging()),
             ("Shared Memory", test_shared_memory()),
+            ("Model Fallback", test_model_fallback()),
+            ("Model Performance Tracking", test_model_performance_tracking()),
+            ("External Tool Graceful Degradation", test_external_tool_graceful_degradation()),
             ("Workflow Visualization", test_workflow_visualization())
         ]
         

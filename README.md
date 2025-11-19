@@ -10,6 +10,125 @@ This repository now includes a Python FastAPI backend scaffold located in the `b
 
 See `backend/README.md` for setup, configuration, and usage instructions.
 
+## AI Model Setup
+
+PixelCraft Bloom leverages local AI models via Ollama for AI-powered features like chat, lead qualification, and content creation. This section guides you through installing, configuring, and managing these models. The system also supports HuggingFace as a cloud fallback for enhanced reliability.
+
+### Installing Ollama
+
+1. Visit [ollama.ai](https://ollama.ai) and download the installer for your operating system (macOS, Windows, or Linux).
+2. Run the installer and follow the on-screen instructions to complete the setup.
+3. Verify installation by running `ollama --version` in your terminal.
+
+Ollama runs as a local server on port 11434 by default, providing a REST API for model interactions.
+
+### Pulling Required Models
+
+The backend agents require the following models. Pull them using Ollama's CLI:
+
+```bash
+ollama pull llama2
+ollama pull llama3
+ollama pull mistral
+ollama pull codellama
+```
+
+- **llama2**: General-purpose model for chat and text generation.
+- **llama3**: Advanced model for conversational AI and reasoning tasks.
+- **mistral**: Efficient model for fast, lightweight processing across various tasks.
+- **codellama**: Specialized model for code generation, ideal for web development and technical content.
+
+These models are automatically selected by the ModelManager based on task type (e.g., chat vs. code generation).
+
+### Configuring Ollama
+
+Ollama is configured via environment variables in `backend/.env`. Default settings are provided, but customize as needed:
+
+```
+OLLAMA_HOST=http://localhost:11434  # Ollama server URL
+OLLAMA_MODEL=llama3                 # Default model
+OLLAMA_KEEP_ALIVE=10m               # Model keep-alive duration
+OLLAMA_TEMPERATURE=0.7              # Response creativity (0.0-1.0)
+OLLAMA_STREAM=true                  # Enable streaming responses
+```
+
+Ensure Ollama is running (`ollama serve`) before starting the backend.
+
+### HuggingFace API Key Setup (Cloud Fallback)
+
+For cloud-based model fallback when local Ollama models are unavailable:
+
+1. Create a HuggingFace account at [huggingface.co](https://huggingface.co).
+2. Navigate to **Settings > Access Tokens** and generate a new API token with "Read" permissions.
+3. Add the token to `backend/.env`:
+
+```
+HUGGINGFACE_API_KEY=your-api-key-here
+```
+
+This enables automatic failover to HuggingFace-hosted models (e.g., via their Inference API) for improved uptime.
+
+### Model Testing Instructions
+
+Test models after setup to ensure functionality:
+
+1. Start the backend: `cd backend && uvicorn app.main:app --reload`.
+2. Use the API endpoint `POST /api/models/test` with a JSON payload like `{"model": "llama3", "prompt": "Hello, world!"}`.
+3. Alternatively, use the frontend **ModelTester** component in the dashboard to interactively test models, view latency, and compare outputs.
+4. Check the response for successful generation; expect JSON with `{"response": "...", "latency": 123}`.
+
+Run backend tests for comprehensive validation: `cd backend && pytest test_models.py`.
+
+### Model Performance Monitoring
+
+Track model health and metrics in real-time:
+
+- **Health Check**: Query `GET /api/models/health` for overall status (e.g., model availability and response times).
+- **Metrics**: Use `GET /api/models/metrics` for detailed stats like latency, success rate, token usage, and error counts.
+- **Dashboard**: View live metrics in the frontend **ModelsDashboard** component, including performance trends and model comparisons.
+- **Logs**: Monitor backend logs for model-specific events (e.g., fallbacks or failures).
+
+Metrics are persisted to Supabase for historical analysis.
+
+### Troubleshooting Common Model Issues
+
+- **Ollama Not Responding**: Ensure Ollama is running (`ollama serve`). Check `OLLAMA_HOST` in `.env` and verify port 11434 is open.
+- **Model Not Found Error**: Pull the model manually (`ollama pull <model_name>`). Confirm the model name matches those in `backend/app/models/config.py`.
+- **Connection Refused**: Restart Ollama or update `OLLAMA_HOST` if using a custom setup.
+- **Slow Responses**: Increase `OLLAMA_KEEP_ALIVE` or switch to lighter models like `mistral`. Monitor system RAM/CPU usage.
+- **Out of Memory**: Use smaller models (e.g., `llama2:7b` instead of full versions) or add more RAM to your machine.
+- **Cloud Fallback Failing**: Verify `HUGGINGFACE_API_KEY` is valid and has sufficient API quota. Check HuggingFace status at [status.huggingface.co](https://status.huggingface.co).
+- **Streaming Not Working**: Ensure `OLLAMA_STREAM=true` and use WebSocket-compatible endpoints.
+
+For persistent issues, check backend logs and refer to [Ollama documentation](https://github.com/jmorganca/ollama) or [HuggingFace docs](https://huggingface.co/docs).
+
+### Model Configuration Options
+
+Advanced configuration is handled in `backend/app/models/config.py` and `.env`:
+
+- **Task Mapping**: Assign models to tasks (e.g., `chat: llama3`, `code: codellama`).
+- **Health Checks**: Set intervals via `MODEL_HEALTH_CHECK_INTERVAL=300` (seconds).
+- **Retries/Timeouts**: Configure `MODEL_MAX_RETRIES=3` and `MODEL_REQUEST_TIMEOUT=30` for robustness.
+- **Caching**: Enable response caching with `MODEL_CACHE_TTL=3600` to reduce API calls.
+- **Warmup**: Set `MODEL_WARMUP_ON_STARTUP=true` to preload models on backend startup.
+- **Cost Tracking**: For HuggingFace, track usage via API responses (no direct config needed).
+
+Refer to `backend/.env.example` for all variables and their descriptions.
+
+### Examples of Using Different Models for Tasks
+
+The ModelManager intelligently selects models based on agent tasks:
+
+- **Chat Agent**: Uses `llama3` for natural, conversational responses (e.g., customer inquiries).
+- **Lead Qualification**: Employs `mistral` for efficient analysis of lead data and scoring.
+- **Web Development**: Leverages `codellama` for generating HTML/CSS/JS code snippets.
+- **Content Creation**: Relies on `llama2` for creative writing and blog post drafts.
+- **Analytics Consulting**: Uses `mistral` for data interpretation and report generation.
+
+Override defaults via API parameters (e.g., `POST /api/models/generate` with `{"model": "codellama", "task": "code"}`).
+
+For detailed backend setup, see `backend/README.md`. If issues persist, check the [SETUP_GUIDE.md](SETUP_GUIDE.md) for comprehensive instructions.
+
 ## Revenue Analytics
 
 The revenue analytics system provides comprehensive insights into subscription-based revenue, including Monthly Recurring Revenue (MRR), Annual Recurring Revenue (ARR), subscription trends, customer lifetime value (LTV), and revenue breakdowns by pricing package.

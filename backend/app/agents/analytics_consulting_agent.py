@@ -10,7 +10,6 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.analytics")
@@ -138,7 +137,8 @@ def create_analytics_consulting_agent() -> 'AnalyticsConsultingAgent':
                 parameters={"goals": "str", "current_tools": "str", "budget": "str", "data_volume": "str"},
                 required_params=["goals", "current_tools"]
             )
-        ]
+        ],
+        task_type="analytics_consulting"
     )
     return AnalyticsConsultingAgent(config)
 
@@ -157,25 +157,22 @@ class AnalyticsConsultingAgent(BaseAgent):
             memory = self.get_memory(conversation_id)
             memory.add_message("user", message, metadata)
 
-            # Get Ollama client
-            ollama = get_ollama_client()
-
             # Build conversation context
             context = memory.get_context_string(limit=5)
             system_prompt = self._build_system_prompt()
 
-            # Generate response using Ollama
-            response = await ollama.chat(
-                model=self.config.default_model,
+            # Generate response using ModelManager (with automatic model selection and fallback)
+            response = await self.model_manager.chat(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Context: {context}\n\nAnalytics Query: {message}"}
                 ],
+                task_type=self.config.task_type,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens
             )
 
-            # Extract assistant's message
+            # Extract assistant's message from ModelManager response
             assistant_message = response["message"]["content"]
 
             # Add response to memory
@@ -205,26 +202,32 @@ class AnalyticsConsultingAgent(BaseAgent):
                 output_data={"response": assistant_message}
             )
 
+            # Extract model metadata from ModelManager response for enhanced tracking
+            model_used = response.get("model", self.config.default_model)
+            model_metadata = response.get("metadata", {})
+
             return AgentResponse(
                 content=assistant_message,
                 agent_id=self.config.agent_id,
                 conversation_id=conversation_id,
                 metadata={
-                    "model": self.config.default_model,
+                    "model": model_used,
                     "temperature": self.config.temperature,
-                    "specialization": "analytics_consulting"
+                    "specialization": "analytics_consulting",
+                    "model_performance": model_metadata  # Include latency, tokens, etc. from ModelManager
                 },
                 tools_used=[],
                 timestamp=datetime.utcnow()
             )
 
         except Exception as e:
-            logger.exception(f"Analytics consultation failed: {e}")
+            logger.exception(f"Analytics consultation failed (model error: {e})")
             await self._log_interaction(
                 conversation_id=conversation_id,
                 action="analytics_consultation",
                 input_data={"message": message, "metadata": metadata},
                 output_data={},
-                error_message=str(e)
+                error_message=f"Model generation failed: {str(e)}"
             )
+            # ModelManager handles fallback internally, but re-raise for upstream handling
             raise

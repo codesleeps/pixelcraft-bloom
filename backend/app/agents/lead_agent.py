@@ -1,11 +1,3 @@
-from typing import Any, Dict
-from .base import BaseAgent, BaseAgentConfig
-from ..utils.ollama_client import get_ollama_client
-from ..utils.supabase_client import get_supabase_client
-import logging
-
-logger = logging.getLogger("pixelcraft.agents.lead")
-
 from typing import Any, Dict, List, Optional
 import json
 import re
@@ -13,7 +5,6 @@ import logging
 from datetime import datetime
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 from .orchestrator import orchestrator
 
@@ -99,7 +90,7 @@ class LeadQualificationAgent(BaseAgent):
         }
 
     async def _get_ai_analysis(self, lead_data: Dict[str, Any], conversation_history: Optional[List[Dict]] = None, shared_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Get AI analysis of the lead using the Ollama model."""
+        """Get AI analysis of the lead using ModelManager with automatic fallback and performance tracking."""
         try:
             # Prepare input for AI analysis, incorporating shared context
             recommendations = shared_context.get("recommendations", {}) if shared_context else {}
@@ -113,18 +104,15 @@ class LeadQualificationAgent(BaseAgent):
                 "user_intent": user_intent
             }
 
-            ollama = get_ollama_client()
-            response = await ollama.chat(
-                model=self.config.default_model,
-                messages=[
-                    {"role": "system", "content": self.config.system_prompt},
-                    {"role": "user", "content": f"Analyze this lead with shared context: {json.dumps(analysis_prompt)}"}
-                ],
+            # Use ModelManager for generation with lead_qualification task type, passing system prompt separately
+            content = await self.model_manager.generate(
+                prompt=f"Analyze this lead with shared context: {json.dumps(analysis_prompt)}",
+                task_type="lead_qualification",
+                system_prompt=self.config.system_prompt,
                 temperature=self.config.temperature
             )
 
             # Extract JSON from response (handle potential markdown code blocks)
-            content = response["message"]["content"]
             json_match = re.search(r'```json\n(.*)\n```', content, re.DOTALL)
             if json_match:
                 analysis = json.loads(json_match.group(1))
@@ -137,16 +125,17 @@ class LeadQualificationAgent(BaseAgent):
                     raise ValueError("No valid JSON found in response")
 
             # Validate required fields
-            required_fields = ["score", "confidence", "reasoning", "recommended_services", 
+            required_fields = ["score", "confidence", "reasoning", "recommended_services",
                              "key_insights", "suggested_actions", "priority", "estimated_value"]
             if not all(field in analysis for field in required_fields):
                 raise ValueError("Missing required fields in AI analysis")
 
+            logger.info(f"AI analysis completed successfully for lead {lead_data.get('id', 'unknown')}")
             return analysis
 
         except Exception as e:
-            logger.error(f"AI analysis failed: {e}")
-            # Return conservative fallback analysis
+            logger.error(f"AI analysis failed with ModelManager: {e}")
+            # Return conservative fallback analysis (ModelManager handles model fallback internally)
             return {
                 "score": 50,  # Neutral score
                 "confidence": 30,  # Low confidence due to error

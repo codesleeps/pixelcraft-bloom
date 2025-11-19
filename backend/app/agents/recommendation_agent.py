@@ -13,7 +13,6 @@ import logging
 from collections import defaultdict
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
-from ..utils.ollama_client import get_ollama_client
 from ..utils.supabase_client import get_supabase_client
 from .orchestrator import orchestrator
 
@@ -59,7 +58,6 @@ def create_recommendation_agent() -> 'ServiceRecommendationAgent':
         agent_id="service_recommendation",
         name="Service Recommendation Specialist",
         description="Expert system for recommending PixelCraft services",
-        default_model="llama2",
         temperature=0.4,  # Moderate temperature for balanced recommendations
         max_tokens=2000,
         system_prompt="""You are PixelCraft's service recommendation specialist.
@@ -71,7 +69,7 @@ def create_recommendation_agent() -> 'ServiceRecommendationAgent':
         4. Technical requirements
         5. Industry context
         6. Potential ROI and impact
-        
+
         Provide recommendations in JSON format with array of recommendations, each containing:
         {
             "service": string (service identifier),
@@ -81,7 +79,7 @@ def create_recommendation_agent() -> 'ServiceRecommendationAgent':
             "estimated_impact": string (description of expected outcomes),
             "suggested_approach": string (implementation strategy)
         }
-        
+
         Focus on practical, achievable solutions that align with client needs and constraints.
         Prioritize recommendations based on potential impact and urgency.""",
         capabilities=[
@@ -91,7 +89,8 @@ def create_recommendation_agent() -> 'ServiceRecommendationAgent':
             "Implementation planning",
             "Impact estimation",
             "Integration planning"
-        ]
+        ],
+        task_type="service_recommendation"
     )
     return ServiceRecommendationAgent(config)
 
@@ -136,7 +135,7 @@ class ServiceRecommendationAgent(BaseAgent):
     def _get_fallback_recommendations(self, keyword_scores: Dict[str, float]) -> List[Dict[str, Any]]:
         """Generate fallback recommendations based on keyword matching."""
         recommendations = []
-        
+
         for service, score in keyword_scores.items():
             if score > 20:  # Only include services with meaningful matches
                 recommendations.append({
@@ -147,10 +146,49 @@ class ServiceRecommendationAgent(BaseAgent):
                     "estimated_impact": "Potential positive impact on business goals",
                     "suggested_approach": "Standard service implementation"
                 })
-        
+
         # Sort by confidence score
         recommendations.sort(key=lambda x: x["confidence"], reverse=True)
         return recommendations[:3]  # Return top 3 recommendations
+
+    def _parse_recommendations_json(self, content: str, keyword_scores: Dict[str, float]) -> List[Dict[str, Any]]:
+        """Parse JSON recommendations from AI response with improved error handling."""
+        try:
+            # First, try to parse the entire content as JSON
+            try:
+                parsed = json.loads(content.strip())
+                if isinstance(parsed, list):
+                    return parsed
+                elif isinstance(parsed, dict):
+                    if "recommendations" in parsed:
+                        return parsed["recommendations"]
+                    # Assume it's a single recommendation
+                    return [parsed]
+            except json.JSONDecodeError:
+                pass
+
+            # Try to extract JSON from code blocks
+            json_match = re.search(r'```json\n(.*)\n```', content, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(1))
+
+            # Try to find JSON object/array directly
+            json_match = re.search(r'(\[[\s\S]*\]|\{[\s\S]*\})', content)
+            if json_match:
+                parsed = json.loads(json_match.group(1))
+                # Handle if it's a dict with "recommendations" key
+                if isinstance(parsed, dict) and "recommendations" in parsed:
+                    return parsed["recommendations"]
+                elif isinstance(parsed, list):
+                    return parsed
+                elif isinstance(parsed, dict):
+                    return [parsed]
+
+            # If no valid JSON found, raise error to trigger fallback
+            raise ValueError("No valid JSON recommendations found in response")
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"JSON parsing failed: {e}, falling back to keyword-based recommendations")
+            return self._get_fallback_recommendations(keyword_scores)
 
     async def check_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
         """Check for incoming agent messages and handle responses."""
@@ -166,21 +204,14 @@ class ServiceRecommendationAgent(BaseAgent):
                     needs = self._extract_needs_and_constraints(req_message)
                     keyword_scores = self._keyword_matching_score(req_message)
                     try:
-                        ollama = get_ollama_client()
-                        response = await ollama.chat(
-                            model=self.config.default_model,
+                        content = await self._chat_with_model(
                             messages=[
                                 {"role": "system", "content": self.config.system_prompt},
                                 {"role": "user", "content": f"Analyze needs and recommend services:\nMessage: {req_message}\nExtracted needs: {json.dumps(needs)}"}
                             ],
                             temperature=self.config.temperature
                         )
-                        content = response["message"]["content"]
-                        json_match = re.search(r'```json\n(.*)\n```', content, re.DOTALL)
-                        if json_match:
-                            recommendations = json.loads(json_match.group(1))
-                        else:
-                            recommendations = self._get_fallback_recommendations(keyword_scores)
+                        recommendations = self._parse_recommendations_json(content, keyword_scores)
                     except Exception as e:
                         logger.error(f"Failed to generate recommendations for agent message: {e}")
                         recommendations = self._get_fallback_recommendations(keyword_scores)
@@ -221,7 +252,6 @@ class ServiceRecommendationAgent(BaseAgent):
             
             # Get AI recommendations
             try:
-                ollama = get_ollama_client()
                 # Incorporate shared context into the prompt
                 shared_context = ""
                 if chat_history:
@@ -229,27 +259,16 @@ class ServiceRecommendationAgent(BaseAgent):
                 if user_intent:
                     shared_context += f"User intent: {user_intent}\n"
 
-                response = await ollama.chat(
-                    model=self.config.default_model,
+                content = await self._chat_with_model(
                     messages=[
                         {"role": "system", "content": self.config.system_prompt},
                         {"role": "user", "content": f"{shared_context}Analyze needs and recommend services:\nMessage: {message}\nExtracted needs: {json.dumps(needs)}"}
                     ],
                     temperature=self.config.temperature
                 )
-                
-                # Extract JSON from response
-                content = response["message"]["content"]
-                json_match = re.search(r'```json\n(.*)\n```', content, re.DOTALL)
-                if json_match:
-                    recommendations = json.loads(json_match.group(1))
-                else:
-                    json_match = re.search(r'\{[\s\S]*\}', content)
-                    if json_match:
-                        recommendations = json.loads(json_match.group(0))["recommendations"]
-                    else:
-                        raise ValueError("No valid JSON found in response")
-                
+
+                recommendations = self._parse_recommendations_json(content, keyword_scores)
+
             except Exception as e:
                 logger.error(f"AI recommendation failed: {e}")
                 recommendations = self._get_fallback_recommendations(keyword_scores)
@@ -305,9 +324,14 @@ class ServiceRecommendationAgent(BaseAgent):
                 metadata={
                     "needs": needs,
                     "keyword_scores": keyword_scores,
-                    "recommendations": recommendations
+                    "recommendations": recommendations,
+                    "model_metadata": {
+                        "task_type": self.config.task_type,
+                        "model_selection": "automatic_via_model_manager"
+                    }
                 },
                 tools_used=[],
+                model_used=None,  # ModelManager handles selection automatically
                 timestamp=datetime.utcnow()
             )
 

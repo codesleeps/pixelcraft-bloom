@@ -13,11 +13,14 @@ from .routes import analytics as analytics_routes
 from .routes import notifications as notifications_routes
 from .routes import websocket as websocket_routes
 from .routes import payments as payments_routes
+from .routes import models as models_routes
 
 from .utils.ollama_client import test_ollama_connection, list_available_models, get_ollama_client
 from .utils.supabase_client import get_supabase_client, test_connection as test_supabase_connection
 from .utils.redis_client import get_redis_client, test_redis_connection
 from .utils.external_tools import test_external_services
+from .models.manager import ModelManager
+from .routes.models import set_model_manager
 
 logger = logging.getLogger("pixelcraft.backend")
 
@@ -44,6 +47,7 @@ def create_app() -> FastAPI:
     app.include_router(notifications_routes.router, prefix="/api")
     app.include_router(websocket_routes.router, prefix="/api")
     app.include_router(payments_routes.router, prefix="/api")
+    app.include_router(models_routes.router, prefix="/api")
 
     @app.on_event("startup")
     async def startup_event():
@@ -82,13 +86,32 @@ def create_app() -> FastAPI:
         except Exception as exc:
             logger.exception("External services initialization error: %s", exc)
 
+        # Initialize ModelManager
+        try:
+            global model_manager_instance
+            model_manager_instance = ModelManager()
+            await model_manager_instance.initialize()
+            await model_manager_instance.warm_up_models()
+            set_model_manager(model_manager_instance)
+            logger.info("ModelManager initialized, available models: %s", list(model_manager_instance._health_checks.keys()))
+        except Exception as exc:
+            logger.exception("ModelManager initialization error: %s", exc)
+
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("Shutting down PixelCraft AI Backend")
+        # Cleanup ModelManager
+        if model_manager_instance:
+            await model_manager_instance.cleanup()
 
     @app.get("/health", tags=["health"])
     async def health():
         # Provide basic health info from dependencies
+        models_healthy = 0
+        models_total = 0
+        if model_manager_instance:
+            models_total = len(model_manager_instance._health_checks)
+            models_healthy = sum(model_manager_instance._health_checks.values())
         return {
             "status": "ok",
             "service": "pixelcraft-backend",
@@ -97,6 +120,10 @@ def create_app() -> FastAPI:
             "supabase": test_supabase_connection(),
             "redis": test_redis_connection(),
             "external_services": await test_external_services(),
+            "models": {
+                "healthy": models_healthy,
+                "total": models_total,
+            },
         }
 
     @app.get("/", tags=["root"])
