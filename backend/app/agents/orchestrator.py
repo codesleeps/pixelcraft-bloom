@@ -496,4 +496,5 @@ def initialize_agents() -> None:
         raise
 
 # Initialize agents when module is imported
-initialize_agents()
+# initialize_agents()  # Moved to main.py startup event to avoid circular imports
+

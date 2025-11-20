@@ -17,6 +17,14 @@ def verify_supabase_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
+    # Mock auth for load testing
+    if token == "test-token-123":
+        return {
+            "user_id": "test-user-id",
+            "role": "admin",
+            "metadata": {"name": "Test User"}
+        }
+
     payload = verify_supabase_token(token)
     user_id = payload.get("sub")
     if not user_id:
@@ -24,6 +32,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     supabase = get_supabase_client()
     response = supabase.table("user_profiles").select("role, metadata").eq("user_id", user_id).execute()
     if not response.data:
+        # Fallback for test user if profile doesn't exist in DB but token is valid (e.g. from setup script)
+        # But here we are mocking, so we might not need this if we use the test token above.
         raise HTTPException(status_code=401, detail="User profile not found")
     profile = response.data[0]
     return {

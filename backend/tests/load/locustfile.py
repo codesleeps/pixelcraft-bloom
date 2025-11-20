@@ -8,8 +8,9 @@ class ChatUser(HttpUser):
     wait_time = between(1, 5)
     
     def on_start(self):
-        # Simulate login or setup if needed
-        # For now, we assume public or mock auth
+        """Simulate login or setup if needed."""
+        self.client.headers.update({"Authorization": "Bearer test-token-123"})
+# For now, we assume public or mock auth
         pass
 
     @task(3)
@@ -29,7 +30,12 @@ class ChatUser(HttpUser):
 class AnalyticsUser(HttpUser):
     wait_time = between(2, 10)
 
+    def on_start(self):
+        """Simulate login or setup if needed."""
+        self.client.headers.update({"Authorization": "Bearer test-token-123"})
+
     @task(1)
+
     def view_dashboard(self):
         # Simulate a user loading the dashboard by hitting key endpoints
         self.client.get("/api/analytics/leads/summary")

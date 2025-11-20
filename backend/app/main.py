@@ -114,6 +114,16 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info("Starting PixelCraft AI Backend (env=%s)", settings.app_env)
+        
+        # Initialize Agents
+        from .agents.orchestrator import initialize_agents
+        try:
+            initialize_agents()
+            logger.info("Agents initialized successfully")
+        except Exception as e:
+            logger.exception("Failed to initialize agents: %s", e)
+
+
         # Initialize and validate Ollama
         try:
             ollama_ready = test_ollama_connection()
