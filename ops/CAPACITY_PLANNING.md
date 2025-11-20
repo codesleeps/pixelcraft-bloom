@@ -42,14 +42,17 @@ Run the load test script:
 ```
 
 ### Recent Test Results (Nov 2025)
-- **Chat Endpoint**: Successfully handled traffic up to rate limit (100 req/min).
-  - *Observation*: Rate limiting works as expected (429 responses).
-  - *Stability*: Backend remained stable with no 500 errors after fixes.
-- **Analytics Endpoints**: Protected by authentication (401 responses in test).
-  - *Recommendation*: Use authenticated users for future tests to stress DB.
-- **Performance**:
-  - Average Response Time: ~20ms (cached/fallback), ~200ms (uncached).
-  - 95th Percentile: ~50ms.
+- **Chat Endpoint**:
+  - **Result**: Rate limit exceeded (429) as expected at high load.
+  - **Throughput**: Sustained ~50 req/sec before rate limiting kicked in.
+  - **Stability**: No 500 errors observed on chat endpoints.
+- **Analytics Endpoints**:
+  - **Result**: 500 Internal Server Errors observed during load test.
+  - **Cause**: Missing local database connection (Supabase) in test environment.
+  - **Action Required**: Ensure local Supabase instance is running (`npx supabase start`) before running analytics load tests.
+- **Authentication**:
+  - Successfully implemented mock authentication for load testing using test tokens.
+
 
 ## 5. Capacity Recommendations
 1. **Rate Limiting**: Keep current limits (100/min for chat) to protect resources.

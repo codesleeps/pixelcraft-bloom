@@ -37,7 +37,7 @@ class ModelPriority(BaseModel):
 # Model configurations
 MODELS = {
     "mistral": ModelConfig(
-        name="mistral",
+        name="mistral:7b",
         provider=ModelProvider.OLLAMA,
         endpoint="http://localhost:11434/api/generate",
         parameters={
@@ -59,7 +59,7 @@ MODELS = {
         supports_streaming=True
     ),
     "llama2": ModelConfig(
-        name="llama2",
+        name="llama2:7b",
         provider=ModelProvider.OLLAMA,
         endpoint="http://localhost:11434/api/generate",
         parameters={
@@ -80,7 +80,7 @@ MODELS = {
         supports_streaming=True
     ),
     "llama3": ModelConfig(
-        name="llama3",
+        name="llama3.1:8b",
         provider=ModelProvider.OLLAMA,
         endpoint="http://localhost:11434/api/generate",
         parameters={
@@ -101,7 +101,7 @@ MODELS = {
         supports_streaming=True
     ),
     "codellama": ModelConfig(
-        name="codellama",
+        name="codellama:latest",
         provider=ModelProvider.OLLAMA,
         endpoint="http://localhost:11434/api/generate",
         parameters={
