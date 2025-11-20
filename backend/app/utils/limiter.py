@@ -4,7 +4,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from .config import settings
+from ..config import settings
 
 # Custom key function to use User ID if available, otherwise IP
 def get_rate_limit_key(request: Request) -> str:

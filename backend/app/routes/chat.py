@@ -26,7 +26,7 @@ async def post_message(req: ChatRequest, request: Request, model: Optional[str] 
     conversation_id = req.conversation_id or f"conv_{int(time.time())}"
       
     # Prepare metadata with optional model selection
-    metadata = req.metadata or {}
+    metadata = req.context or {}
     if model:
         metadata["model"] = model
       
@@ -114,7 +114,7 @@ async def post_stream(req: ChatRequest, request: Request, model: Optional[str] =
     conversation_id = req.conversation_id or f"conv_{int(time.time())}"
       
     # Prepare metadata with optional model selection
-    metadata = req.metadata or {}
+    metadata = req.context or {}
     if model:
         metadata["model"] = model
       

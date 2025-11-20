@@ -6,7 +6,6 @@ from datetime import datetime
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.supabase_client import get_supabase_client
-from .orchestrator import orchestrator
 
 logger = logging.getLogger("pixelcraft.agents.lead")
 
@@ -36,6 +35,33 @@ TIMELINE_SCORES = {
     "6-12_months": 5,
     "unknown": 0,
 }
+
+def create_lead_qualification_agent() -> 'LeadQualificationAgent':
+    """Factory function to create a LeadQualificationAgent instance."""
+    config = BaseAgentConfig(
+        agent_id="lead_qualification",
+        name="Lead Qualification Specialist",
+        description="Expert system for scoring and qualifying leads",
+        temperature=0.3,
+        max_tokens=1500,
+        system_prompt="""You are PixelCraft's lead qualification specialist.
+        Analyze lead information to determine quality, potential value, and priority.
+        Focus on:
+        1. Budget alignment
+        2. Timeline feasibility
+        3. Project clarity
+        4. Strategic fit
+        
+        Provide analysis in JSON format.""",
+        capabilities=[
+            "Lead scoring",
+            "Budget analysis",
+            "Timeline assessment",
+            "Priority assignment"
+        ],
+        task_type="lead_qualification"
+    )
+    return LeadQualificationAgent(config)
 
 class LeadQualificationAgent(BaseAgent):
     """Agent for qualifying and scoring leads based on available information."""
@@ -196,6 +222,7 @@ class LeadQualificationAgent(BaseAgent):
             # If lead score is high, send message to appropriate agent for follow-up
             if final_score > 70:
                 target_agent = "web_development" if "web" in str(recommendations).lower() else "digital_marketing"
+                from .orchestrator import orchestrator
                 await orchestrator.send_agent_message(
                     workflow_execution_id or "",
                     self.config.agent_id,
@@ -210,7 +237,7 @@ class LeadQualificationAgent(BaseAgent):
             # Update lead score in Supabase
             try:
                 supabase = get_supabase_client()
-                await supabase.table("leads").update({
+                supabase.table("leads").update({
                     "lead_score": final_score,
                     "metadata": {
                         "last_analysis": final_analysis,
@@ -250,6 +277,7 @@ class LeadQualificationAgent(BaseAgent):
 
     async def handle_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
         """Handle incoming agent messages for lead qualification requests."""
+        from .orchestrator import orchestrator
         messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
         processed_responses = []
         for msg in messages:

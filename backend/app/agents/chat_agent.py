@@ -12,7 +12,6 @@ from pydantic import BaseModel
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
-from .orchestrator import orchestrator
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.chat")
@@ -193,8 +192,8 @@ class ChatAgent(BaseAgent):
                     temperature=self.config.temperature,
                     max_tokens=self.config.max_tokens
                 )
-                assistant_message = response['content']
-                model_used = response['model_used']
+                assistant_message = response
+                model_used = self.config.default_model # ModelManager doesn't return model name yet
             except Exception as e:
                 logger.error(f"ModelManager failed for chat generation: {e}")
                 # Fallback response on model failure
@@ -214,6 +213,7 @@ class ChatAgent(BaseAgent):
                 elif "lead" in (assistant_message + message).lower() or "qualification" in (assistant_message + message).lower():
                     target_agent = "lead_qualification"
                 if target_agent:
+                    from .orchestrator import orchestrator
                     conversation_context = context
                     await orchestrator.send_agent_message(
                         workflow_execution_id,
@@ -255,8 +255,8 @@ class ChatAgent(BaseAgent):
             }
 
             # Use upsert for conversation to handle existing conversations
-            await supabase.table("conversations").upsert(conversation_data).execute()
-            await supabase.table("messages").insert(message_data).execute()
+            supabase.table("conversations").upsert(conversation_data).execute()
+            supabase.table("messages").insert(message_data).execute()
 
             # Log the interaction
             await self._log_interaction(
@@ -293,6 +293,7 @@ class ChatAgent(BaseAgent):
 
     async def check_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
         """Check for incoming agent messages in the workflow."""
+        from .orchestrator import orchestrator
         messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
         # Process handoff messages
         for msg in messages:

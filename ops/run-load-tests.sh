@@ -18,7 +18,7 @@ echo "Duration: $RUN_TIME"
 # pip install locust
 
 # Run Locust in headless mode
-locust -f "$LOCUST_FILE" \
+python3 -m locust -f "$LOCUST_FILE" \
        --headless \
        --host "$HOST" \
        --users "$USERS" \

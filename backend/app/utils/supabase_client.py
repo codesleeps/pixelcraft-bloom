@@ -90,6 +90,23 @@ class WrappedSupabaseClient:
         return getattr(self._client, name)
 
 
+class DummySupabaseClient:
+    def table(self, *_args, **_kwargs):
+        class T:
+            def insert(self, *a, **k): return self
+            def select(self, *a, **k): return self
+            def eq(self, *a, **k): return self
+            def order(self, *a, **k): return self
+            def limit(self, *a, **k): return self
+            def offset(self, *a, **k): return self
+            def update(self, *a, **k): return self
+            def upsert(self, *a, **k): return self
+            def delete(self, *a, **k): return self
+            def in_(self, *a, **k): return self
+            def execute(self): return type("R", (), {"data": []})()
+        return T()
+    def rpc(self, *a, **k): return type("R", (), {"data": []})()
+
 @lru_cache()
 def get_supabase_client() -> Any:
     """Create and return a Supabase client using the service role key.
@@ -100,34 +117,14 @@ def get_supabase_client() -> Any:
         from supabase import create_client
     except Exception:
         logger.warning("supabase package not installed; returning a dummy client")
-        class Dummy:
-            def table(self, *_args, **_kwargs):
-                class T:
-                    def insert(self, *a, **k):
-                        return self
-                    def select(self, *a, **k):
-                        return self
-                    def eq(self, *a, **k):
-                        return self
-                    def order(self, *a, **k):
-                        return self
-                    def limit(self, *a, **k):
-                        return self
-                    def offset(self, *a, **k):
-                        return self
-                    def update(self, *a, **k):
-                        return self
-                    def execute(self):
-                        return type("R", (), {"data": []})()
-                return T()
-        return Dummy()
+        return DummySupabaseClient()
 
     supabase_url = settings.supabase.url if settings.supabase else None
     supabase_key = settings.supabase.key if settings.supabase else None
 
     if not supabase_url or not supabase_key:
         logger.warning("Supabase credentials not configured in settings; returning dummy client")
-        return get_supabase_client.__wrapped__()
+        return DummySupabaseClient()
 
     client = create_client(supabase_url, supabase_key)
     # Optionally test connection here

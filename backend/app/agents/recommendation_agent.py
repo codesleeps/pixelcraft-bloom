@@ -14,7 +14,6 @@ from collections import defaultdict
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.supabase_client import get_supabase_client
-from .orchestrator import orchestrator
 
 logger = logging.getLogger("pixelcraft.agents.recommendation")
 
@@ -192,6 +191,7 @@ class ServiceRecommendationAgent(BaseAgent):
 
     async def check_agent_messages(self, workflow_execution_id: str) -> List[Dict[str, Any]]:
         """Check for incoming agent messages and handle responses."""
+        from .orchestrator import orchestrator
         messages = await orchestrator.get_agent_messages(self.config.agent_id, workflow_execution_id)
         for msg in messages:
             if msg["message_type"] == "request" and "service_suggestions" in msg["content"]:

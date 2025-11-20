@@ -110,6 +110,9 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
 # Global audit logger instance
 audit_logger = AuditLogger(get_logger("pixelcraft.audit"))
 
+# Global default logger instance
+logger = get_logger()
+
 def log_with_context(logger: logging.Logger, level: int, message: str, **context):
     try:
         with sentry_sdk.configure_scope() as scope:

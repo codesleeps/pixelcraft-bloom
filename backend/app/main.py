@@ -26,7 +26,7 @@ from .models.manager import ModelManager
 from .routes.models import set_model_manager
 
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration, SentryAsgiMiddleware
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from .middleware.sentry_middleware import SentryContextMiddleware
 from .middleware.correlation import CorrelationIdMiddleware
@@ -90,8 +90,8 @@ def create_app() -> FastAPI:
     )
 
     # Add Sentry ASGI middleware after CORS
-    if settings.sentry:
-        app.add_middleware(SentryAsgiMiddleware)
+    # if settings.sentry:
+    #     app.add_middleware(SentryAsgiMiddleware)
 
     # Add custom Sentry context middleware
     if settings.sentry:

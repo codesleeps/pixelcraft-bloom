@@ -156,7 +156,7 @@ class BaseAgent:
                 "expires_at": expires_at.isoformat() if expires_at else None,
                 "created_at": datetime.utcnow().isoformat()
             }
-            await supabase.table("shared_memory").upsert(memory_entry, on_conflict="conversation_id,memory_key,scope").execute()
+            supabase.table("shared_memory").upsert(memory_entry, on_conflict="conversation_id,memory_key,scope").execute()
             self.logger.debug(f"Set shared memory for key '{key}' in conversation '{conversation_id}'")
         except Exception as e:
             self.logger.warning(f"Failed to set shared memory: {e}")
@@ -169,7 +169,7 @@ class BaseAgent:
             query = supabase.table("shared_memory").select("memory_value,access_count,expires_at").eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope)
             if workflow_execution_id:
                 query = query.eq("workflow_execution_id", workflow_execution_id)
-            result = await query.execute()
+            result = query.execute()
             if not result.data:
                 return None
             data = result.data[0]
@@ -180,7 +180,7 @@ class BaseAgent:
                     return None
             # Increment access count
             access_count = data.get("access_count", 0)
-            await supabase.table("shared_memory").update({"access_count": access_count + 1}).eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
+            supabase.table("shared_memory").update({"access_count": access_count + 1}).eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
             return data["memory_value"]
         except Exception as e:
             self.logger.warning(f"Failed to get shared memory: {e}")
@@ -194,7 +194,7 @@ class BaseAgent:
             query = supabase.table("shared_memory").select("memory_key").eq("conversation_id", conversation_id).eq("scope", scope)
             if workflow_execution_id:
                 query = query.eq("workflow_execution_id", workflow_execution_id)
-            result = await query.execute()
+            result = query.execute()
             return [row["memory_key"] for row in result.data]
         except Exception as e:
             self.logger.warning(f"Failed to list shared memory keys: {e}")
@@ -205,7 +205,7 @@ class BaseAgent:
         if not supabase:
             return
         try:
-            await supabase.table("shared_memory").delete().eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
+            supabase.table("shared_memory").delete().eq("conversation_id", conversation_id).eq("memory_key", key).eq("scope", scope).execute()
             self.logger.debug(f"Deleted shared memory for key '{key}' in conversation '{conversation_id}'")
         except Exception as e:
             self.logger.warning(f"Failed to delete shared memory: {e}")
@@ -285,7 +285,7 @@ class BaseAgent:
                 "created_at": datetime.utcnow().isoformat()
             }
 
-            await supabase.table("agent_logs").insert(log_entry).execute()
+            supabase.table("agent_logs").insert(log_entry).execute()
         except Exception as e:
             self.logger.error(f"Failed to log interaction: {e}")
 
@@ -313,7 +313,7 @@ class BaseAgent:
                 "created_at": datetime.utcnow().isoformat()
             }
 
-            await supabase.table("agent_logs").insert(log_entry).execute()
+            supabase.table("agent_logs").insert(log_entry).execute()
         except Exception as e:
             self.logger.warning(f"Failed to log tool execution: {e}")
 
