@@ -338,8 +338,6 @@ For manual testing of notifications (e.g., during development):
 
 There are several ways of editing your application.
 
-### Use Lovable
-
 Simply visit the [GitHub Project](https://github.com/codesleeps/pixelcraft-bloom) and start editing
 
 ### Use your preferred IDE
@@ -446,12 +444,6 @@ Recommended architecture for production:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/f1718176-4080-4bf5-9910-b3d5b66f3fb7) and click on Share -> Publish.
+Simply open [GitHub](https://github.com/codesleeps/pixelcraft-bloom/) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
