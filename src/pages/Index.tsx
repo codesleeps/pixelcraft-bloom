@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import PerformanceOptimizer from "@/components/PerformanceOptimizer";
 import { BackToTopButton } from "@/components/BackToTopButton";
+import { ChatWidget } from "@/components/ChatWidget";
 
 const Index = () => {
   const organizationSchema = {
@@ -65,6 +66,7 @@ const Index = () => {
       </main>
       <Footer />
       <BackToTopButton />
+      <ChatWidget />
     </>
   );
 };
