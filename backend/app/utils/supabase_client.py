@@ -126,7 +126,20 @@ def get_supabase_client() -> Any:
         logger.warning("Supabase credentials not configured in settings; returning dummy client")
         return DummySupabaseClient()
 
-    client = create_client(supabase_url, supabase_key)
+    # Coerce pydantic types (e.g. AnyHttpUrl) and SecretStr to plain strings expected by supabase client
+    try:
+        # handle SecretStr
+        if hasattr(supabase_key, "get_secret_value"):
+            key_val = supabase_key.get_secret_value()
+        else:
+            key_val = str(supabase_key)
+
+        url_val = str(supabase_url)
+    except Exception:
+        url_val = str(supabase_url)
+        key_val = str(supabase_key)
+
+    client = create_client(url_val, key_val)
     # Optionally test connection here
     logger.info("Supabase client initialized")
     return WrappedSupabaseClient(client)
