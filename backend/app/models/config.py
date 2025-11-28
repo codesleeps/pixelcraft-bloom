@@ -1,6 +1,11 @@
 from enum import Enum
 from typing import Dict, Optional, List
 from pydantic import BaseModel, Field
+import os
+
+# Use OLLAMA_HOST environment variable when available so endpoints work inside
+# Docker Compose networks (service hostname `ollama`). Fall back to localhost.
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
   
 class ModelProvider(str, Enum):
     OLLAMA = "ollama"
@@ -39,7 +44,7 @@ MODELS = {
     "mistral": ModelConfig(
         name="mistral:7b",
         provider=ModelProvider.OLLAMA,
-        endpoint="http://localhost:11434/api/generate",
+        endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
             "num_ctx": 4096,
             "num_thread": 4,
@@ -61,7 +66,7 @@ MODELS = {
     "llama2": ModelConfig(
         name="llama2:7b",
         provider=ModelProvider.OLLAMA,
-        endpoint="http://localhost:11434/api/generate",
+        endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
             "num_ctx": 4096,
             "num_thread": 4,
@@ -82,7 +87,7 @@ MODELS = {
     "llama3": ModelConfig(
         name="llama3.1:8b",
         provider=ModelProvider.OLLAMA,
-        endpoint="http://localhost:11434/api/generate",
+        endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
             "num_ctx": 8192,
             "num_thread": 4,
@@ -103,7 +108,7 @@ MODELS = {
     "codellama": ModelConfig(
         name="codellama:latest",
         provider=ModelProvider.OLLAMA,
-        endpoint="http://localhost:11434/api/generate",
+        endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
             "num_ctx": 4096,
             "num_thread": 4,
