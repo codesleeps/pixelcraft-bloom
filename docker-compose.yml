@@ -40,8 +40,9 @@ services:
     image: ollama/ollama:latest
     # Note: If an official Ollama Docker image isn't available for your setup,
     # run Ollama locally on the host (see README) and remove/disable this service.
+    # Host port remapped to 11435 to avoid conflict with a local Ollama instance
     ports:
-      - "11434:11434"
+      - "11435:11434"
     restart: unless-stopped
 
 volumes:
