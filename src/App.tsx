@@ -18,6 +18,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const LeadsList = lazy(() => import("./pages/LeadsList"));
 const LeadDetail = lazy(() => import("./pages/LeadDetail"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const PaymentsSuccess = lazy(() => import("./pages/PaymentsSuccess"));
 const PaymentsCancel = lazy(() => import("./pages/PaymentsCancel"));
 
@@ -83,7 +84,7 @@ const AppContent = () => {
       <Route path="/dashboard" element={<Suspense fallback={<LoadingFallback />}><ProtectedRoute allowedRoles={['admin', 'user']}><Dashboard /></ProtectedRoute></Suspense>} />
       <Route path="/dashboard/leads" element={<Suspense fallback={<LoadingFallback />}><ProtectedRoute allowedRoles={['admin', 'user']}><LeadsList /></ProtectedRoute></Suspense>} />
       <Route path="/dashboard/leads/:id" element={<Suspense fallback={<LoadingFallback />}><ProtectedRoute allowedRoles={['admin', 'user']}><LeadDetail /></ProtectedRoute></Suspense>} />
-      <Route path="/admin" element={<Suspense fallback={<LoadingFallback />}><ProtectedRoute allowedRoles={['admin']}><Dashboard /></ProtectedRoute></Suspense>} />
+      <Route path="/admin" element={<Suspense fallback={<LoadingFallback />}><ProtectedRoute allowedRoles={['admin']}><AdminPanel /></ProtectedRoute></Suspense>} />
       <Route path="/payments/success" element={<Suspense fallback={<LoadingFallback />}><PaymentsSuccess /></Suspense>} />
       <Route path="/payments/cancel" element={<Suspense fallback={<LoadingFallback />}><PaymentsCancel /></Suspense>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

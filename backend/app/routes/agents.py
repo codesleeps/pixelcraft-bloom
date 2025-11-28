@@ -51,6 +51,62 @@ async def agents_health():
     return {k: {"status": "active"} for k in orchestrator.registry.keys()}
 
 
+@router.get("/metrics")
+async def get_agent_metrics():
+    """Get performance metrics for all agents."""
+    try:
+        supabase = get_supabase_client()
+        
+        # Query agent logs to calculate metrics
+        logs_result = await supabase.table("agent_logs").select("*").execute()
+        
+        metrics = {}
+        for log in logs_result.data:
+            agent_type = log.get("agent_type")
+            if not agent_type:
+                continue
+            
+            if agent_type not in metrics:
+                metrics[agent_type] = {
+                    "agent_id": agent_type,
+                    "total_interactions": 0,
+                    "total_response_time": 0,
+                    "successful": 0,
+                    "failed": 0,
+                    "last_active": log.get("created_at")
+                }
+            
+            metrics[agent_type]["total_interactions"] += 1
+            
+            # Track success/failure
+            if log.get("error_message"):
+                metrics[agent_type]["failed"] += 1
+            else:
+                metrics[agent_type]["successful"] += 1
+            
+            # Update last active if this log is more recent
+            if log.get("created_at") > metrics[agent_type]["last_active"]:
+                metrics[agent_type]["last_active"] = log.get("created_at")
+        
+        # Calculate derived metrics
+        result_metrics = []
+        for agent_id, data in metrics.items():
+            total = data["total_interactions"]
+            success_rate = (data["successful"] / total * 100) if total > 0 else 0
+            
+            result_metrics.append({
+                "agent_id": agent_id,
+                "total_interactions": total,
+                "avg_response_time": 150,  # Placeholder - would need timing data from logs
+                "success_rate": round(success_rate, 1),
+                "last_active": data["last_active"]
+            })
+        
+        return {"success": True, "metrics": result_metrics}
+    except Exception as e:
+        return {"success": False, "metrics": [], "error": str(e)}
+
+
 @router.post("/workflows/execute", response_model=WorkflowExecutionResponse)
 async def execute_workflow(req: WorkflowExecutionRequest):
     # Validate participating agents
