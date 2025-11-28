@@ -398,6 +398,65 @@ Backend:
 Recommended architecture for production:
 
 - Frontend (static site and SPA) on Vercel
+
+## Docker
+
+This repository includes Docker support for the FastAPI backend. Below are example commands for building and running the backend image in development and production contexts.
+
+Build the development image (uses `--reload` by default):
+
+```bash
+docker build -t pixelcraft-bloom-backend:dev -f backend/Dockerfile .
+```
+
+Run the development container (reads `.env` from repository root):
+
+```bash
+docker run --rm -p 8000:8000 --env-file .env pixelcraft-bloom-backend:dev
+```
+
+Run without `--reload` for production (override CMD):
+
+```bash
+docker run --rm -p 8000:8000 --env-file .env pixelcraft-bloom-backend:dev uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+If you use Docker Compose, point the backend service's environment to the values in `.env` and ensure services named `db`, `redis`, and `ollama` are reachable on the network (the included `.env` template uses those hostnames).
+
+Important files added for Docker support:
+
+- `backend/Dockerfile` — multi-stage Dockerfile for the FastAPI backend
+- `backend/.dockerignore` — backend-specific ignores
+- `.dockerignore` — root-level ignores for the repository
+- `.env` — Docker-friendly environment template (copy/rename before use)
+
+### Docker Compose (local development)
+
+A `docker-compose.yml` is provided at the repository root to wire up a simple local development environment with Postgres, Redis, Ollama and the backend service.
+
+Bring the stack up in the background:
+
+```bash
+docker compose up -d
+```
+
+Tail backend logs:
+
+```bash
+docker compose logs -f backend
+```
+
+Stop and remove resources:
+
+```bash
+docker compose down
+```
+
+Notes:
+- The `ollama` service in `docker-compose.yml` references `ollama/ollama:latest`. If you run Ollama locally (recommended for some OS installs) you can remove or disable the `ollama` service and set `OLLAMA_HOST` in `.env` to `http://host.docker.internal:11434` (or the host network address) depending on your OS.
+- The `backend` service in the compose file mounts `./backend:/app` to enable live development. For production image testing remove the volume mount or use the `backend/Dockerfile.prod` image.
+
+
 - Backend (Python API + WebSocket) on a Hostinger VPS (or Render)
 
 ### Frontend on Vercel

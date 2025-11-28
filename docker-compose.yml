@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: pixelcraft-bloom-backend:dev
+    env_file:
+      - .env
+      - backend/.env.example
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+
+  ollama:
+    image: ollama/ollama:latest
+    # Note: If an official Ollama Docker image isn't available for your setup,
+    # run Ollama locally on the host (see README) and remove/disable this service.
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+
+volumes:
+  db_data:

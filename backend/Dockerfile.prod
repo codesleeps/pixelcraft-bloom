@@ -1,0 +1,54 @@
+# Production-ready Dockerfile for FastAPI backend
+# Similar multi-stage build as `backend/Dockerfile`, but optimized for production
+FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       gcc \
+       build-essential \
+       libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY backend/requirements.txt ./requirements.txt
+
+RUN python -m pip install --upgrade pip setuptools wheel \
+    && pip wheel --no-cache-dir --no-deps -r requirements.txt -w /wheels
+
+
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Create a non-root user for security
+RUN groupadd --system appuser && useradd --system --gid appuser --create-home --home-dir /home/appuser appuser
+
+WORKDIR /app
+
+COPY --from=builder /wheels /wheels
+COPY backend/requirements.txt ./requirements.txt
+
+RUN python -m pip install --upgrade pip \
+    && pip install --no-cache-dir /wheels/* \
+    && pip install --no-cache-dir "pydantic[email]"
+
+COPY backend/ .
+
+RUN chown -R appuser:appuser /app
+
+EXPOSE 8000
+
+USER appuser
+
+# Production command: no --reload; use host 0.0.0.0
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Healthcheck using Python's stdlib so no extra deps are required
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD python -c "import sys,urllib.request as u; \
+try:\n+  u.urlopen('http://127.0.0.1:8000/');\n+except Exception as e:\n  sys.exit(1)"
