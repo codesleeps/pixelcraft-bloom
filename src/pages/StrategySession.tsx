@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
 import { BackToTopButton } from "@/components/BackToTopButton";
+import { AppointmentCalendar } from "@/components/AppointmentCalendar";
 import { 
   CheckCircle,
   Clock, 
@@ -18,10 +19,12 @@ import {
   Star,
   Phone,
   Video,
-  MessageSquare
+  MessageSquare,
+  Calendar as CalendarIcon
 } from "lucide-react";
 
 const StrategySession = () => {
+  const [step, setStep] = useState<'form' | 'calendar'>('form');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,6 +38,7 @@ const StrategySession = () => {
     timeline: '',
     preferredContact: 'phone'
   });
+  const [selectedSlot, setSelectedSlot] = useState<{ startTime: string; endTime: string } | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -43,18 +47,62 @@ const StrategySession = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Move to calendar step
+    setStep('calendar');
+  };
+
+  const handleSlotSelected = (startTime: string, endTime: string) => {
+    setSelectedSlot({ startTime, endTime });
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!selectedSlot) {
+      toast({
+        title: "Please select a time slot",
+        description: "Choose an available time for your appointment",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/appointments/book`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            company: formData.company,
+            start_time: selectedSlot.startTime,
+            end_time: selectedSlot.endTime,
+            appointment_type: 'strategy_session',
+            notes: `Goals: ${formData.goals}\nCurrent Marketing: ${formData.currentMarketing}\nBudget: ${formData.budget}\nTimeline: ${formData.timeline}\nPreferred Contact: ${formData.preferredContact}`,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to book appointment');
+      }
+
+      const result = await response.json();
+
       toast({
-        title: "Strategy Session Requested!",
-        description: "We'll contact you within 24 hours to schedule your free consultation.",
+        title: "Appointment Booked Successfully!",
+        description: "Check your email for confirmation details and calendar invitation.",
       });
-      setIsSubmitting(false);
-      // Reset form
+
+      // Reset form and go back to step 1
       setFormData({
         firstName: '',
         lastName: '',
@@ -68,7 +116,19 @@ const StrategySession = () => {
         timeline: '',
         preferredContact: 'phone'
       });
-    }, 1000);
+      setSelectedSlot(undefined);
+      setStep('form');
+
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast({
+        title: "Booking Failed",
+        description: "There was an error booking your appointment. Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const benefits = [
@@ -249,19 +309,20 @@ const StrategySession = () => {
               </section>
             </div>
 
-            {/* Right Column - Form */}
+            {/* Right Column - Form or Calendar */}
             <div className="lg:sticky lg:top-8">
-              <Card className="shadow-glow">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-center">
-                    Book Your Free Session
-                  </CardTitle>
-                  <p className="text-center text-gray-600">
-                    Fill out the form below and we'll contact you within 24 hours
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+              {step === 'form' ? (
+                <Card className="shadow-glow">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-bold text-center">
+                      Book Your Free Session
+                    </CardTitle>
+                    <p className="text-center text-gray-600">
+                      Step 1: Tell us about yourself
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleFormSubmit} className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <Input
                         name="firstName"
@@ -396,23 +457,71 @@ const StrategySession = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      type="submit" 
-                      variant="premium" 
-                      size="lg" 
-                      className="w-full text-lg py-6 h-auto"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Scheduling..." : "Get My Free Strategy Session"}
-                    </Button>
+                      <Button 
+                        type="submit" 
+                        variant="premium" 
+                        size="lg" 
+                        className="w-full text-lg py-6 h-auto"
+                      >
+                        Continue to Select Time
+                        <CalendarIcon className="ml-2 h-5 w-5" />
+                      </Button>
 
-                    <p className="text-xs text-center text-gray-500">
-                      <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
-                      100% Free • No Obligation • Expert Analysis Included
-                    </p>
-                  </form>
-                </CardContent>
-              </Card>
+                      <p className="text-xs text-center text-gray-500">
+                        <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
+                        100% Free • No Obligation • Expert Analysis Included
+                      </p>
+                    </form>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  <Card className="shadow-glow">
+                    <CardHeader>
+                      <CardTitle className="text-2xl font-bold text-center">
+                        Select Your Time
+                      </CardTitle>
+                      <p className="text-center text-gray-600">
+                        Step 2: Choose your preferred appointment time
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <AppointmentCalendar
+                        appointmentType="strategy_session"
+                        onSlotSelected={handleSlotSelected}
+                        selectedSlot={selectedSlot}
+                      />
+
+                      <div className="flex gap-3 mt-6">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setStep('form')}
+                          className="flex-1"
+                        >
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back
+                        </Button>
+                        <Button 
+                          variant="premium"
+                          onClick={handleFinalSubmit}
+                          disabled={!selectedSlot || isSubmitting}
+                          className="flex-1"
+                        >
+                          {isSubmitting ? "Booking..." : "Confirm Appointment"}
+                          <CheckCircle className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {selectedSlot && (
+                        <p className="text-xs text-center text-gray-500 mt-4">
+                          <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
+                          You'll receive a confirmation email with calendar invite
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </div>
         </main>
