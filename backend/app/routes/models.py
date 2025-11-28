@@ -6,6 +6,10 @@ from ..models.manager import ModelManager
 from ..models.config import MODELS, MODEL_PRIORITIES
 from ..utils.limiter import limiter
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # TODO: Implement proper authentication dependency
 # from ..dependencies import get_current_user
 
@@ -16,9 +20,10 @@ def set_model_manager(mm: ModelManager):
     global model_manager_instance
     model_manager_instance = mm
 
-def get_model_manager() -> ModelManager:
+def get_model_manager() -> Optional[ModelManager]:
     if model_manager_instance is None:
-        raise HTTPException(status_code=500, detail="ModelManager not initialized")
+        logger.warning("ModelManager not initialized")
+        return None
     return model_manager_instance
 
 # Pydantic models for API requests/responses
@@ -103,8 +108,10 @@ router = APIRouter()
 # For now, implement basic rate limiting per endpoint if needed
 
 @router.get("/models", response_model=ModelListResponse)
-async def list_models(mm: ModelManager = Depends(get_model_manager)):
+async def list_models(mm: Optional[ModelManager] = Depends(get_model_manager)):
     """List all available models with health status"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     models = []
     for name, config in MODELS.items():
         health = mm._health_checks.get(name, False)
@@ -118,8 +125,10 @@ async def list_models(mm: ModelManager = Depends(get_model_manager)):
     return ModelListResponse(models=models)
 
 @router.get("/models/{model_name}", response_model=ModelInfo)
-async def get_model(model_name: str, mm: ModelManager = Depends(get_model_manager)):
+async def get_model(model_name: str, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Get specific model details and metrics"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     if model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
@@ -136,8 +145,10 @@ async def get_model(model_name: str, mm: ModelManager = Depends(get_model_manage
 
 @router.post("/models/test", response_model=ModelTestResponse)
 @limiter.limit("10/minute")
-async def test_model(request: Request, request_body: ModelTestRequest, mm: ModelManager = Depends(get_model_manager)):
+async def test_model(request: Request, request_body: ModelTestRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Test a model with sample input"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
@@ -164,8 +175,10 @@ async def test_model(request: Request, request_body: ModelTestRequest, mm: Model
 
 @router.post("/models/generate", response_model=ModelGenerateResponse)
 @limiter.limit("10/minute")
-async def generate_completion(request: Request, request_body: ModelGenerateRequest, mm: ModelManager = Depends(get_model_manager)):
+async def generate_completion(request: Request, request_body: ModelGenerateRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Generate completion using specified model"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
@@ -193,8 +206,10 @@ async def generate_completion(request: Request, request_body: ModelGenerateReque
 
 @router.post("/models/chat", response_model=ModelChatResponse)
 @limiter.limit("10/minute")
-async def chat_completion(request: Request, request_body: ModelChatRequest, mm: ModelManager = Depends(get_model_manager)):
+async def chat_completion(request: Request, request_body: ModelChatRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Chat completion using specified model"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     if request_body.model_name not in MODELS:
         raise HTTPException(status_code=404, detail="Model not found")
     
@@ -220,8 +235,10 @@ async def chat_completion(request: Request, request_body: ModelChatRequest, mm: 
         raise HTTPException(status_code=500, detail=f"Chat completion failed: {str(e)}")
 
 @router.get("/models/health", response_model=ModelHealthResponse)
-async def get_model_health(mm: ModelManager = Depends(get_model_manager)):
+async def get_model_health(mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Overall model system health check"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     overall_health = all(mm._health_checks.values())
     return ModelHealthResponse(
         overall_health=overall_health,
@@ -229,13 +246,17 @@ async def get_model_health(mm: ModelManager = Depends(get_model_manager)):
     )
 
 @router.get("/models/metrics", response_model=ModelMetricsResponse)
-async def get_model_metrics(mm: ModelManager = Depends(get_model_manager)):
+async def get_model_metrics(mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Get aggregated model performance metrics"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     return ModelMetricsResponse(metrics=mm.metrics)
 
 @router.post("/models/warmup", response_model=ModelWarmupResponse)
-async def warmup_models(request: ModelWarmupRequest, mm: ModelManager = Depends(get_model_manager)):
+async def warmup_models(request: ModelWarmupRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Warm up models on demand"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     models_to_warm = request.model_names or list(MODELS.keys())
     warmed_up = []
     
@@ -251,8 +272,10 @@ async def warmup_models(request: ModelWarmupRequest, mm: ModelManager = Depends(
     return ModelWarmupResponse(warmed_up=warmed_up)
 
 @router.get("/models/tasks/{task_type}", response_model=TaskModelsResponse)
-async def get_recommended_models(task_type: str, mm: ModelManager = Depends(get_model_manager)):
+async def get_recommended_models(task_type: str, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Get recommended models for task type"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     if task_type not in MODEL_PRIORITIES:
         raise HTTPException(status_code=404, detail="Task type not found")
     
@@ -268,8 +291,10 @@ async def get_recommended_models(task_type: str, mm: ModelManager = Depends(get_
     )
 
 @router.post("/models/benchmark", response_model=ModelBenchmarkResponse)
-async def benchmark_models(request: ModelBenchmarkRequest, mm: ModelManager = Depends(get_model_manager)):
+async def benchmark_models(request: ModelBenchmarkRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Run benchmark tests on models"""
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
     results = []
     
     for model_name in request.model_names:

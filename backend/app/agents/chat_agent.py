@@ -13,6 +13,7 @@ import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.supabase_client import get_supabase_client
+from ..models.manager import ModelManager
 
 logger = logging.getLogger("pixelcraft.agents.chat")
 
@@ -117,8 +118,10 @@ async def check_availability(date: str, service_type: str) -> List[AppointmentSl
     ]
     return mock_slots
 
-def create_chat_agent() -> 'ChatAgent':
+def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgent':
     """Factory function to create a ChatAgent instance with default configuration."""
+    if model_manager is None:
+        logger.warning("ModelManager not provided to ChatAgent, will use fallback responses")
     config = BaseAgentConfig(
         agent_id="pixelcraft_chat",
         name="PixelCraft Chat Assistant",
@@ -153,7 +156,8 @@ def create_chat_agent() -> 'ChatAgent':
                 required_params=["date"]
             )
         ],
-        task_type="chat"
+        task_type="chat",
+        model_manager=model_manager
     )
     return ChatAgent(config)
 
@@ -197,7 +201,7 @@ class ChatAgent(BaseAgent):
             except Exception as e:
                 logger.error(f"ModelManager failed for chat generation: {e}")
                 # Fallback response on model failure
-                assistant_message = "I'm sorry, I'm currently experiencing technical difficulties. Please try again later or contact our support team."
+                assistant_message = "I apologize, but I'm currently unable to process your request due to AI model unavailability. Please try again later or contact support."
                 model_used = None
 
             # Check if specialist help is needed

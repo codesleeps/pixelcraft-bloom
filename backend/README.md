@@ -4,7 +4,102 @@ This document describes the REST API endpoints, WebSocket channels and authentic
 
 ---
 
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-repo/pixelcraft-bloom.git
+   cd pixelcraft-bloom/backend
+   ```
+
+2. Install Python dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Set up environment variables by copying `.env.example` to `.env` and filling in the required values (see Environment Variables section below).
+
+4. Run the application:
+   ```
+   python main.py
+   ```
+
+## AI Model Setup
+
+The backend uses Ollama for local AI model inference, with HuggingFace as an optional fallback when Ollama is unavailable. Follow these steps to set up AI functionality.
+
+### Installing Ollama
+
+1. Download and install Ollama from the official website: [https://ollama.ai](https://ollama.ai).
+2. Follow the platform-specific installation instructions for your operating system (Windows, macOS, or Linux).
+
+### Pulling Required Models
+
+Pull the necessary models for the agents to function properly:
+
+```
+ollama pull llama3.1:8b
+ollama pull mistral:7b
+ollama pull codellama:latest
+```
+
+These models are used by various agents (e.g., ChatAgent, LeadQualificationAgent) for generating responses and analyses.
+
+### Verifying Ollama Setup
+
+1. Start Ollama (if not already running):
+   ```
+   ollama serve
+   ```
+
+2. Verify Ollama is running and models are available:
+   ```
+   curl http://localhost:11434/api/tags
+   ```
+   This should return a JSON response listing the pulled models.
+
+### Configuring Environment Variables
+
+Update your `.env` file with Ollama settings (refer to `.env.example` for details):
+
+- `OLLAMA_HOST`: URL where Ollama is running (default: `http://localhost:11434`).
+- `OLLAMA_MODEL`: Default model to use (default: `llama3`).
+- `OLLAMA_TEMPERATURE`: Generation temperature (default: `0.7`).
+- `OLLAMA_KEEP_ALIVE`: Keep-alive duration (default: `10m`).
+
+Example:
+```
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=llama3.1:8b
+OLLAMA_TEMPERATURE=0.7
+OLLAMA_KEEP_ALIVE=10m
+```
+
+### Model Fallback Behavior
+
+If Ollama is unavailable (e.g., not running or models not pulled), the system automatically falls back to HuggingFace models for inference. To enable this:
+
+1. Obtain a HuggingFace API key from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+2. Set the `HUGGINGFACE_API_KEY` in your `.env` file:
+   ```
+   HUGGINGFACE_API_KEY=your-huggingface-api-key-here
+   ```
+
+Fallback occurs seamlessly in the ModelManager, logging warnings when switching. Agents will use fallback responses if both Ollama and HuggingFace fail.
+
+### Troubleshooting Common Ollama Issues
+
+- **Ollama not running**: Ensure Ollama is started with `ollama serve`. Check if port 11434 is in use or blocked by firewall.
+- **Models not found**: Confirm models are pulled using `ollama list`. If missing, re-run the pull commands above.
+- **Connection timeout errors**: Verify `OLLAMA_HOST` is correct and Ollama is accessible. Increase timeout settings in config if needed.
+- **Performance issues**: Ensure sufficient RAM/CPU for model inference. Use smaller models (e.g., `llama3:8b` instead of `llama3.1:8b`) if resources are limited.
+- **General debugging**: Check Ollama logs or run `ollama --help` for more options. Restart Ollama after configuration changes.
+
+---
+
 ## Table of Contents
+- Installation
+- AI Model Setup
 - REST API
   - Agents
     - POST /api/agents/invoke

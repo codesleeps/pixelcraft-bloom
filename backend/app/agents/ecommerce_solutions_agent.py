@@ -11,6 +11,7 @@ import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.supabase_client import get_supabase_client
+from ..models.manager import ModelManager
 
 logger = logging.getLogger("pixelcraft.agents.ecommerce")
 
@@ -93,7 +94,7 @@ async def estimate_ecommerce_project(products: str, monthly_sales: str, features
         "monthly_maintenance": f"${estimated_cost * 0.1:,.0f}"
     }
 
-def create_ecommerce_solutions_agent() -> 'EcommerceSolutionsAgent':
+def create_ecommerce_solutions_agent(model_manager: Optional[ModelManager] = None) -> 'EcommerceSolutionsAgent':
     """Factory function to create an EcommerceSolutionsAgent instance."""
     config = BaseAgentConfig(
         agent_id="ecommerce_solutions",
@@ -138,7 +139,8 @@ def create_ecommerce_solutions_agent() -> 'EcommerceSolutionsAgent':
                 required_params=["products", "monthly_sales"]
             )
         ],
-        task_type="ecommerce_solutions"
+        task_type="ecommerce_solutions",
+        model_manager=model_manager
     )
     return EcommerceSolutionsAgent(config)
 

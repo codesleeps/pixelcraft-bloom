@@ -11,6 +11,7 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
+from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, create_calendar_event
 
@@ -212,7 +213,7 @@ async def schedule_technical_consultation(client_email: str, client_name: str, p
         "calendar_status": "scheduled" if event_id else "failed"
     }
 
-def create_web_development_agent() -> 'WebDevelopmentAgent':
+def create_web_development_agent(model_manager: Optional[ModelManager] = None) -> 'WebDevelopmentAgent':
     """Factory function to create a WebDevelopmentAgent instance."""
     config = BaseAgentConfig(
         agent_id="web_development",
@@ -272,7 +273,8 @@ def create_web_development_agent() -> 'WebDevelopmentAgent':
                 required_params=["client_email", "client_name", "preferred_date", "project_type"]
             )
         ],
-        task_type="web_development"
+        task_type="web_development",
+        model_manager=model_manager
     )
     return WebDevelopmentAgent(config)
 

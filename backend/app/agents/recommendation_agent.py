@@ -13,6 +13,7 @@ import logging
 from collections import defaultdict
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
+from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.recommendation")
@@ -51,7 +52,7 @@ SERVICE_KEYWORDS = {
     ]
 }
 
-def create_recommendation_agent() -> 'ServiceRecommendationAgent':
+def create_recommendation_agent(model_manager: Optional[ModelManager] = None) -> 'ServiceRecommendationAgent':
     """Factory function to create a ServiceRecommendationAgent instance."""
     config = BaseAgentConfig(
         agent_id="service_recommendation",
@@ -89,7 +90,8 @@ def create_recommendation_agent() -> 'ServiceRecommendationAgent':
             "Impact estimation",
             "Integration planning"
         ],
-        task_type="service_recommendation"
+        task_type="service_recommendation",
+        model_manager=model_manager
     )
     return ServiceRecommendationAgent(config)
 

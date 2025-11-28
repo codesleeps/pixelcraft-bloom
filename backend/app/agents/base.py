@@ -319,10 +319,16 @@ class BaseAgent:
 
     async def _generate_with_model(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> str:
         """Generate response using ModelManager with automatic model selection and fallback."""
+        if self.model_manager is None:
+            self.logger.warning(f"ModelManager not available for agent {self.config.agent_id}, returning fallback response")
+            return "I apologize, but I'm currently unable to process your request due to AI model unavailability. Please try again later or contact support."
         return await self.model_manager.generate(prompt, self.config.task_type, system_prompt, **kwargs)
 
     async def _chat_with_model(self, messages: List[Dict[str, str]], **kwargs) -> str:
         """Chat completion using ModelManager with automatic model selection and fallback."""
+        if self.model_manager is None:
+            self.logger.warning(f"ModelManager not available for agent {self.config.agent_id}, returning fallback response")
+            return "I apologize, but I'm currently unable to process your request due to AI model unavailability. Please try again later or contact support."
         response = await self.model_manager.chat(messages, self.config.task_type, **kwargs)
         return response["message"]["content"]
 

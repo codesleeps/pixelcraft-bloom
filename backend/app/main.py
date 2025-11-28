@@ -1,6 +1,7 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 
 import time
 from .config import settings
@@ -41,6 +42,9 @@ from fastapi import Request, Depends
 from .config import settings, get_settings
 
 logger = logging.getLogger("pixelcraft.backend")
+
+# Global ModelManager instance
+model_manager_instance: Optional[ModelManager] = None
 
 
 def create_app() -> FastAPI:
@@ -114,15 +118,6 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info("Starting PixelCraft AI Backend (env=%s)", settings.app_env)
-        
-        # Initialize Agents
-        from .agents.orchestrator import initialize_agents
-        try:
-            initialize_agents()
-            logger.info("Agents initialized successfully")
-        except Exception as e:
-            logger.exception("Failed to initialize agents: %s", e)
-
 
         # Initialize and validate Ollama
         try:
@@ -168,13 +163,25 @@ def create_app() -> FastAPI:
             logger.info("ModelManager initialized, available models: %s", list(model_manager_instance._health_checks.keys()))
         except Exception as exc:
             logger.exception("ModelManager initialization error: %s", exc)
+            model_manager_instance = None  # Ensure it's None on failure
+
+        # Initialize Agents (only if ModelManager succeeded)
+        if model_manager_instance is not None:
+            from .agents.orchestrator import initialize_agents
+            try:
+                initialize_agents()
+                logger.info("Agents initialized successfully")
+            except Exception as e:
+                logger.exception("Failed to initialize agents: %s", e)
+        else:
+            logger.warning("Skipping agent initialization due to ModelManager failure")
 
         # Register Health Checks
         health_service.register_check("supabase", test_supabase_connection, critical=True)
         health_service.register_check("redis", test_redis_connection, critical=True)
         health_service.register_check("ollama", test_ollama_connection, critical=True)
         health_service.register_check("external_services", test_external_services, critical=False)
-        
+
         # Register ModelManager check if initialized
         if model_manager_instance:
              async def check_models():

@@ -10,6 +10,7 @@ import json
 import logging
   
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
+from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
   
 logger = logging.getLogger("pixelcraft.agents.brand_design")
@@ -93,7 +94,7 @@ async def analyze_brand_needs(industry: str, target_audience: str, current_brand
         ]
     }
   
-def create_brand_design_agent() -> 'BrandDesignAgent':
+def create_brand_design_agent(model_manager: Optional[ModelManager] = None) -> 'BrandDesignAgent':
     """Factory function to create a BrandDesignAgent instance."""
     config = BaseAgentConfig(
         agent_id="brand_design",
@@ -139,7 +140,8 @@ def create_brand_design_agent() -> 'BrandDesignAgent':
                 required_params=["industry", "target_audience"]
             )
         ],
-        task_type="brand_design"
+        task_type="brand_design",
+        model_manager=model_manager
     )
     return BrandDesignAgent(config)
   

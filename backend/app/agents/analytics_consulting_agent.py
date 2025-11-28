@@ -10,6 +10,7 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
+from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.analytics")
@@ -92,7 +93,7 @@ async def analyze_analytics_needs(goals: str, current_tools: str, budget: str, d
         "implementation_phases": ["Setup", "Data Collection", "Analysis", "Optimization"]
     }
 
-def create_analytics_consulting_agent() -> 'AnalyticsConsultingAgent':
+def create_analytics_consulting_agent(model_manager: Optional[ModelManager] = None) -> 'AnalyticsConsultingAgent':
     """Factory function to create an AnalyticsConsultingAgent instance."""
     config = BaseAgentConfig(
         agent_id="analytics_consulting",
@@ -138,7 +139,8 @@ def create_analytics_consulting_agent() -> 'AnalyticsConsultingAgent':
                 required_params=["goals", "current_tools"]
             )
         ],
-        task_type="analytics_consulting"
+        task_type="analytics_consulting",
+        model_manager=model_manager
     )
     return AnalyticsConsultingAgent(config)
 

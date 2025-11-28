@@ -137,11 +137,6 @@ class ModelManager:
         **kwargs
     ) -> str:
         """Generate a response using the appropriate model with caching, failover, and metrics"""
-        # Cache key will be set per model in the loop below
-        cached = self._get_cached_response(cache_key)
-        if cached:
-            return cached
-
         async with self.rate_limiter:
             models = self.get_available_models(task_type)
             if not models:

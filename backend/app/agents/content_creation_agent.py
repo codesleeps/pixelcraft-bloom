@@ -10,6 +10,7 @@ import json
 import logging
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
+from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
 logger = logging.getLogger("pixelcraft.agents.content_creation")
@@ -88,7 +89,7 @@ async def plan_content_strategy(goals: str, audience: str, channels: str, budget
         "key_metrics": ["engagement_rate", "conversion_rate", "lead_quality", "brand_sentiment"]
     }
 
-def create_content_creation_agent() -> 'ContentCreationAgent':
+def create_content_creation_agent(model_manager: Optional[ModelManager] = None) -> 'ContentCreationAgent':
     """Factory function to create a ContentCreationAgent instance."""
     config = BaseAgentConfig(
         agent_id="content_creation",
@@ -134,7 +135,8 @@ def create_content_creation_agent() -> 'ContentCreationAgent':
                 required_params=["goals", "audience"]
             )
         ],
-        task_type="content_creation"
+        task_type="content_creation",
+        model_manager=model_manager
     )
     return ContentCreationAgent(config)
 

@@ -6,6 +6,7 @@ from datetime import datetime
 
 from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.supabase_client import get_supabase_client
+from ..models.manager import ModelManager
 
 logger = logging.getLogger("pixelcraft.agents.lead")
 
@@ -36,7 +37,7 @@ TIMELINE_SCORES = {
     "unknown": 0,
 }
 
-def create_lead_qualification_agent() -> 'LeadQualificationAgent':
+def create_lead_qualification_agent(model_manager: Optional[ModelManager] = None) -> 'LeadQualificationAgent':
     """Factory function to create a LeadQualificationAgent instance."""
     config = BaseAgentConfig(
         agent_id="lead_qualification",
@@ -59,7 +60,8 @@ def create_lead_qualification_agent() -> 'LeadQualificationAgent':
             "Timeline assessment",
             "Priority assignment"
         ],
-        task_type="lead_qualification"
+        task_type="lead_qualification",
+        model_manager=model_manager
     )
     return LeadQualificationAgent(config)
 
@@ -117,6 +119,18 @@ class LeadQualificationAgent(BaseAgent):
 
     async def _get_ai_analysis(self, lead_data: Dict[str, Any], conversation_history: Optional[List[Dict]] = None, shared_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Get AI analysis of the lead using ModelManager with automatic fallback and performance tracking."""
+        if self.model_manager is None:
+            logger.warning("ModelManager not available, returning fallback analysis")
+            return {
+                "score": 50,  # Neutral score
+                "confidence": 30,  # Low confidence due to error
+                "reasoning": "Fallback analysis due to AI processing error",
+                "recommended_services": lead_data.get("services_interested", []),
+                "key_insights": ["Automated analysis unavailable"],
+                "suggested_actions": ["Manual review required"],
+                "priority": "medium",
+                "estimated_value": 5000  # Conservative estimate
+            }
         try:
             # Prepare input for AI analysis, incorporating shared context
             recommendations = shared_context.get("recommendations", {}) if shared_context else {}
@@ -160,7 +174,7 @@ class LeadQualificationAgent(BaseAgent):
             return analysis
 
         except Exception as e:
-            logger.error(f"AI analysis failed with ModelManager: {e}")
+            logger.error(f"AI analysis failed: {e}. This may indicate model unavailability, network issues, or other processing errors.")
             # Return conservative fallback analysis (ModelManager handles model fallback internally)
             return {
                 "score": 50,  # Neutral score
