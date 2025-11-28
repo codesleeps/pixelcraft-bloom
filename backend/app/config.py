@@ -189,6 +189,16 @@ def get_settings() -> AppConfig:
             enable_tracing=environ.get("SENTRY_ENABLE_TRACING", "true").lower() == "true"
         )
 
+    # Support overriding nested Ollama config via environment variable OLLAMA_HOST
+    # (pydantic nested BaseSettings don't automatically map simple env names).
+    ollama_host = environ.get("OLLAMA_HOST")
+    if ollama_host:
+        try:
+            settings.ollama.host = ollama_host
+        except Exception:
+            # Fallback to string assignment if pydantic types raise
+            settings.ollama.host = str(ollama_host)
+
     return settings
 
 
