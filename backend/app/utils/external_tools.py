@@ -325,6 +325,24 @@ async def update_calendar_event(event_id: str, updates: Dict[str, Any]) -> Dict[
     except Exception as e:
         logger.error(f"Error updating calendar event: {e}")
         return {"success": False, "data": {}, "error": str(e)}
+
+
+async def cancel_calendar_event(event_id: str) -> Dict[str, Any]:
+    """Cancel (delete) a calendar event."""
+    if not settings.calendar:
+        # Mock response for graceful fallback
+        return {"success": True, "data": {"mock": True, "event_id": event_id, "status": "mock_cancelled"}, "error": ""}
+
+    url = f"https://www.googleapis.com/calendar/v3/calendars/{settings.calendar.calendar_id}/events/{event_id}"
+    headers = {"Authorization": f"Bearer {settings.calendar.api_key}"}
+
+    try:
+        # DELETE request returns 204 No Content on success
+        await _make_api_request("DELETE", url, headers)
+        return {"success": True, "data": {"event_id": event_id, "status": "cancelled"}, "error": ""}
+    except Exception as e:
+        logger.error(f"Error cancelling calendar event: {e}")
+        return {"success": False, "data": {}, "error": str(e)}
   
   
 async def test_external_services() -> Dict[str, Any]:

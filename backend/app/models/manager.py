@@ -44,7 +44,7 @@ class ModelManager:
         for model_name, config in MODELS.items():
             try:
                 if config.provider == ModelProvider.OLLAMA:
-                    self._health_checks[model_name] = await self.ollama_client.is_ready(model_name)
+                    self._health_checks[model_name] = await self.ollama_client.is_ready(config.name)
                 else:  # HuggingFace
                     if not self._hf_api_key:
                         self._health_checks[model_name] = False

@@ -61,3 +61,10 @@ class LeadResponse(BaseModel):
     analysis: Optional[LeadAnalysis] = None
     status: str = Field("received")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class LeadUpdate(BaseModel):
+    status: Optional[str] = Field(None, description="new|contacted|qualified|converted|lost")
+    assigned_to: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None

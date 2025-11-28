@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Query, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Query, Request, Depends
 from fastapi.responses import StreamingResponse, JSONResponse
 from typing import List, Optional
 import json
@@ -13,6 +13,8 @@ from ..utils.redis_client import publish_analytics_event
 from ..utils.notification_service import create_notification
 from ..agents.chat_agent import create_chat_agent
 from ..utils.limiter import limiter
+from ..routes.models import get_model_manager
+from ..models.manager import ModelManager
   
 logger = logging.getLogger("pixelcraft.routes.chat")
   
@@ -21,7 +23,12 @@ router = APIRouter(prefix="/chat", tags=["chat"])
   
 @router.post("/message", response_model=ChatResponse)
 @limiter.limit("100/minute")
-async def post_message(req: ChatRequest, request: Request, model: Optional[str] = Query(None, description="Optional model to use for generation")):
+async def post_message(
+    req: ChatRequest, 
+    request: Request, 
+    model: Optional[str] = Query(None, description="Optional model to use for generation"),
+    mm: Optional[ModelManager] = Depends(get_model_manager)
+):
     """Handle a chat message and return a single aggregated response using ChatAgent with ModelManager."""
     conversation_id = req.conversation_id or f"conv_{int(time.time())}"
       
@@ -35,7 +42,7 @@ async def post_message(req: ChatRequest, request: Request, model: Optional[str] 
       
     try:
         # Create ChatAgent instance (integrates ModelManager)
-        agent = create_chat_agent()
+        agent = create_chat_agent(mm)
           
         sentry_sdk.add_breadcrumb(category="chat", message="Agent processing started")
           
@@ -106,7 +113,12 @@ def _sse_generator(message: str):
   
 @router.post("/stream")
 @limiter.limit("100/minute")
-async def post_stream(req: ChatRequest, request: Request, model: Optional[str] = Query(None, description="Optional model to use for generation")):
+async def post_stream(
+    req: ChatRequest, 
+    request: Request, 
+    model: Optional[str] = Query(None, description="Optional model to use for generation"),
+    mm: Optional[ModelManager] = Depends(get_model_manager)
+):
     """Return a streaming response (SSE-like simple implementation) using ChatAgent with ModelManager.
   
     The frontend can consume this chunked JSON stream. Replace with proper EventSourceResponse in production.
@@ -123,7 +135,7 @@ async def post_stream(req: ChatRequest, request: Request, model: Optional[str] =
       
     try:
         # Create ChatAgent instance (integrates ModelManager)
-        agent = create_chat_agent()
+        agent = create_chat_agent(mm)
           
         sentry_sdk.add_breadcrumb(category="chat", message="Agent processing started for stream")
           

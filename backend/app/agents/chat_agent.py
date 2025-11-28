@@ -14,6 +14,7 @@ import logging
 from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.supabase_client import get_supabase_client
 from ..models.manager import ModelManager
+from ..utils.external_tools import check_calendar_availability as check_calendar_availability_tool, create_calendar_event, send_email, cancel_calendar_event
 
 logger = logging.getLogger("pixelcraft.agents.chat")
 
@@ -100,8 +101,35 @@ async def get_services_info() -> Dict[str, Any]:
 
 async def check_availability(date: str, service_type: str) -> List[AppointmentSlot]:
     """Tool function to check appointment availability."""
-    # TODO: Implement actual calendar integration
-    # For now, return mock data
+    # Use external tool to check availability
+    # Assuming date is YYYY-MM-DD, check business hours 09:00 to 17:00 UTC
+    start_time = f"{date}T09:00:00Z"
+    end_time = f"{date}T17:00:00Z"
+    
+    try:
+        result = await check_calendar_availability_tool(start_time, end_time)
+        
+        if result["success"] and "available_slots" in result["data"]:
+            # Convert available slots to AppointmentSlot objects
+            slots = []
+            for slot in result["data"]["available_slots"]:
+                # Simple conversion, assuming we can book any time within the free slots
+                # For simplicity, we'll just return the free slots as "available"
+                # In a real app, we might chop these into 60-min chunks
+                slots.append(AppointmentSlot(
+                    start_time=slot["start"],
+                    end_time=slot["end"],
+                    duration_minutes=60, # Placeholder
+                    slot_type=service_type
+                ))
+            return slots
+        else:
+            # Fallback to mock if external tool fails or returns no data
+            logger.warning(f"Calendar check failed or returned no data: {result.get('error')}")
+    except Exception as e:
+        logger.error(f"Error checking availability: {e}")
+
+    # Fallback mock data
     mock_slots = [
         AppointmentSlot(
             start_time=f"{date}T09:00:00Z",
@@ -117,6 +145,70 @@ async def check_availability(date: str, service_type: str) -> List[AppointmentSl
         )
     ]
     return mock_slots
+
+async def book_appointment(summary: str, start_time: str, end_time: str, email: str) -> Dict[str, Any]:
+    """Tool function to book an appointment."""
+    # Use external tool to create calendar event
+    try:
+        result = await create_calendar_event(
+            summary=summary,
+            start_time=start_time,
+            end_time=end_time,
+            attendees=[email],
+            description="Scheduled via PixelCraft Chat Assistant"
+        )
+        
+        # Send confirmation email
+        if result.get("success"):
+            try:
+                email_content = f"""
+                <h1>Appointment Confirmed</h1>
+                <p>Your appointment for <strong>{summary}</strong> has been scheduled.</p>
+                <p><strong>Time:</strong> {start_time} - {end_time}</p>
+                <p>A calendar invitation has been sent to your email.</p>
+                <br>
+                <p>Best regards,</p>
+                <p>The PixelCraft Team</p>
+                """
+                await send_email(
+                    to_email=email,
+                    subject="Appointment Confirmation - PixelCraft",
+                    html_content=email_content
+                )
+            except Exception as e:
+                logger.error(f"Failed to send confirmation email: {e}")
+                
+        return result
+    except Exception as e:
+        logger.error(f"Error booking appointment: {e}")
+        return {"success": False, "error": str(e)}
+
+async def cancel_appointment(event_id: str, email: str) -> Dict[str, Any]:
+    """Tool function to cancel an appointment."""
+    try:
+        result = await cancel_calendar_event(event_id)
+        
+        if result.get("success"):
+            try:
+                email_content = f"""
+                <h1>Appointment Cancelled</h1>
+                <p>Your appointment (ID: {event_id}) has been cancelled as requested.</p>
+                <br>
+                <p>Best regards,</p>
+                <p>The PixelCraft Team</p>
+                """
+                await send_email(
+                    to_email=email,
+                    subject="Appointment Cancellation - PixelCraft",
+                    html_content=email_content
+                )
+            except Exception as e:
+                logger.error(f"Failed to send cancellation email: {e}")
+                
+        return result
+    except Exception as e:
+        logger.error(f"Error cancelling appointment: {e}")
+        return {"success": False, "error": str(e)}
 
 def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgent':
     """Factory function to create a ChatAgent instance with default configuration."""
@@ -154,6 +246,20 @@ def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgen
                 function=check_availability,
                 parameters={"date": "str", "service_type": "str"},
                 required_params=["date"]
+            ),
+            AgentTool(
+                name="book_appointment",
+                description="Book an appointment slot",
+                function=book_appointment,
+                parameters={"summary": "str", "start_time": "str", "end_time": "str", "email": "str"},
+                required_params=["summary", "start_time", "end_time", "email"]
+            ),
+            AgentTool(
+                name="cancel_appointment",
+                description="Cancel an existing appointment",
+                function=cancel_appointment,
+                parameters={"event_id": "str", "email": "str"},
+                required_params=["event_id", "email"]
             )
         ],
         task_type="chat",
