@@ -10,7 +10,7 @@ class OllamaConfig(BaseSettings):
     model: str = Field("mistral:latest", description="Default Ollama model name")
     keep_alive: str = Field("10m", description="Keep-alive duration")
     temperature: float = Field(0.7, description="Generation temperature")
-    stream: bool = Field(True, description="Enable streaming by default")
+    stream: bool = Field(False, description="Enable streaming by default")
 
 
 class CRMConfig(BaseSettings):
