@@ -36,60 +36,79 @@ class WrappedQuery:
     
     def select(self, *args, **kwargs):
         self._operation = "select"
-        # call underlying method then return self to preserve chaining
-        self._query.select(*args, **kwargs)
+        # Call underlying method and wrap result to maintain instrumentation chain
+        result = self._query.select(*args, **kwargs)
+        if result is not None:
+            self._query = result
         return self
     
     def insert(self, *args, **kwargs):
         self._operation = "insert"
-        self._query.insert(*args, **kwargs)
+        result = self._query.insert(*args, **kwargs)
+        if result is not None:
+            self._query = result
         return self
     
     def update(self, *args, **kwargs):
         self._operation = "update"
-        self._query.update(*args, **kwargs)
+        result = self._query.update(*args, **kwargs)
+        if result is not None:
+            self._query = result
         return self
     
     def delete(self, *args, **kwargs):
         self._operation = "delete"
-        self._query.delete(*args, **kwargs)
+        result = self._query.delete(*args, **kwargs)
+        if result is not None:
+            self._query = result
         return self
 
     def upsert(self, *args, **kwargs):
         self._operation = "upsert"
-        # Some supabase clients expose upsert; forward call and keep chaining
         if hasattr(self._query, "upsert"):
-            self._query.upsert(*args, **kwargs)
+            result = self._query.upsert(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
 
     def in_(self, *args, **kwargs):
         self._operation = "in"
         if hasattr(self._query, "in_"):
-            self._query.in_(*args, **kwargs)
+            result = self._query.in_(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
 
     def eq(self, *args, **kwargs):
         self._operation = "eq"
         if hasattr(self._query, "eq"):
-            self._query.eq(*args, **kwargs)
+            result = self._query.eq(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
 
     def order(self, *args, **kwargs):
         self._operation = "order"
         if hasattr(self._query, "order"):
-            self._query.order(*args, **kwargs)
+            result = self._query.order(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
 
     def limit(self, *args, **kwargs):
         self._operation = "limit"
         if hasattr(self._query, "limit"):
-            self._query.limit(*args, **kwargs)
+            result = self._query.limit(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
 
     def offset(self, *args, **kwargs):
         self._operation = "offset"
         if hasattr(self._query, "offset"):
-            self._query.offset(*args, **kwargs)
+            result = self._query.offset(*args, **kwargs)
+            if result is not None:
+                self._query = result
         return self
     
     def execute(self):

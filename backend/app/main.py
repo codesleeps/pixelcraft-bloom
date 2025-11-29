@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -122,9 +123,16 @@ def create_app() -> FastAPI:
     async def startup_event():
         logger.info("Starting PixelCraft AI Backend (env=%s)", settings.app_env)
 
-        # Initialize and validate Ollama
+        # Initialize and validate Ollama (with retries for slower startup)
         try:
-            ollama_ready = await test_ollama_connection()
+            ollama_ready = False
+            for attempt in range(3):
+                ollama_ready = await test_ollama_connection()
+                if ollama_ready:
+                    break
+                if attempt < 2:
+                    logger.info("Ollama not ready yet, retrying... (attempt %d/3)", attempt + 1)
+                    await asyncio.sleep(2)
             logger.info("Ollama ready=%s", ollama_ready)
             if not ollama_ready:
                 # Log available models for debugging

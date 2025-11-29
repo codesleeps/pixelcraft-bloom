@@ -42,7 +42,7 @@ class ModelPriority(BaseModel):
 # Model configurations
 MODELS = {
     "mistral": ModelConfig(
-        name="mistral:7b",
+        name="mistral:latest",
         provider=ModelProvider.OLLAMA,
         endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
@@ -127,18 +127,19 @@ MODELS = {
         },
         supports_streaming=True
     ),
-    "mixtral-8x7b": ModelConfig(
-        name="mixtral-8x7b",
-        provider=ModelProvider.HUGGING_FACE,
-        endpoint="https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
-        api_key="${HUGGING_FACE_API_KEY}",  # Will be replaced with actual key from env
+    "mixtral": ModelConfig(
+        name="mixtral:latest",
+        provider=ModelProvider.OLLAMA,
+        endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
-            "max_new_tokens": 2048,
-            "temperature": 0.7,
-            "top_p": 0.9,
-            "repetition_penalty": 1.1
+            "num_ctx": 32768,
+            "num_thread": 8,
+            "top_k": 50,
+            "top_p": 0.95,
+            "repeat_penalty": 1.1
         },
-        context_window=32768,  # Mixtral has large context
+        max_tokens=8192,
+        context_window=32768,
         capabilities={
             "chat": True,
             "completion": True,
@@ -146,7 +147,7 @@ MODELS = {
             "code_completion": True,
             "vision": False
         },
-        cost_per_token=0.0001  # Example cost per token for HuggingFace
+        supports_streaming=True
     )
 }
   
@@ -155,51 +156,51 @@ MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "code": ModelPriority(
         task_type="code",
         models=["codellama", "mistral", "llama3"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "service_recommendation": ModelPriority(
         task_type="service_recommendation",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "web_development": ModelPriority(  # Added for web_development agent task type
         task_type="web_development",
         models=["codellama", "mistral", "llama3"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "digital_marketing": ModelPriority(
         task_type="digital_marketing",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "brand_design": ModelPriority(
         task_type="brand_design",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "ecommerce_solutions": ModelPriority(
         task_type="ecommerce_solutions",
         models=["mistral", "llama3", "codellama"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "content_creation": ModelPriority(
         task_type="content_creation",
         models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     ),
     "analytics_consulting": ModelPriority(
         task_type="analytics_consulting",
         models=["mistral", "llama3", "codellama"],
-        fallback_model="mixtral-8x7b"
+        fallback_model="mixtral"
     )
 }

@@ -7,7 +7,7 @@ import logging
 
 class OllamaConfig(BaseSettings):
     host: AnyHttpUrl = Field("http://localhost:11434", description="Ollama host URL")
-    model: str = Field("llama3", description="Default Ollama model name")
+    model: str = Field("mistral:latest", description="Default Ollama model name")
     keep_alive: str = Field("10m", description="Keep-alive duration")
     temperature: float = Field(0.7, description="Generation temperature")
     stream: bool = Field(True, description="Enable streaming by default")

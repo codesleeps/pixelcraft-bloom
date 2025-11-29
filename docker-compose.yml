@@ -44,6 +44,12 @@ services:
     ports:
       - "11435:11434"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 8G
 
 volumes:
   db_data:

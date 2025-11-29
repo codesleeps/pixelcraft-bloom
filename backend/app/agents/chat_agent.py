@@ -365,8 +365,11 @@ class ChatAgent(BaseAgent):
             }
 
             # Use upsert for conversation to handle existing conversations
-            supabase.table("conversations").upsert(conversation_data).execute()
-            supabase.table("messages").insert(message_data).execute()
+            try:
+                supabase.table("conversations").upsert(conversation_data).execute()
+                supabase.table("messages").insert(message_data).execute()
+            except Exception as e:
+                logger.warning(f"Failed to persist message to Supabase: {e}")
 
             # Log the interaction
             await self._log_interaction(
