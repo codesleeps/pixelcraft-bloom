@@ -36,19 +36,61 @@ class WrappedQuery:
     
     def select(self, *args, **kwargs):
         self._operation = "select"
-        return self._query.select(*args, **kwargs)
+        # call underlying method then return self to preserve chaining
+        self._query.select(*args, **kwargs)
+        return self
     
     def insert(self, *args, **kwargs):
         self._operation = "insert"
-        return self._query.insert(*args, **kwargs)
+        self._query.insert(*args, **kwargs)
+        return self
     
     def update(self, *args, **kwargs):
         self._operation = "update"
-        return self._query.update(*args, **kwargs)
+        self._query.update(*args, **kwargs)
+        return self
     
     def delete(self, *args, **kwargs):
         self._operation = "delete"
-        return self._query.delete(*args, **kwargs)
+        self._query.delete(*args, **kwargs)
+        return self
+
+    def upsert(self, *args, **kwargs):
+        self._operation = "upsert"
+        # Some supabase clients expose upsert; forward call and keep chaining
+        if hasattr(self._query, "upsert"):
+            self._query.upsert(*args, **kwargs)
+        return self
+
+    def in_(self, *args, **kwargs):
+        self._operation = "in"
+        if hasattr(self._query, "in_"):
+            self._query.in_(*args, **kwargs)
+        return self
+
+    def eq(self, *args, **kwargs):
+        self._operation = "eq"
+        if hasattr(self._query, "eq"):
+            self._query.eq(*args, **kwargs)
+        return self
+
+    def order(self, *args, **kwargs):
+        self._operation = "order"
+        if hasattr(self._query, "order"):
+            self._query.order(*args, **kwargs)
+        return self
+
+    def limit(self, *args, **kwargs):
+        self._operation = "limit"
+        if hasattr(self._query, "limit"):
+            self._query.limit(*args, **kwargs)
+        return self
+
+    def offset(self, *args, **kwargs):
+        self._operation = "offset"
+        if hasattr(self._query, "offset"):
+            self._query.offset(*args, **kwargs)
+        return self
     
     def execute(self):
         wrapped_execute = instrument_supabase_query(
@@ -151,11 +193,30 @@ def test_connection() -> bool:
     Returns True if a simple query succeeds.
     """
     try:
-        client = get_supabase_client()
-        # Try to perform a harmless read; table may not exist in a fresh project but call should not crash
-        if hasattr(client, "table"):
-            _ = client.table("leads").select("id").limit(1).execute()
-        return True
+        # Prefer a lightweight HTTP connectivity check to avoid depending on client API differences
+        import httpx
+
+        supabase_url = None
+        if settings.supabase and getattr(settings.supabase, "url", None):
+            supabase_url = str(settings.supabase.url)
+
+        if not supabase_url:
+            logger.warning("Supabase URL not configured for connectivity test")
+            return False
+
+        # Perform a simple HEAD request to the Supabase URL to confirm network reachability
+        try:
+            resp = httpx.head(supabase_url, timeout=5.0)
+            return resp.status_code < 500
+        except Exception:
+            # Fallback to a GET in case HEAD is not supported
+            try:
+                resp = httpx.get(supabase_url, timeout=5.0)
+                return resp.status_code < 500
+            except Exception as exc:
+                logger.exception("Supabase connectivity test failed: %s", exc)
+                return False
+
     except Exception as exc:
-        logger.exception("Supabase connectivity test failed: %s", exc)
+        logger.exception("Supabase connectivity test unexpected error: %s", exc)
         return False

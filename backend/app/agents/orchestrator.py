@@ -23,6 +23,7 @@ from .analytics_consulting_agent import create_analytics_consulting_agent
 from ..utils.supabase_client import get_supabase_client
 from ..utils.redis_client import publish_analytics_event
 from ..utils.notification_service import create_notification, create_notification_for_admins
+from ..models.manager import ModelManager
 
 logger = logging.getLogger("pixelcraft.agents.orchestrator")
 
@@ -464,19 +465,24 @@ class AgentOrchestrator:
 # Create global orchestrator instance
 orchestrator = AgentOrchestrator()
 
-def initialize_agents() -> None:
-    """Initialize and register all agents."""
+def initialize_agents(model_manager: Optional[ModelManager] = None) -> None:
+    """Initialize and register all agents.
+
+    If a ModelManager instance is provided it will be passed to agents that
+    support it (so they can use available models for generation).
+    """
     try:
-        # Create agents
-        chat_agent = create_chat_agent()
-        lead_agent = create_lead_qualification_agent()
-        rec_agent = create_recommendation_agent()
-        web_dev_agent = create_web_development_agent()
+        # Create agents (pass model_manager where supported)
+        chat_agent = create_chat_agent(model_manager)
+        lead_agent = create_lead_qualification_agent(model_manager)
+        rec_agent = create_recommendation_agent(model_manager)
+        web_dev_agent = create_web_development_agent(model_manager)
+        # digital_marketing agent factory does not accept model_manager
         digital_marketing_agent = create_digital_marketing_agent()
-        brand_design_agent = create_brand_design_agent()
-        ecommerce_agent = create_ecommerce_solutions_agent()
-        content_creation_agent = create_content_creation_agent()
-        analytics_agent = create_analytics_consulting_agent()
+        brand_design_agent = create_brand_design_agent(model_manager)
+        ecommerce_agent = create_ecommerce_solutions_agent(model_manager)
+        content_creation_agent = create_content_creation_agent(model_manager)
+        analytics_agent = create_analytics_consulting_agent(model_manager)
 
         # Register agents
         orchestrator.register("chat", chat_agent)

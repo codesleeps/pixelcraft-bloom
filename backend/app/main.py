@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 
@@ -123,11 +124,11 @@ def create_app() -> FastAPI:
 
         # Initialize and validate Ollama
         try:
-            ollama_ready = test_ollama_connection()
+            ollama_ready = await test_ollama_connection()
             logger.info("Ollama ready=%s", ollama_ready)
             if not ollama_ready:
                 # Log available models for debugging
-                models = list_available_models()
+                models = await list_available_models()
                 logger.info("Available Ollama models: %s", models)
         except Exception as exc:
             logger.exception("Ollama initialization error: %s", exc)
@@ -171,7 +172,7 @@ def create_app() -> FastAPI:
         if model_manager_instance is not None:
             from .agents.orchestrator import initialize_agents
             try:
-                initialize_agents()
+                initialize_agents(model_manager_instance)
                 logger.info("Agents initialized successfully")
             except Exception as e:
                 logger.exception("Failed to initialize agents: %s", e)
