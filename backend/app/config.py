@@ -6,7 +6,9 @@ import logging
 
 
 class OllamaConfig(BaseSettings):
-    host: AnyHttpUrl = Field("http://localhost:11434", description="Ollama host URL")
+    # Default to the docker-compose service hostname so the backend container
+    # can reach the Ollama container via the internal compose network.
+    host: AnyHttpUrl = Field("http://ollama:11434", description="Ollama host URL")
     model: str = Field("mistral:latest", description="Default Ollama model name")
     keep_alive: str = Field("10m", description="Keep-alive duration")
     temperature: float = Field(0.7, description="Generation temperature")

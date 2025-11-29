@@ -248,15 +248,34 @@ class ModelManager:
             return data[0]["generated_text"]
 
     async def warm_up_models(self):
-        """Warm up available models with a test prompt"""
-        logger.info("Warming up models...")
-        for model_name in MODELS:
-            if self._health_checks.get(model_name, False):
-                try:
-                    await self.generate("Hello, this is a warm-up message.", "chat", max_tokens=10)
-                    logger.info(f"Warmed up {model_name}")
-                except Exception as e:
-                    logger.warning(f"Failed to warm up {model_name}: {e}")
+        """Warm up available models with a test prompt using long timeout and retries.
+        
+        This eagerly loads model runners at startup using the Ollama client's retry logic.
+        Models are available for use even if warm-up fails (they'll load on first request).
+        Warm-up just pre-loads them to avoid user-facing timeouts on the first request.
+        """
+        logger.info("Warming up models (this may take several minutes)...")
+        for model_name, model_config in MODELS.items():
+            if not self._health_checks.get(model_name, False):
+                logger.debug(f"Skipping warm-up for {model_name}: marked unhealthy")
+                continue
+            
+            if model_config.provider != "ollama":
+                logger.debug(f"Skipping warm-up for non-Ollama model {model_name}")
+                continue
+            
+            try:
+                logger.info(f"[Warm-up] Loading {model_name}...")
+                prompt = "Hello, this is a warm-up message."
+                response = await self.ollama_client.generate(
+                    model=model_config.name,
+                    prompt=prompt,
+                    max_tokens=10
+                )
+                logger.info(f"[Warm-up] ✓ Loaded {model_name}")
+            except Exception as e:
+                # Warm-up failures are non-critical: model will load on first user request
+                logger.info(f"[Warm-up] ✗ Did not pre-load {model_name}: {type(e).__name__}. Will load on first use.")
 
     async def chat(
         self,

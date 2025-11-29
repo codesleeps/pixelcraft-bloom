@@ -32,8 +32,8 @@ class OllamaClient:
             self._session = aiohttp.ClientSession(timeout=self.timeout, connector=aiohttp.TCPConnector(limit=10))
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
+        stop=stop_after_attempt(6),
+        wait=wait_exponential(multiplier=1, min=1, max=60),
         retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError)),
         reraise=True
     )
@@ -41,16 +41,29 @@ class OllamaClient:
         await self._ensure_session()
         url = f"{self.host}{endpoint}"
         try:
+            logger.debug("Ollama request %s %s payload=%s", "POST", url, {k: v for k, v in data.items() if k != "prompt"})
             async with self._session.post(url, json=data) as resp:
-                resp.raise_for_status()
+                # If server returned an error status, capture body for debugging
+                if resp.status >= 400:
+                    try:
+                        body = await resp.text()
+                    except Exception:
+                        body = "<unable to read response body>"
+                    logger.error("Ollama API %s returned status %s body=%s", endpoint, resp.status, body)
+                    resp.raise_for_status()
+
                 if data.get("stream", True):
                     # Handle streaming response
                     full_response = {}
                     async for line in resp.content:
-                        line = line.strip()
-                        if not line:
+                        try:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            chunk = json.loads(line.decode("utf-8"))
+                        except Exception as parse_exc:
+                            logger.warning("Failed to parse stream chunk from Ollama: %s", parse_exc)
                             continue
-                        chunk = json.loads(line.decode("utf-8"))
                         if chunk.get("done"):
                             full_response.update(chunk)
                             break
@@ -66,9 +79,14 @@ class OllamaClient:
                                 full_response["response"] += chunk.get("response", "")
                     return full_response
                 else:
-                    return await resp.json()
+                    try:
+                        return await resp.json()
+                    except Exception as json_exc:
+                        text = await resp.text()
+                        logger.error("Failed to decode JSON response from Ollama: %s; raw=%s", json_exc, text)
+                        raise
         except Exception as e:
-            logger.error(f"Error calling Ollama API {endpoint}: {e}")
+            logger.exception("Error calling Ollama API %s", endpoint)
             raise
 
     async def chat(self, model: str, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
@@ -145,7 +163,7 @@ def get_ollama_client() -> OllamaClient:
         cfg = settings.ollama
         _ollama_client = OllamaClient(
             host=str(cfg.host),
-            timeout=30.0,  # Default timeout, can be made configurable
+            timeout=300.0,  # Increase default timeout to accommodate model loading/generation
             keep_alive=cfg.keep_alive
         )
     return _ollama_client
