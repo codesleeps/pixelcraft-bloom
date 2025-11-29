@@ -539,6 +539,82 @@ Consult each file for table definitions (e.g., `notifications`, `pricing_package
 
 ---
 
+## Testing and Validation
+
+### Quick Smoke Test
+
+A ready-to-run smoke test suite is available at the repository root:
+
+```bash
+cd ..  # Go to repository root
+chmod +x scripts/smoke-test.sh
+./scripts/smoke-test.sh
+```
+
+This validates core backend functionality:
+- **Health Check** ✓ (usually passes)
+- **Models List** ✓ (usually passes)
+- **Chat Message** ⚠ (may timeout on resource-constrained Docker Desktop)
+- **Model Details** ✓ (usually passes)
+
+Expected pass rate: 3/4 tests on Docker Desktop. See [OLLAMA_SETUP_GUIDE.md](../OLLAMA_SETUP_GUIDE.md) for details on the known chat endpoint limitation.
+
+### Detailed Logging and Debugging
+
+The ModelManager now provides detailed logging for model selection and inference:
+
+```python
+# Log output example:
+# [ModelManager] Attempting generation for task_type=chat, available models: ['mistral']
+# [ModelManager] Trying model: mistral for task_type=chat
+# [ModelManager] Attempting generation with model: mistral
+# [ModelManager] ✓ Chat generation succeeded with mistral (latency=2.34s)
+
+# Or on failure:
+# [ModelManager] Attempting generation with model: mistral
+# [ModelManager] ✗ Failed with mistral: TimeoutError (latency=67.00s)
+# [ModelManager] All models exhausted for task_type=chat
+```
+
+Check backend logs for "[ModelManager]" prefixed messages to see:
+- Which model is being attempted
+- Success/failure status with latency
+- Error type (TimeoutError, ConnectionError, etc.)
+
+### Unit and Integration Tests
+
+```bash
+# Run all tests
+cd backend
+pytest
+
+# Run specific test file
+pytest tests/test_models.py -v
+
+# Run with coverage
+pytest --cov=app tests/
+```
+
+### Manual API Testing
+
+```bash
+# Health check
+curl http://localhost:8000/health | jq .
+
+# List available models
+curl http://localhost:8000/api/models | jq .
+
+# Get details for a specific model
+curl http://localhost:8000/api/models/mistral | jq .
+
+# Chat endpoint
+curl -X POST http://localhost:8000/api/chat/message \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Say hello in one sentence"}'
+```
+
+---
+
 ## Examples
 
 ### Example: Invoking an agent

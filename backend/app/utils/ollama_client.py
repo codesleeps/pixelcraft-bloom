@@ -163,7 +163,7 @@ def get_ollama_client() -> OllamaClient:
         cfg = settings.ollama
         _ollama_client = OllamaClient(
             host=str(cfg.host),
-            timeout=300.0,  # Increase default timeout to accommodate model loading/generation
+            timeout=600.0,  # Increase default timeout to 10 minutes to accommodate model loading/generation on constrained systems
             keep_alive=cfg.keep_alive
         )
     return _ollama_client

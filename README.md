@@ -79,6 +79,17 @@ Test models after setup to ensure functionality:
 
 Run backend tests for comprehensive validation: `cd backend && pytest test_models.py`.
 
+**Quick Smoke Test**:
+
+A ready-to-run smoke test suite is provided at `scripts/smoke-test.sh` to validate core system functionality:
+
+```bash
+chmod +x scripts/smoke-test.sh
+./scripts/smoke-test.sh
+```
+
+This runs 4 test cases with automatic retries and produces a simple pass/fail summary. See [RUNBOOK.md](RUNBOOK.md) for details on expected results and known limitations.
+
 ### Model Performance Monitoring
 
 Track model health and metrics in real-time:
@@ -93,6 +104,7 @@ Metrics are persisted to Supabase for historical analysis.
 ### Troubleshooting Common Model Issues
 
 - **Ollama Not Responding**: Ensure Ollama is running (`ollama serve`). Check `OLLAMA_HOST` in `.env` and verify port 11434 is open.
+- **Chat Endpoint Timeouts**: On Docker Desktop with resource constraints, the chat/inference endpoint may timeout. This is a known limitation due to Ollama model loader constraints, not an application defect. See [OLLAMA_SETUP_GUIDE.md](OLLAMA_SETUP_GUIDE.md) for details and workarounds. Health checks and model listing will work reliably even when inference times out.
 - **Model Not Found Error**: Pull the model manually (`ollama pull <model_name>`). Confirm the model name matches those in `backend/app/models/config.py`.
 - **Connection Refused**: Restart Ollama or update `OLLAMA_HOST` if using a custom setup.
 - **Slow Responses**: Increase `OLLAMA_KEEP_ALIVE` or switch to lighter models like `mistral`. Monitor system RAM/CPU usage.

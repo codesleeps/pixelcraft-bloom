@@ -143,13 +143,16 @@ class ModelManager:
                 logger.warning("No available models, returning default response")
                 return "I'm sorry, I'm currently unable to process your request due to all models being unavailable. Please try again later."
 
+            logger.info(f"[ModelManager] Attempting generation for task_type={task_type}, available models: {[m.name for m in models]}")
             for model_config in models:
                 cache_key = self._get_cache_key(model_config.name, prompt, system_prompt or '', kwargs)
                 cached = self._get_cached_response(cache_key)
                 if cached:
+                    logger.debug(f"[ModelManager] Cache hit for {model_config.name}")
                     return cached
                 start_time = time.time()
                 try:
+                    logger.info(f"[ModelManager] Trying model: {model_config.name} for task_type={task_type}")
                     response = await self._generate_with_config(
                         prompt,
                         model_config,
@@ -157,17 +160,20 @@ class ModelManager:
                         **kwargs
                     )
                     latency = time.time() - start_time
+                    logger.info(f"[ModelManager] ✓ Success with {model_config.name} (latency={latency:.2f}s)")
                     await self._update_metrics(model_config.name, latency, True, len(response.split()))  # rough token estimate
                     self._cache_response(cache_key, response)
                     return response
                 except Exception as e:
                     latency = time.time() - start_time
+                    logger.error(f"[ModelManager] ✗ Failed with {model_config.name}: {type(e).__name__} (latency={latency:.2f}s)")
+                    logger.debug(f"[ModelManager] Error detail: {str(e)}")
                     await self._update_metrics(model_config.name, latency, False)
                     self._record_failure(model_config.name)
-                    logger.error(f"Failed with {model_config.name}: {e}")
                     continue
 
             # If all failed
+            logger.error(f"[ModelManager] All models exhausted for task_type={task_type}")
             return "I'm sorry, I'm currently unable to process your request due to model failures. Please try again later."
     
     async def _generate_with_config(
@@ -190,26 +196,31 @@ class ModelManager:
         **kwargs
     ) -> str:
         """Generate using Ollama via OllamaClient"""
+        logger.info(f"[ModelManager] Attempting generation with model: {model_config.name}")
         if system_prompt:
             # Use chat API for system prompt support
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ]
+            logger.debug(f"[ModelManager] Using /api/chat for {model_config.name} with {len(messages)} messages")
             response = await self.ollama_client.chat(
                 model=model_config.name,
                 messages=messages,
                 **model_config.parameters,
                 **kwargs
             )
+            logger.info(f"[ModelManager] ✓ Chat generation succeeded with {model_config.name}")
         else:
             # Use generate API for simple completion
+            logger.debug(f"[ModelManager] Using /api/generate for {model_config.name}")
             response = await self.ollama_client.generate(
                 model=model_config.name,
                 prompt=prompt,
                 **model_config.parameters,
                 **kwargs
             )
+            logger.info(f"[ModelManager] ✓ Generate succeeded with {model_config.name}")
         return response["message"]["content"]
     
     async def _generate_huggingface(
