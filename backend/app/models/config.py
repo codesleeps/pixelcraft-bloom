@@ -40,6 +40,9 @@ class ModelPriority(BaseModel):
     fallback_model: str
   
 # Model configurations
+# DEVELOPMENT NOTE: Using only mistral:latest for development on macOS Docker.
+# To use additional models (llama2, llama3, codellama), ensure your system has
+# at least 16GB available Docker memory. See README.md for configuration.
 MODELS = {
     "mistral": ModelConfig(
         name="mistral:latest",
@@ -61,146 +64,61 @@ MODELS = {
             "code_completion": True,
             "vision": False
         },
-        supports_streaming=True
+        supports_streaming=False  # Disable streaming for stability; use non-streaming for dev
     ),
-    "llama2": ModelConfig(
-        name="llama2:7b",
-        provider=ModelProvider.OLLAMA,
-        endpoint=f"{OLLAMA_HOST}/api/generate",
-        parameters={
-            "num_ctx": 4096,
-            "num_thread": 4,
-            "top_k": 40,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1
-        },
-        context_window=4096,
-        capabilities={
-            "chat": True,
-            "completion": True,
-            "embedding": True,
-            "code_completion": True,
-            "vision": False
-        },
-        supports_streaming=True
-    ),
-    "llama3": ModelConfig(
-        name="llama3.1:8b",
-        provider=ModelProvider.OLLAMA,
-        endpoint=f"{OLLAMA_HOST}/api/generate",
-        parameters={
-            "num_ctx": 8192,
-            "num_thread": 4,
-            "top_k": 40,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1
-        },
-        context_window=8192,
-        capabilities={
-            "chat": True,
-            "completion": True,
-            "embedding": True,
-            "code_completion": True,
-            "vision": False
-        },
-        supports_streaming=True
-    ),
-    "codellama": ModelConfig(
-        name="codellama:latest",
-        provider=ModelProvider.OLLAMA,
-        endpoint=f"{OLLAMA_HOST}/api/generate",
-        parameters={
-            "num_ctx": 4096,
-            "num_thread": 4,
-            "top_k": 40,
-            "top_p": 0.95,
-            "repeat_penalty": 1.1
-        },
-        temperature=0.5,
-        context_window=4096,
-        capabilities={
-            "chat": True,
-            "completion": True,
-            "embedding": True,
-            "code_completion": True,
-            "vision": False
-        },
-        supports_streaming=True
-    ),
-    "mixtral": ModelConfig(
-        name="mixtral:latest",
-        provider=ModelProvider.OLLAMA,
-        endpoint=f"{OLLAMA_HOST}/api/generate",
-        parameters={
-            "num_ctx": 32768,
-            "num_thread": 8,
-            "top_k": 50,
-            "top_p": 0.95,
-            "repeat_penalty": 1.1
-        },
-        max_tokens=8192,
-        context_window=32768,
-        capabilities={
-            "chat": True,
-            "completion": True,
-            "embedding": False,
-            "code_completion": True,
-            "vision": False
-        },
-        supports_streaming=True
-    )
 }
   
 # Task-specific model priorities
+# DEVELOPMENT: All tasks use mistral as primary model (only one loaded)
 MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "code": ModelPriority(
         task_type="code",
-        models=["codellama", "mistral", "llama3"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "service_recommendation": ModelPriority(
         task_type="service_recommendation",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
-    "web_development": ModelPriority(  # Added for web_development agent task type
+    "web_development": ModelPriority(
         task_type="web_development",
-        models=["codellama", "mistral", "llama3"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "digital_marketing": ModelPriority(
         task_type="digital_marketing",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "brand_design": ModelPriority(
         task_type="brand_design",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "ecommerce_solutions": ModelPriority(
         task_type="ecommerce_solutions",
-        models=["mistral", "llama3", "codellama"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "content_creation": ModelPriority(
         task_type="content_creation",
-        models=["mistral", "llama3", "llama2"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     ),
     "analytics_consulting": ModelPriority(
         task_type="analytics_consulting",
-        models=["mistral", "llama3", "codellama"],
-        fallback_model="mixtral"
+        models=["mistral"],
+        fallback_model="mistral"
     )
 }
