@@ -1,14 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { 
-  Search, 
-  Megaphone, 
-  Palette, 
-  BarChart3, 
-  Smartphone, 
+import { Link, useNavigate } from "react-router-dom";
+import { createCheckoutSession } from "@/lib/payments";
+import {
+  Search,
+  Megaphone,
+  Palette,
+  BarChart3,
+  Smartphone,
   MessageSquare,
-  ArrowRight 
+  ArrowRight
 } from "lucide-react";
 
 const services = [
@@ -51,6 +52,8 @@ const services = [
 ];
 
 const ServicesSection = () => {
+  const navigate = useNavigate();
+
   const handleSubscribe = async () => {
     try {
       const origin = window.location.origin;
@@ -62,6 +65,12 @@ const ServicesSection = () => {
       console.error('Checkout error', err);
     }
   };
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
+
   return (
     <section id="services" className="py-24 bg-gradient-subtle">
       <div className="container mx-auto px-4">
@@ -72,11 +81,11 @@ const ServicesSection = () => {
             <span className="block bg-gradient-primary bg-clip-text text-transparent">Solutions</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            From strategy to execution, we provide end-to-end digital marketing services 
+            From strategy to execution, we provide end-to-end digital marketing services
             that drive measurable results for your business.
           </p>
         </div>
-        
+
         {/* Services Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {services.map((service, index) => {
@@ -104,14 +113,12 @@ const ServicesSection = () => {
             );
           })}
         </div>
-        
+
         {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" asChild>
-            <Link to="/strategy-session">
-              Get Custom Strategy
-              <ArrowRight className="ml-2" />
-            </Link>
+          <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" onClick={handleStrategyClick}>
+            Get Custom Strategy
+            <ArrowRight className="ml-2" />
           </Button>
           <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" onClick={handleSubscribe}>
             Subscribe
@@ -124,4 +131,3 @@ const ServicesSection = () => {
 };
 
 export default ServicesSection;
-import { createCheckoutSession } from "@/lib/payments";

@@ -5,9 +5,11 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import LazyImage from "@/components/LazyImage";
 import { createCheckoutSession } from "@/lib/payments";
+import { useState } from "react";
 
 const HeroSection = () => {
   const { user, signOut } = useAuth();
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   const handleSubscribe = async () => {
     try {
@@ -18,6 +20,16 @@ const HeroSection = () => {
       window.location.href = url;
     } catch (err) {
       console.error('Checkout error', err);
+    }
+  };
+
+  const handleWatchStories = () => {
+    // TODO: Replace with actual video modal or redirect to success stories page
+    setShowVideoModal(true);
+    // Temporary: scroll to testimonials section
+    const testimonialsSection = document.getElementById('testimonials');
+    if (testimonialsSection) {
+      testimonialsSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -42,23 +54,22 @@ const HeroSection = () => {
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-2 mb-8">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-sm font-medium">
-              Growing 500+ businesses worldwide
+              AI-Powered Automation for 500+ Growing Businesses
             </span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-            Transform Your Digital Marketing
+            Automate Your Business Growth
             <span className="block bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-              Business Growth
+              With AI-Powered Solutions
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl mb-12 text-gray-200 max-w-3xl mx-auto leading-relaxed">
-            Award-winning digital marketing agency helping ambitious businesses
-            scale faster with data-driven SEO, social media marketing, web
-            design, and proven growth systems.
+            Transform your business with intelligent automation. Our AI agents handle lead qualification,
+            customer engagement, and analytics—so you can focus on what matters most: growing your business.
           </p>
 
           {/* CTA Buttons */}
@@ -89,6 +100,7 @@ const HeroSection = () => {
               size="lg"
               className="text-lg px-8 py-6 h-auto text-white hover:bg-white/10"
               aria-label="Watch client success stories and case studies"
+              onClick={handleWatchStories}
             >
               <Play className="mr-2" aria-hidden="true" />
               Watch Success Stories

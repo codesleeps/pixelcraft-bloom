@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Calculator, TrendingUp, DollarSign, Users, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ROIData {
   monthlyRevenue: number;
@@ -26,6 +27,7 @@ const industryMultipliers = {
 };
 
 const ROICalculator = () => {
+  const navigate = useNavigate();
   const [roiData, setRoiData] = useState<ROIData>({
     monthlyRevenue: 10000,
     monthlyLeads: 100,
@@ -83,6 +85,18 @@ const ROICalculator = () => {
       ...prev,
       [field]: field === 'industry' ? value : Number(value)
     }));
+  };
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
+
+  const handleLearnMoreClick = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -255,12 +269,21 @@ const ROICalculator = () => {
                           Based on our average client performance, you could see similar growth within 90 days.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                          <a href="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-white text-primary rounded-lg hover:bg-gray-100 transition-colors font-medium">
+                          <Button
+                            variant="secondary"
+                            size="lg"
+                            onClick={handleStrategyClick}
+                          >
                             Get Free Strategy Session
-                          </a>
-                          <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors font-medium">
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            className="border-white/30 text-white hover:bg-white/10"
+                            onClick={handleLearnMoreClick}
+                          >
                             Learn More
-                          </a>
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

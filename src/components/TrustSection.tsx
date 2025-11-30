@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -55,15 +55,41 @@ const trustElements = [
 ];
 
 const certifications = [
-  { name: 'Google Partner', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iIzQyODVGNCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
-  { name: 'Meta Business Partner', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iIzE4NzdmZiIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
-  { name: 'HubSpot Certified', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iI2ZmN2E1MCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
-  { name: 'AWS Certified', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDI0QzE4Ljk3NDIgMjQgMjQgMTguOTc0MiAyNCAxMkMyNCA1LjAyNTggMTguOTc0MiAwIDEyIDBDNS4wMjU4IDAgMCA1LjAyNTggMCAxMkMwIDE4Ljk3NDIgNS4wMjU4IDI0IDEyIDI0WiIgZmlsbD0iI2ZmOTkwMCIvPgo8cGF0aCBkPSJNMTIgMTMuNUMxMy4zMjQ0IDEzLjUgMTQuNSAxMi4zMjQ0IDE0LjUgMTFDMTQuNSAxMC4wMjU4IDEzLjMyNDQgOC41IDEyIDguNUMxMC42NzU2IDguNSA5LjUgOS42NzU2IDkuNSAxMUM5LjUgMTIuMzI0NCAxMC42NzU2IDEzLjUgMTIgMTMuNVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=', visible: true },
-  { name: 'ISO 27001', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzAwN2JmZiIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNTQTwvdGV4dD4KPHN2Zz4K', visible: true },
-  { name: 'GDPR Compliant', logo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iIzI1OGI1ZSIvPgo8dGV4dCB4PSIxMiIgeT0iMTUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+R0RQUjwvdGV4dD4KPHN2Zz4K', visible: true }
+  {
+    name: 'Google Partner',
+    logo: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=100&h=100&fit=crop',
+    color: '#4285F4'
+  },
+  {
+    name: 'Meta Business Partner',
+    logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=100&h=100&fit=crop',
+    color: '#1877f2'
+  },
+  {
+    name: 'HubSpot Certified',
+    logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&h=100&fit=crop',
+    color: '#ff7a50'
+  },
+  {
+    name: 'AWS Certified',
+    logo: 'https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=100&h=100&fit=crop',
+    color: '#ff9900'
+  },
+  {
+    name: 'ISO 27001',
+    logo: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=100&h=100&fit=crop',
+    color: '#007bff'
+  },
+  {
+    name: 'GDPR Compliant',
+    logo: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=100&h=100&fit=crop',
+    color: '#258b5e'
+  }
 ];
 
 const TrustSection = () => {
+  const navigate = useNavigate();
+
   const handleSubscribe = async () => {
     try {
       const origin = window.location.origin;
@@ -75,6 +101,12 @@ const TrustSection = () => {
       console.error('Checkout error', err);
     }
   };
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
+
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
@@ -120,13 +152,24 @@ const TrustSection = () => {
         <div className="text-center mb-16">
           <h3 className="text-2xl font-bold mb-8">Certified & Recognized By</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
-            {certifications.filter(cert => cert.visible).map((cert, index) => (
+            {certifications.map((cert, index) => (
               <div key={index} className="flex items-center justify-center h-16 group">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300">
-                    <span className="text-lg font-bold text-gray-700">
-                      {cert.name.split(' ')[0]}
-                    </span>
+                  <div className="w-16 h-16 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                    <img
+                      src={cert.logo}
+                      alt={cert.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        // Fallback to text if image fails
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `<span class="text-lg font-bold text-gray-700">${cert.name.split(' ')[0]}</span>`;
+                        }
+                      }}
+                    />
                   </div>
                   <div className="text-xs text-muted-foreground font-medium">
                     {cert.name}
@@ -169,13 +212,13 @@ const TrustSection = () => {
               Get your free strategy session today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-gradient-primary/90 transition-colors font-medium">
+              <Button variant="default" size="lg" onClick={handleStrategyClick}>
                 Get Free Strategy Session
-              </Link>
-              <Link to="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleStrategyClick}>
                 Schedule a Call
-              </Link>
-              <Button variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+              </Button>
+              <Button variant="hero" size="lg" onClick={handleSubscribe}>
                 Subscribe
               </Button>
             </div>

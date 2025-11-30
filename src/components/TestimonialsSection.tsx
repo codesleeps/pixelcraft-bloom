@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, Quote, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
 import { createCheckoutSession } from '@/lib/payments';
 
 const testimonials = [
@@ -63,6 +64,8 @@ const testimonials = [
 ];
 
 const TestimonialsSection = () => {
+  const navigate = useNavigate();
+
   const handleSubscribe = async () => {
     try {
       const origin = window.location.origin;
@@ -74,8 +77,21 @@ const TestimonialsSection = () => {
       console.error('Checkout error', err);
     }
   };
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
+
+  const handleCaseStudiesClick = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className="py-24 bg-gray-50">
+    <section id="testimonials" className="py-24 bg-gray-50">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -128,6 +144,11 @@ const TestimonialsSection = () => {
                     src={testimonial.avatar}
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback to a placeholder if image fails to load
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(testimonial.name)}&background=random`;
+                    }}
                   />
                   <div>
                     <div className="font-semibold text-sm">{testimonial.name}</div>
@@ -150,13 +171,13 @@ const TestimonialsSection = () => {
               Start your growth journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-gradient-primary/90 transition-colors font-medium">
+              <Button variant="default" size="lg" onClick={handleStrategyClick}>
                 Get Your Free Strategy Session
-              </a>
-              <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleCaseStudiesClick}>
                 View More Case Studies
-              </a>
-              <Button variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+              </Button>
+              <Button variant="hero" size="lg" onClick={handleSubscribe}>
                 Subscribe
                 <ArrowRight className="ml-2" />
               </Button>

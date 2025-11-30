@@ -15,10 +15,7 @@ const Navigation = () => {
     { name: 'Pricing', href: '#pricing' },
     { name: 'About', href: '#about' },
     { name: 'Contact', href: '#contact' },
-    { name: 'Dashboard', href: '/dashboard' },
   ];
-
-  const filteredNavItems = navItems.filter(item => item.name !== 'Dashboard' || user);
 
   const handleSmoothScroll = (href: string, event?: React.MouseEvent) => {
     if (href.startsWith('#')) {
@@ -58,16 +55,15 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {filteredNavItems.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.href.startsWith('#') ? `/${item.href}` : item.href}
                 onClick={(e) => handleSmoothScroll(item.href, e)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(item.href)
-                    ? 'text-primary'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
+                  ? 'text-primary'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 {item.name}
               </Link>
@@ -115,16 +111,15 @@ const Navigation = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4">
-              {filteredNavItems.map((item) => (
+              {navItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href.startsWith('#') ? `/${item.href}` : item.href}
                   onClick={(e) => handleSmoothScroll(item.href, e)}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${
-                    isActive(item.href)
-                      ? 'text-primary'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
                 >
                   {item.name}
                 </Link>

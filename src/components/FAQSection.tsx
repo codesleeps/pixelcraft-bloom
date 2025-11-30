@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, HelpCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { createCheckoutSession } from '@/lib/payments';
 
 const faqs = [
@@ -49,6 +50,7 @@ const faqs = [
 
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -63,6 +65,18 @@ const FAQSection = () => {
       window.location.href = url;
     } catch (err) {
       console.error('Checkout error', err);
+    }
+  };
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
+
+  const handleContactClick = () => {
+    const contactSection = document.getElementById('contact');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -124,13 +138,13 @@ const FAQSection = () => {
               PixelCraft can transform your business.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/strategy-session" className="inline-flex items-center justify-center px-6 py-3 bg-gradient-primary text-white rounded-lg hover:bg-gradient-primary/90 transition-colors font-medium">
+              <Button variant="default" size="lg" onClick={handleStrategyClick}>
                 Get Free Strategy Session
-              </a>
-              <a href="#contact" className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+              </Button>
+              <Button variant="outline" size="lg" onClick={handleContactClick}>
                 Contact Our Team
-              </a>
-              <Button variant="hero" size="lg" className="px-6 py-3 h-auto" onClick={handleSubscribe}>
+              </Button>
+              <Button variant="hero" size="lg" onClick={handleSubscribe}>
                 Subscribe
                 <ArrowRight className="ml-2" />
               </Button>
