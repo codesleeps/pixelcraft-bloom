@@ -13,13 +13,19 @@ const HeroSection = () => {
 
   const handleSubscribe = async () => {
     try {
+      console.log('Subscribe button clicked');
       const origin = window.location.origin;
       const success_url = `${origin}/#/payments/success`;
       const cancel_url = `${origin}/#/payments/cancel`;
+
+      console.log('Creating checkout session with:', { mode: 'subscription', success_url, cancel_url });
       const { url } = await createCheckoutSession({ mode: 'subscription', success_url, cancel_url });
+
+      console.log('Checkout session created, redirecting to:', url);
       window.location.href = url;
     } catch (err) {
-      console.error('Checkout error', err);
+      console.error('Checkout error:', err);
+      alert(`Unable to start checkout: ${err instanceof Error ? err.message : 'Unknown error'}. Please ensure the backend is running.`);
     }
   };
 
@@ -37,7 +43,21 @@ const HeroSection = () => {
     <header className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-hero opacity-90" />
+
+      {/* Video Background - Placeholder until real video is provided */}
       <div className="absolute inset-0 opacity-20">
+        {/* TODO: Replace with actual success stories video when available */}
+        {/* <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/success-stories.mp4" type="video/mp4" />
+        </video> */}
+
+        {/* Fallback to image until video is provided */}
         <LazyImage
           src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
           alt="Digital marketing team collaborating on business growth strategies"

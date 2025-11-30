@@ -66,22 +66,22 @@ export default function Dashboard() {
   }, [wsError]);
   useEffect(() => {
     if (!notifications) return;
-    
+
     const now = new Date();
     const recentNotifications = notifications.filter(n => {
       const createdAt = new Date(n.created_at);
       const ageInSeconds = (now.getTime() - createdAt.getTime()) / 1000;
       return ageInSeconds < 10 && !shownNotificationsRef.current.has(n.id);
     });
-    
+
     recentNotifications.forEach(notification => {
       if (notification.severity === 'error' || notification.severity === 'warning') {
-        toast.error(notification.title, { 
-          description: notification.message, 
-          action: notification.action_url ? { 
-            label: 'View', 
-            onClick: () => navigate(notification.action_url) 
-          } : undefined 
+        toast.error(notification.title, {
+          description: notification.message,
+          action: notification.action_url ? {
+            label: 'View',
+            onClick: () => navigate(notification.action_url)
+          } : undefined
         });
       } else if (notification.severity === 'success') {
         toast.success(notification.title, { description: notification.message });
@@ -90,7 +90,7 @@ export default function Dashboard() {
     });
   }, [notifications, navigate]);
   const [timeRange, setTimeRange] = useState('30d');
-  
+
 
   const getTimeRangeParams = (range: string) => {
     const now = new Date();
@@ -278,6 +278,69 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Quick Actions Panel */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Quick Actions
+            </CardTitle>
+            <CardDescription>Common tasks and shortcuts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <Button
+                variant="outline"
+                className="h-auto flex-col items-start p-4 hover:bg-white/80"
+                onClick={() => navigate('/dashboard/leads')}
+              >
+                <Users className="h-5 w-5 mb-2 text-primary" />
+                <span className="font-semibold">View All Leads</span>
+                <span className="text-xs text-muted-foreground">Manage your leads</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-auto flex-col items-start p-4 hover:bg-white/80"
+                onClick={() => {
+                  const contactSection = document.getElementById('contact');
+                  if (contactSection) {
+                    navigate('/');
+                    setTimeout(() => contactSection.scrollIntoView({ behavior: 'smooth' }), 500);
+                  }
+                }}
+              >
+                <MessageSquare className="h-5 w-5 mb-2 text-primary" />
+                <span className="font-semibold">Start Conversation</span>
+                <span className="text-xs text-muted-foreground">Chat with AI agent</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-auto flex-col items-start p-4 hover:bg-white/80"
+                onClick={() => navigate('/dashboard')}
+              >
+                <TrendingUp className="h-5 w-5 mb-2 text-primary" />
+                <span className="font-semibold">View Analytics</span>
+                <span className="text-xs text-muted-foreground">Check performance</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-auto flex-col items-start p-4 hover:bg-white/80"
+                onClick={() => {
+                  navigate('/');
+                  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                }}
+              >
+                <Calendar className="h-5 w-5 mb-2 text-primary" />
+                <span className="font-semibold">Schedule Meeting</span>
+                <span className="text-xs text-muted-foreground">Book a session</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {role === 'admin' && (
           <div className="space-y-4">

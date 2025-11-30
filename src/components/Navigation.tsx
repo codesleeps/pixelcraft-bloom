@@ -17,15 +17,21 @@ const Navigation = () => {
     { name: 'Contact', href: '#contact' },
   ];
 
+
   const handleSmoothScroll = (href: string, event?: React.MouseEvent) => {
-    if (href.startsWith('#')) {
+    if (href === '/') {
+      // Handle home link
+      event?.preventDefault();
+      window.location.hash = '/';
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+    } else if (href.startsWith('#')) {
       const id = href.slice(1);
       const element = document.getElementById(id);
       if (element) {
         event?.preventDefault();
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // Update URL hash without triggering additional scroll
-        window.history.replaceState(null, '', `#${id}`);
+        window.history.replaceState(null, '', `/${href}`);
       }
     }
     // Close mobile menu if open
@@ -44,7 +50,14 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
+          <Link
+            to="/"
+            className="flex items-center space-x-2"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (isOpen) setIsOpen(false);
+            }}
+          >
             <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">PC</span>
             </div>

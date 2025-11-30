@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Eye, TrendingUp, Users, MessageSquare } from 'lucide-react';
+import { Play, Eye, TrendingUp, Users, MessageSquare, Sparkles } from 'lucide-react';
 
 const DemoPreview = () => {
+  const navigate = useNavigate();
   const [activeDemo, setActiveDemo] = useState('overview');
+
+  const handleStrategyClick = () => {
+    navigate('/strategy-session');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+  };
 
   const demos = [
     {
@@ -15,28 +21,28 @@ const DemoPreview = () => {
       title: 'AI Agent Dashboard',
       description: 'See how our AI agents work in real-time',
       icon: Eye,
-      preview: 'Live dashboard showing agent performance, lead scoring, and automated responses.'
+      preview: 'Live dashboard showing AI agent performance, intelligent lead scoring, and automated customer responses powered by machine learning.'
     },
     {
       id: 'analytics',
       title: 'Performance Analytics',
       description: 'Real-time insights and reporting',
       icon: TrendingUp,
-      preview: 'Interactive charts showing conversion rates, ROI, and campaign performance metrics.'
+      preview: 'Interactive charts showing conversion rates, ROI, and campaign performance metrics with AI-driven recommendations for optimization.'
     },
     {
       id: 'automation',
       title: 'Lead Qualification',
       description: 'Watch AI qualify leads automatically',
       icon: Users,
-      preview: 'Automated lead scoring, qualification, and routing to the right team member.'
+      preview: 'Automated lead scoring, intelligent qualification, and smart routing to the right team member based on AI analysis.'
     },
     {
       id: 'chat',
       title: 'AI Chat Assistant',
       description: 'Intelligent customer conversations',
       icon: MessageSquare,
-      preview: 'AI-powered chat that handles customer inquiries, schedules appointments, and provides instant support.'
+      preview: 'AI-powered chat that handles customer inquiries 24/7, schedules appointments, and provides instant support with natural language understanding.'
     }
   ];
 
@@ -46,15 +52,15 @@ const DemoPreview = () => {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-purple-100 border border-purple-200 rounded-full px-6 py-2 mb-6">
-            <Play className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-800">Interactive Demo</span>
+            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-800">Interactive AI Demo</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
             See Our AI <span className="bg-gradient-primary bg-clip-text text-transparent">In Action</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Experience how PixelCraft's AI agents can transform your digital marketing.
-            Interactive demos of our most popular features.
+            Experience how PixelCraft's AI-powered automation can transform your business operations.
+            Interactive demos of our most powerful features.
           </p>
         </div>
 
@@ -96,7 +102,7 @@ const DemoPreview = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Real-time processing</span>
+                        <span className="text-sm">Real-time AI processing</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -108,21 +114,23 @@ const DemoPreview = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">24/7 availability</span>
+                        <span className="text-sm">24/7 AI availability</span>
                       </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Button className="bg-gradient-primary hover:bg-gradient-primary/90" asChild>
-                        <Link to="/strategy-session">
-                          <Play className="w-4 h-4 mr-2" />
-                          Start Live Demo
-                        </Link>
+                      <Button
+                        className="bg-gradient-primary hover:bg-gradient-primary/90"
+                        onClick={handleStrategyClick}
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Start Live Demo
                       </Button>
-                      <Button variant="outline" asChild>
-                        <Link to="/strategy-session">
-                          Schedule Demo Call
-                        </Link>
+                      <Button
+                        variant="outline"
+                        onClick={handleStrategyClick}
+                      >
+                        Schedule Demo Call
                       </Button>
                     </div>
                   </div>
@@ -152,12 +160,12 @@ const DemoPreview = () => {
                           <div className="space-y-3">
                             <div className="p-3 bg-gray-800 rounded-lg">
                               <div className="text-sm text-gray-300 mb-1">User Query:</div>
-                              <div className="text-sm">"I need help with SEO for my e-commerce site"</div>
+                              <div className="text-sm">"I need help automating my lead generation process"</div>
                             </div>
 
                             <div className="p-3 bg-blue-600/20 border border-blue-500/30 rounded-lg">
                               <div className="text-sm text-blue-300 mb-1">AI Response:</div>
-                              <div className="text-sm">"I'd be happy to help! Let me analyze your site and create a custom SEO strategy..."</div>
+                              <div className="text-sm">"I'd be happy to help! Let me analyze your current process and create a custom automation strategy..."</div>
                             </div>
 
                             <div className="flex items-center justify-between text-xs text-gray-400">
@@ -169,10 +177,10 @@ const DemoPreview = () => {
                           {/* Service Agent Badges */}
                           <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-700">
                             <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 text-xs hover:bg-green-500/30">
-                              SEO Agent
+                              Lead Gen Agent
                             </Badge>
                             <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs hover:bg-blue-500/30">
-                              E-commerce Agent
+                              Automation Agent
                             </Badge>
                             <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs hover:bg-purple-500/30">
                               Analytics Agent
@@ -197,20 +205,22 @@ const DemoPreview = () => {
           <div className="bg-gradient-primary/5 border border-gradient-primary/20 rounded-lg p-8 max-w-4xl mx-auto">
             <h3 className="text-2xl font-bold mb-4">Ready to Experience the Difference?</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              See how PixelCraft's AI agents can transform your business operations.
+              See how PixelCraft's AI agents can transform your business operations with intelligent automation.
               Book a personalized demo today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-gradient-primary hover:bg-gradient-primary/90" asChild>
-                <Link to="/strategy-session">
-                  <Play className="w-4 h-4 mr-2" />
-                  Schedule Live Demo
-                </Link>
+              <Button
+                className="bg-gradient-primary hover:bg-gradient-primary/90"
+                onClick={handleStrategyClick}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Schedule Live Demo
               </Button>
-              <Button variant="outline" asChild>
-                <Link to="/strategy-session">
-                  View Case Studies
-                </Link>
+              <Button
+                variant="outline"
+                onClick={handleStrategyClick}
+              >
+                View Case Studies
               </Button>
             </div>
           </div>
