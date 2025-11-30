@@ -384,7 +384,46 @@ POST /api/chat/message → "I'm sorry, I'm currently unable to process..."  ✗
    - Ensure Docker can reach ollama.ai CDN
    - Test: `docker exec -it ollama-container curl https://registry.ollama.ai/v2/`
 
-### Issue 5: Curl Errors (exit code 56, partial response)
+### Issue 5: Mixtral:8x7b Llama Runner Crashes (OOM on Docker Desktop)
+
+**Symptom**: `docker compose logs ollama` shows `"llama runner process has terminated: signal: killed"` after attempting mixtral:8x7b inference
+
+**Cause**: **mixtral:8x7b is a 46.7B parameter model (26GB quantized) that requires ~25GB RAM just to load on CPU**. Docker Desktop on macOS with typical 12GB memory allocation cannot support this model for inference.
+
+**Solutions**:
+
+1. **Use `mistral` (7B, 5GB) instead — recommended for Docker Desktop**
+   - Fully compatible with 12GB Docker memory limit
+   - ModelManager will use `mistral` for fallback tasks
+   - All inference endpoints work reliably
+   - In docker-compose.yml or `.env`: keep default `OLLAMA_MODEL=mistral`
+
+2. **Use mixtral:8x7b on host Ollama (not in Docker)**
+   ```bash
+   # Pull on host
+   ollama pull mixtral:8x7b
+   
+   # Point backend to host Ollama
+   # In .env: OLLAMA_HOST=http://host.docker.internal:11434  (macOS)
+   # OR: OLLAMA_HOST=http://172.17.0.1:11434  (Linux)
+   
+   # Requires: Host Ollama running (`ollama serve`)
+   # Requires: 32GB+ system RAM, or 24GB swap space
+   ```
+
+3. **Allocate more Docker Desktop memory (advanced)**
+   - Docker Desktop → Preferences → Resources → Memory: set to 20GB+
+   - Note: System may become unresponsive if you exceed available RAM
+   - Not recommended on typical development machines
+
+4. **Use GPU acceleration (advanced)**
+   - Enable Metal (macOS) or CUDA (Linux): `OLLAMA_METAL=1` or `OLLAMA_CUDA_VISIBLE_DEVICES=0`
+   - Requires compatible GPU (M1/M2/M3 macOS, NVIDIA CUDA on Linux)
+   - Significantly reduces memory footprint (10-15GB for mixtral on GPU)
+
+**Best Practice**: Keep `mistral` (5GB) as primary in Docker, use `mixtral:8x7b` locally on host if available for advanced tasks.
+
+### Issue 6: Curl Errors (exit code 56, partial response)
 
 **Symptom**: `curl` commands fail with network read errors
 

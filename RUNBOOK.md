@@ -31,9 +31,8 @@ cd pixelcraft-bloom
 # 3. Start Ollama in a new terminal
 ollama serve
 
-# 4. In another terminal, pull the models
-ollama pull mistral        # Fast, lightweight
-ollama pull mixtral:8x7b   # Powerful reasoning (optional but recommended)
+# 4. In another terminal, pull the required model
+ollama pull mistral        # Fast, stable, Docker-compatible
 
 # 5. Install and run backend
 cd backend
@@ -62,17 +61,17 @@ cd pixelcraft-bloom
 # 3. Start all services
 docker compose up -d
 
-# 4. Wait for Ollama to initialize and pull models (watch logs)
-docker compose logs -f ollama | grep -E "success|pulling"
-# You should see "mixtral:8x7b" being pulled automatically or use:
-# docker compose exec ollama ollama pull mixtral:8x7b
+# 4. Wait for Ollama to initialize (mistral model only, ~5GB)
+docker compose logs -f ollama | grep -E "success|listening"
 
 # 5. Test the API
 curl http://localhost:8000/api/models | jq .
-# Should show "mixtral" and "mistral" in the models list
+# Should show "mistral" in the models list
 
 # 6. Open http://localhost:5173 in your browser
 ```
+
+**Note**: Docker Compose uses `mistral` (7B, stable) by default. For advanced tasks requiring `mixtral:8x7b`, set up local Ollama on the host (requires 24GB+ RAM). See [OLLAMA_SETUP_GUIDE.md](OLLAMA_SETUP_GUIDE.md).
 
 ---
 
@@ -120,13 +119,11 @@ curl http://localhost:11434/api/tags
 
 ```bash
 # In Terminal 2:
-# Pull the primary models (required for development)
-ollama pull mistral        # ~5GB, fast inference
-ollama pull mixtral:8x7b   # ~26GB quantized, powerful reasoning
+# Pull the primary model (required, Docker-compatible)
+ollama pull mistral        # ~5GB, fast inference, stable for Docker Desktop
 
-# Optional additional models (only if you have 16GB+ RAM):
-# ollama pull llama3         # ~4.9GB, conversational AI
-# ollama pull codellama      # ~3.8GB, code generation
+# Optional: For local development on high-end machines (requires 24GB+ RAM)
+# ollama pull mixtral:8x7b   # ~26GB quantized, powerful but resource-intensive
 ```
 
 #### Step 5: Start Backend

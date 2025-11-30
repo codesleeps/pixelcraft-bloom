@@ -27,20 +27,27 @@ Ollama runs as a local server on port 11434 by default, providing a REST API for
 The backend agents require the following models. Pull them using Ollama's CLI:
 
 ```bash
+# Essential for all deployments
 ollama pull mistral
+
+# Recommended for host-based development (requires 24GB+ RAM or 20GB+ swap)
 ollama pull mixtral:8x7b
+
+# Optional advanced models (only if you have 16GB+ RAM)
 ollama pull llama2
 ollama pull llama3
 ollama pull codellama
 ```
 
-- **mistral** (7B): Efficient model for fast, lightweight processing across various tasks.
-- **mixtral:8x7b** (46.7B quantized): Powerful mixture-of-experts model for complex reasoning and multi-task handling.
-- **llama2**: General-purpose model for chat and text generation.
-- **llama3**: Advanced model for conversational AI and reasoning tasks.
-- **codellama**: Specialized model for code generation, ideal for web development and technical content.
+**Model Selection Guide:**
 
-These models are automatically selected by the ModelManager based on task type (e.g., chat vs. code generation). For Docker Compose deployments, at least `mistral` and `mixtral:8x7b` should be available for optimal performance.
+- **mistral** (7B, 5GB): ✓ Docker Desktop compatible, fast inference. **Recommended for Docker Compose.**
+- **mixtral:8x7b** (46.7B quantized, 26GB): ✓ Available, but requires host Ollama or dedicated GPU. OOM on Docker Desktop with 12GB. **Recommended for local development on high-end machines.**
+- **llama2** (7B): General-purpose chat and text generation.
+- **llama3** (8B): Advanced conversational AI and reasoning.
+- **codellama** (7B): Code generation and technical tasks.
+
+Models are automatically selected by ModelManager based on task type. For Docker Compose deployments, `mistral` is the stable primary model. See [OLLAMA_SETUP_GUIDE.md](OLLAMA_SETUP_GUIDE.md) for mixtral:8x7b host setup and resource requirements.
 
 ### Configuring Ollama
 
