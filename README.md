@@ -27,18 +27,20 @@ Ollama runs as a local server on port 11434 by default, providing a REST API for
 The backend agents require the following models. Pull them using Ollama's CLI:
 
 ```bash
+ollama pull mistral
+ollama pull mixtral:8x7b
 ollama pull llama2
 ollama pull llama3
-ollama pull mistral
 ollama pull codellama
 ```
 
+- **mistral** (7B): Efficient model for fast, lightweight processing across various tasks.
+- **mixtral:8x7b** (46.7B quantized): Powerful mixture-of-experts model for complex reasoning and multi-task handling.
 - **llama2**: General-purpose model for chat and text generation.
 - **llama3**: Advanced model for conversational AI and reasoning tasks.
-- **mistral**: Efficient model for fast, lightweight processing across various tasks.
 - **codellama**: Specialized model for code generation, ideal for web development and technical content.
 
-These models are automatically selected by the ModelManager based on task type (e.g., chat vs. code generation).
+These models are automatically selected by the ModelManager based on task type (e.g., chat vs. code generation). For Docker Compose deployments, at least `mistral` and `mixtral:8x7b` should be available for optimal performance.
 
 ### Configuring Ollama
 

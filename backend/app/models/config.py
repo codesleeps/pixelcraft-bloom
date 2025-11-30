@@ -64,26 +64,47 @@ MODELS = {
             "code_completion": True,
             "vision": False
         },
-        supports_streaming=False  # Disable streaming for stability; use non-streaming for dev
+        supports_streaming=False
+    ),
+    "mixtral": ModelConfig(
+        name="mixtral:latest",
+        provider=ModelProvider.OLLAMA,
+        endpoint=f"{OLLAMA_HOST}/api/generate",
+        parameters={
+            "num_ctx": 4096,
+            "num_thread": 8,  # Use more threads for larger model
+            "top_k": 50,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        },
+        max_tokens=4096,
+        context_window=32768,  # Mixtral has larger context
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": True,
+            "code_completion": True,
+            "vision": False
+        },
+        supports_streaming=False
     ),
 }
   
 # Task-specific model priorities
-# DEVELOPMENT: All tasks use mistral as primary model (only one loaded)
 MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "code": ModelPriority(
         task_type="code",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "service_recommendation": ModelPriority(
@@ -93,12 +114,12 @@ MODEL_PRIORITIES = {
     ),
     "web_development": ModelPriority(
         task_type="web_development",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "digital_marketing": ModelPriority(
         task_type="digital_marketing",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "brand_design": ModelPriority(
@@ -108,17 +129,17 @@ MODEL_PRIORITIES = {
     ),
     "ecommerce_solutions": ModelPriority(
         task_type="ecommerce_solutions",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "content_creation": ModelPriority(
         task_type="content_creation",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     ),
     "analytics_consulting": ModelPriority(
         task_type="analytics_consulting",
-        models=["mistral"],
+        models=["mixtral", "mistral"],
         fallback_model="mistral"
     )
 }

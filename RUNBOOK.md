@@ -31,8 +31,9 @@ cd pixelcraft-bloom
 # 3. Start Ollama in a new terminal
 ollama serve
 
-# 4. In another terminal, pull the model
-ollama pull mistral
+# 4. In another terminal, pull the models
+ollama pull mistral        # Fast, lightweight
+ollama pull mixtral:8x7b   # Powerful reasoning (optional but recommended)
 
 # 5. Install and run backend
 cd backend
@@ -52,7 +53,7 @@ npm run dev
 ### 5-Minute Setup (Docker Compose)
 
 ```bash
-# 1. Ensure Docker Desktop is running with 12GB+ memory
+# 1. Ensure Docker Desktop is running with 12GB+ memory allocated
 
 # 2. Clone and navigate
 git clone https://github.com/codesleeps/pixelcraft-bloom.git
@@ -61,11 +62,14 @@ cd pixelcraft-bloom
 # 3. Start all services
 docker compose up -d
 
-# 4. Wait for Ollama to initialize (watch logs)
-docker compose logs -f ollama | grep -i "loaded model"
+# 4. Wait for Ollama to initialize and pull models (watch logs)
+docker compose logs -f ollama | grep -E "success|pulling"
+# You should see "mixtral:8x7b" being pulled automatically or use:
+# docker compose exec ollama ollama pull mixtral:8x7b
 
 # 5. Test the API
 curl http://localhost:8000/api/models | jq .
+# Should show "mixtral" and "mistral" in the models list
 
 # 6. Open http://localhost:5173 in your browser
 ```
@@ -112,12 +116,17 @@ curl http://localhost:11434/api/tags
 # Should return JSON with available models
 ```
 
-#### Step 4: Pull Model
+#### Step 4: Pull Models
 
 ```bash
 # In Terminal 2:
-ollama pull mistral
-# This downloads ~5GB and may take 5-10 minutes on first run
+# Pull the primary models (required for development)
+ollama pull mistral        # ~5GB, fast inference
+ollama pull mixtral:8x7b   # ~26GB quantized, powerful reasoning
+
+# Optional additional models (only if you have 16GB+ RAM):
+# ollama pull llama3         # ~4.9GB, conversational AI
+# ollama pull codellama      # ~3.8GB, code generation
 ```
 
 #### Step 5: Start Backend
