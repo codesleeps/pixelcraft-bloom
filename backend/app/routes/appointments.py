@@ -11,6 +11,7 @@ from ..utils.external_tools import check_calendar_availability, create_calendar_
 from ..utils.notification_service import create_notification, create_notification_for_admins
 from ..utils.redis_client import publish_analytics_event
 from ..utils.limiter import limiter
+from ..utils.auth import get_current_user
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -26,6 +27,13 @@ class AppointmentTypeEnum(str, Enum):
     strategy_session = "strategy_session"
     discovery_call = "discovery_call"
     consultation = "consultation"
+
+
+class AppointmentStatusEnum(str, Enum):
+    scheduled = "scheduled"
+    rescheduled = "rescheduled"
+    cancelled = "cancelled"
+    completed = "completed"
 
 
 class AppointmentBookingRequest(BaseModel):
@@ -211,7 +219,7 @@ async def get_availability(
 
 @router.post("/book")
 @limiter.limit("10/minute")
-async def book_appointment(request: Request, booking_data: AppointmentBookingRequest):
+async def book_appointment(request: Request, booking_data: AppointmentBookingRequest, current_user: dict = Depends(get_current_user)):
     """Book a new appointment."""
     appointment_id = str(uuid.uuid4())
     
@@ -250,6 +258,7 @@ Appointment Details:
 - Phone: {booking_data.phone}
 - Company: {booking_data.company or 'N/A'}
 - Notes: {booking_data.notes or 'None'}
+- Booked by: {current_user.get('metadata', {}).get('name', 'Unknown')} ({current_user.get('user_id')})
         """
         
         calendar_result = await create_calendar_event(
@@ -279,6 +288,7 @@ Appointment Details:
             "timezone": booking_data.timezone,
             "status": "scheduled",
             "calendar_event_id": calendar_event_id,
+            "created_by": current_user["user_id"],
             "created_at": datetime.utcnow().isoformat()
         }
         
@@ -343,7 +353,8 @@ Appointment Details:
         try:
             publish_analytics_event("analytics:appointments", "appointment_booked", {
                 "appointment_id": appointment_id,
-                "type": booking_data.appointment_type
+                "type": booking_data.appointment_type,
+                "created_by": current_user["user_id"]
             })
         except Exception:
             pass
@@ -363,7 +374,7 @@ Appointment Details:
 
 
 @router.get("/{appointment_id}")
-async def get_appointment(appointment_id: str):
+async def get_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
     """Get appointment details."""
     try:
         sb = get_supabase_client()
@@ -372,9 +383,15 @@ async def get_appointment(appointment_id: str):
         if not result.data:
             raise HTTPException(status_code=404, detail="Appointment not found")
         
+        appointment = result.data
+        
+        # Check if user has permission to view this appointment
+        if current_user["role"] != "admin" and appointment.get("created_by") != current_user["user_id"]:
+            raise HTTPException(status_code=403, detail="Not authorized to view this appointment")
+        
         return {
             "success": True,
-            "appointment": result.data
+            "appointment": appointment
         }
     except HTTPException:
         raise
@@ -387,12 +404,17 @@ async def list_appointments(
     status: Optional[str] = None,
     email: Optional[str] = None,
     limit: int = 50,
-    offset: int = 0
+    offset: int = 0,
+    current_user: dict = Depends(get_current_user)
 ):
     """List appointments with optional filters."""
     try:
         sb = get_supabase_client()
         query = sb.table("appointments").select("*", count="exact")
+        
+        # Non-admin users can only see their own appointments
+        if current_user["role"] != "admin":
+            query = query.eq("created_by", current_user["user_id"])
         
         if status:
             query = query.eq("status", status)
@@ -539,3 +561,64 @@ async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequ
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to cancel appointment: {str(e)}")
+
+
+@router.patch("/{appointment_id}/complete")
+@limiter.limit("10/minute")
+async def complete_appointment(appointment_id: str, _: bool = Depends(require_api_key)):
+    """Mark an appointment as completed."""
+    try:
+        sb = get_supabase_client()
+        
+        # Get existing appointment
+        result = sb.table("appointments").select("*").eq("id", appointment_id).single().execute()
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        
+        # Update appointment status to completed
+        sb.table("appointments").update({
+            "status": "completed",
+            "completed_at": datetime.utcnow().isoformat()
+        }).eq("id", appointment_id).execute()
+        
+        appointment = result.data
+        
+        # Send completion email
+        try:
+            email_html = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Appointment Completed</h2>
+                <p>Hi {appointment['name']},</p>
+                <p>Your appointment scheduled for {datetime.fromisoformat(appointment['start_time'].replace('Z', '+00:00')).strftime('%B %d, %Y at %I:%M %p')} has been marked as completed.</p>
+                <p>Thank you for your time!</p>
+            </body>
+            </html>
+            """
+            
+            await send_email(
+                to_email=appointment["email"],
+                subject="Appointment Completed",
+                html_content=email_html
+            )
+        except Exception as e:
+            print(f"Failed to send completion email: {e}")
+        
+        # Publish analytics event
+        try:
+            publish_analytics_event("analytics:appointments", "appointment_completed", {
+                "appointment_id": appointment_id,
+                "type": appointment["appointment_type"]
+            })
+        except Exception:
+            pass
+        
+        return {
+            "success": True,
+            "message": "Appointment marked as completed"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to complete appointment: {str(e)}")

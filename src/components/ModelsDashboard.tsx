@@ -37,8 +37,11 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  LineChart,
+  Line
 } from 'recharts';
+import AnalyticsTrends from '@/components/AnalyticsTrends';
 
 interface ModelInfo {
   name: string;
@@ -74,6 +77,7 @@ export default function ModelsDashboard() {
   const [testPrompt, setTestPrompt] = useState('');
   const [testResult, setTestResult] = useState('');
   const [testing, setTesting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'models' | 'analytics'>('models');
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -189,185 +193,207 @@ export default function ModelsDashboard() {
         </div>
       </div>
 
-      {error && <p className="text-red-500">{error}</p>}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Model Health</CardTitle>
-            <CardDescription>Healthy models / Total</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {health ? `${health.healthy}/${health.total}` : 'N/A'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Status: {health?.status || 'Unknown'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Requests</CardTitle>
-            <CardDescription>Across all models</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {metrics.reduce((sum, m) => sum + m.total_requests, 0).toLocaleString()}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Average Success Rate</CardTitle>
-            <CardDescription>All models combined</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {(metrics.reduce((sum, m) => sum + m.success_rate, 0) / metrics.length || 0).toFixed(1)}%
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Cache Hit Rate</CardTitle>
-            <CardDescription>Response caching efficiency</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {(metrics.reduce((sum, m) => sum + m.cache_hit_rate, 0) / metrics.length || 0).toFixed(1)}%
-            </p>
-          </CardContent>
-        </Card>
+      {/* Tab Navigation */}
+      <div className="flex border-b">
+        <button
+          className={`px-4 py-2 font-medium ${activeTab === 'models' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
+          onClick={() => setActiveTab('models')}
+        >
+          Model Performance
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${activeTab === 'analytics' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          Business Analytics
+        </button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Available Models</CardTitle>
-          <CardDescription>Current model status and providers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>List of available models with health status</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Model Name</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Health</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {models.map((model, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-medium">{model.name}</TableCell>
-                  <TableCell>{model.provider}</TableCell>
-                  <TableCell>
-                    <span className={model.health ? 'text-green-600' : 'text-red-600'}>
-                      {model.health ? 'Healthy' : 'Unhealthy'}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {error && <p className="text-red-500">{error}</p>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Model Testing</CardTitle>
-          <CardDescription>Test a model with a custom prompt</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Select value={testModel} onValueChange={setTestModel}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.name} value={model.name}>
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Enter test prompt"
-              value={testPrompt}
-              onChange={(e) => setTestPrompt(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={handleTest} disabled={testing || !testModel || !testPrompt}>
-              {testing ? 'Testing...' : 'Test'}
-            </Button>
+      {activeTab === 'models' ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Model Health</CardTitle>
+                <CardDescription>Healthy models / Total</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {health ? `${health.healthy}/${health.total}` : 'N/A'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Status: {health?.status || 'Unknown'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Requests</CardTitle>
+                <CardDescription>Across all models</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {metrics.reduce((sum, m) => sum + m.total_requests, 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Average Success Rate</CardTitle>
+                <CardDescription>All models combined</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {(metrics.reduce((sum, m) => sum + m.success_rate, 0) / metrics.length || 0).toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Cache Hit Rate</CardTitle>
+                <CardDescription>Response caching efficiency</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {(metrics.reduce((sum, m) => sum + m.cache_hit_rate, 0) / metrics.length || 0).toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
           </div>
-          {testResult && (
-            <div className="p-4 bg-gray-50 rounded">
-              <p className="font-medium">Result:</p>
-              <p>{testResult}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Metrics</CardTitle>
-          <CardDescription>Success rate and cache efficiency by model</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="successRate" name="Success Rate (%)" fill="#22c55e" />
-              <Bar dataKey="cacheHitRate" name="Cache Hit Rate (%)" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Models</CardTitle>
+              <CardDescription>Current model status and providers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableCaption>List of available models with health status</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Model Name</TableHead>
+                    <TableHead>Provider</TableHead>
+                    <TableHead>Health</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {models.map((model, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{model.name}</TableCell>
+                      <TableCell>{model.provider}</TableCell>
+                      <TableCell>
+                        <span className={model.health ? 'text-green-600' : 'text-red-600'}>
+                          {model.health ? 'Healthy' : 'Unhealthy'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Detailed Metrics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>A detailed view of model performance metrics</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Model</TableHead>
-                <TableHead>Task Type</TableHead>
-                <TableHead>Success Rate</TableHead>
-                <TableHead>Avg Response Time</TableHead>
-                <TableHead>Cache Hit Rate</TableHead>
-                <TableHead>Total Requests</TableHead>
-                <TableHead>Total Tokens</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {metrics.map((metric, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-medium">{metric.model_name}</TableCell>
-                  <TableCell>{metric.task_type}</TableCell>
-                  <TableCell>{metric.success_rate.toFixed(1)}%</TableCell>
-                  <TableCell>{metric.avg_response_time.toFixed(0)}ms</TableCell>
-                  <TableCell>{metric.cache_hit_rate.toFixed(1)}%</TableCell>
-                  <TableCell>{metric.total_requests.toLocaleString()}</TableCell>
-                  <TableCell>{metric.total_tokens.toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Testing</CardTitle>
+              <CardDescription>Test a model with a custom prompt</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Select value={testModel} onValueChange={setTestModel}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {models.map((model) => (
+                      <SelectItem key={model.name} value={model.name}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Enter test prompt"
+                  value={testPrompt}
+                  onChange={(e) => setTestPrompt(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleTest} disabled={testing || !testModel || !testPrompt}>
+                  {testing ? 'Testing...' : 'Test'}
+                </Button>
+              </div>
+              {testResult && (
+                <div className="p-4 bg-gray-50 rounded">
+                  <p className="font-medium">Result:</p>
+                  <p>{testResult}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Metrics</CardTitle>
+              <CardDescription>Success rate and cache efficiency by model</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="successRate" name="Success Rate (%)" fill="#22c55e" />
+                  <Bar dataKey="cacheHitRate" name="Cache Hit Rate (%)" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Metrics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableCaption>A detailed view of model performance metrics</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Model</TableHead>
+                    <TableHead>Task Type</TableHead>
+                    <TableHead>Success Rate</TableHead>
+                    <TableHead>Avg Response Time</TableHead>
+                    <TableHead>Cache Hit Rate</TableHead>
+                    <TableHead>Total Requests</TableHead>
+                    <TableHead>Total Tokens</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {metrics.map((metric, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{metric.model_name}</TableCell>
+                      <TableCell>{metric.task_type}</TableCell>
+                      <TableCell>{metric.success_rate.toFixed(1)}%</TableCell>
+                      <TableCell>{metric.avg_response_time.toFixed(0)}ms</TableCell>
+                      <TableCell>{metric.cache_hit_rate.toFixed(1)}%</TableCell>
+                      <TableCell>{metric.total_requests.toLocaleString()}</TableCell>
+                      <TableCell>{metric.total_tokens.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <AnalyticsTrends />
+      )}
     </div>
   );
 }

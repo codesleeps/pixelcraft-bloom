@@ -3,7 +3,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TimeSlot {
@@ -27,6 +27,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   const fetchAvailability = async (date: Date) => {
     setLoading(true);
+    setError(null);
     try {
       const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -45,16 +47,22 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch availability');
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch availability: ${errorText || response.statusText}`);
       }
 
       const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch availability');
+      }
       setAvailableSlots(data.slots || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching availability:', error);
+      const errorMessage = error.message || 'Failed to load available time slots. Please try again.';
+      setError(errorMessage);
       toast({
         title: 'Error',
-        description: 'Failed to load available time slots. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
       setAvailableSlots([]);
@@ -118,6 +126,19 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                  <p className="text-center mb-2">Failed to load available time slots</p>
+                  <p className="text-sm text-center">{error}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => selectedDate && fetchAvailability(selectedDate)}
+                  >
+                    Retry
+                  </Button>
                 </div>
               ) : availableSlots.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
