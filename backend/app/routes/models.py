@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from pydantic import BaseModel
 import time
 from ..models.manager import ModelManager
@@ -75,8 +76,17 @@ class ModelHealthResponse(BaseModel):
     overall_health: bool
     models_health: Dict[str, bool]
 
+class ModelMetrics(BaseModel):
+    model_name: str
+    task_type: str = "chat"
+    success_rate: float
+    avg_response_time: float
+    cache_hit_rate: float
+    total_requests: int
+    total_tokens: int
+
 class ModelMetricsResponse(BaseModel):
-    metrics: Dict[str, Dict[str, Any]]
+    metrics: List[ModelMetrics]
 
 class ModelWarmupRequest(BaseModel):
     model_names: Optional[List[str]] = None
@@ -104,153 +114,85 @@ class ModelBenchmarkResponse(BaseModel):
 
 router = APIRouter()
 
-# TODO: Add rate limiting middleware or dependency
-# For now, implement basic rate limiting per endpoint if needed
-
-@router.get("/models", response_model=ModelListResponse)
-async def list_models(mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """List all available models with health status"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    models = []
-    for name, config in MODELS.items():
-        health = mm._health_checks.get(name, False)
-        metrics = mm.metrics.get(name, {})
-        models.append(ModelInfo(
-            name=name,
-            provider=config.provider.value,
-            health=health,
-            metrics=metrics
-        ))
-    return ModelListResponse(models=models)
-
-@router.get("/models/{model_name}", response_model=ModelInfo)
-async def get_model(model_name: str, mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """Get specific model details and metrics"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    if model_name not in MODELS:
-        raise HTTPException(status_code=404, detail="Model not found")
-    
-    config = MODELS[model_name]
-    health = mm._health_checks.get(model_name, False)
-    metrics = mm.metrics.get(model_name, {})
-    
-    return ModelInfo(
-        name=model_name,
-        provider=config.provider.value,
-        health=health,
-        metrics=metrics
-    )
-
-@router.post("/models/test", response_model=ModelTestResponse)
-@limiter.limit("10/minute")
-async def test_model(request: Request, request_body: ModelTestRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """Test a model with sample input"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    if request_body.model_name not in MODELS:
-        raise HTTPException(status_code=404, detail="Model not found")
-    
-    start_time = time.time()
-    try:
-        # For testing, use the specified model directly
-        # Note: This assumes ModelManager has a method to generate with specific model
-        # For now, using task_type selection - TODO: enhance ModelManager to support specific model
-        response = await mm.generate(
-            request_body.prompt, 
-            request_body.task_type, 
-            request_body.system_prompt
-        )
-        latency = time.time() - start_time
-        tokens = len(response.split())  # Rough token estimate
-        
-        return ModelTestResponse(
-            response=response,
-            latency=latency,
-            tokens=tokens
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Model test failed: {str(e)}")
-
-@router.post("/models/generate", response_model=ModelGenerateResponse)
-@limiter.limit("10/minute")
-async def generate_completion(request: Request, request_body: ModelGenerateRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """Generate completion using specified model"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    if request_body.model_name not in MODELS:
-        raise HTTPException(status_code=404, detail="Model not found")
-    
-    start_time = time.time()
-    try:
-        # TODO: Modify ModelManager.generate to accept specific model_name
-        # For now, using task_type selection
-        response = await mm.generate(
-            request_body.prompt,
-            request_body.task_type,
-            request_body.system_prompt,
-            temperature=request_body.temperature,
-            max_tokens=request_body.max_tokens
-        )
-        latency = time.time() - start_time
-        
-        # TODO: Get actual model used from ModelManager
-        return ModelGenerateResponse(
-            response=response,
-            model_used="selected_by_manager",  # Placeholder
-            latency=latency
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
-
-@router.post("/models/chat", response_model=ModelChatResponse)
-@limiter.limit("10/minute")
-async def chat_completion(request: Request, request_body: ModelChatRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """Chat completion using specified model"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    if request_body.model_name not in MODELS:
-        raise HTTPException(status_code=404, detail="Model not found")
-    
-    start_time = time.time()
-    try:
-        # Convert messages to prompt format
-        # TODO: Enhance ModelManager to support chat format directly
-        prompt = "\n".join([f"{msg['role']}: {msg['content']}" for msg in request_body.messages])
-        
-        response = await mm.generate(
-            prompt,
-            request_body.task_type,
-            temperature=request_body.temperature
-        )
-        latency = time.time() - start_time
-        
-        return ModelChatResponse(
-            response=response,
-            model_used="selected_by_manager",  # Placeholder
-            latency=latency
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chat completion failed: {str(e)}")
-
-@router.get("/models/health", response_model=ModelHealthResponse)
-async def get_model_health(mm: Optional[ModelManager] = Depends(get_model_manager)):
-    """Overall model system health check"""
-    if mm is None:
-        raise HTTPException(status_code=503, detail="ModelManager not available")
-    overall_health = all(mm._health_checks.values())
-    return ModelHealthResponse(
-        overall_health=overall_health,
-        models_health=mm._health_checks
-    )
-
 @router.get("/models/metrics", response_model=ModelMetricsResponse)
-async def get_model_metrics(mm: Optional[ModelManager] = Depends(get_model_manager)):
+async def get_model_metrics(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    mm: Optional[ModelManager] = Depends(get_model_manager)
+):
     """Get aggregated model performance metrics"""
     if mm is None:
         raise HTTPException(status_code=503, detail="ModelManager not available")
-    return ModelMetricsResponse(metrics=mm.metrics)
+    
+    metrics_list = []
+    
+    # Try to fetch from Supabase if dates are provided
+    if start_date:
+        try:
+            from ..utils.supabase_client import get_supabase_client
+            sb = get_supabase_client()
+            
+            query = sb.table("model_metrics").select("*")
+            # Simple timestamp filtering (assuming timestamp is stored as float/int in DB)
+            # If stored as ISO string, we'd use string comparison. 
+            # manager.py stores it as time.time() (float).
+            if start_date:
+                dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                query = query.gte("timestamp", dt.timestamp())
+            if end_date:
+                dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                query = query.lte("timestamp", dt.timestamp())
+                
+            result = query.execute()
+            data = result.data or []
+            
+            # Aggregate
+            agg = {}
+            for row in data:
+                name = row['model_name']
+                if name not in agg:
+                    agg[name] = {'requests': 0, 'successes': 0, 'total_latency': 0.0, 'total_tokens': 0}
+                
+                m = agg[name]
+                m['requests'] += 1
+                if row['success']:
+                    m['successes'] += 1
+                m['total_latency'] += row['latency']
+                m['total_tokens'] += row.get('token_usage', 0)
+            
+            for name, m in agg.items():
+                reqs = m['requests']
+                metrics_list.append(ModelMetrics(
+                    model_name=name,
+                    task_type="chat",
+                    success_rate=(m['successes'] / reqs * 100) if reqs > 0 else 0,
+                    avg_response_time=(m['total_latency'] / reqs * 1000) if reqs > 0 else 0,
+                    cache_hit_rate=0.0, # Not tracked yet
+                    total_requests=reqs,
+                    total_tokens=m['total_tokens']
+                ))
+                
+            return ModelMetricsResponse(metrics=metrics_list)
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch metrics from Supabase: {e}")
+            # Fallback to in-memory
+            pass
+
+    # Fallback to in-memory aggregation
+    for name, m in mm.metrics.items():
+        reqs = m['requests']
+        metrics_list.append(ModelMetrics(
+            model_name=name,
+            task_type="chat",
+            success_rate=(m['successes'] / reqs * 100) if reqs > 0 else 0,
+            avg_response_time=(m['total_latency'] / reqs * 1000) if reqs > 0 else 0,
+            cache_hit_rate=0.0,
+            total_requests=reqs,
+            total_tokens=m['total_tokens']
+        ))
+
+    return ModelMetricsResponse(metrics=metrics_list)
 
 @router.post("/models/warmup", response_model=ModelWarmupResponse)
 async def warmup_models(request: ModelWarmupRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):

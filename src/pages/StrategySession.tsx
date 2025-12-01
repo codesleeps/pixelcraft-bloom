@@ -10,11 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import SEOHead from "@/components/SEOHead";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { AppointmentCalendar } from "@/components/AppointmentCalendar";
-import { 
+import {
   CheckCircle,
-  Clock, 
-  Users, 
-  TrendingUp, 
+  Clock,
+  Users,
+  TrendingUp,
   ArrowLeft,
   Star,
   Phone,
@@ -68,7 +68,7 @@ const StrategySession = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/appointments/book`,
@@ -76,7 +76,6 @@ const StrategySession = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-API-Key': import.meta.env.VITE_BACKEND_API_KEY || ''
           },
           body: JSON.stringify({
             name: `${formData.firstName} ${formData.lastName}`,
@@ -206,13 +205,13 @@ const StrategySession = () => {
         canonical="https://pixelcraft.lovable.app/strategy-session"
         schema={strategySchema}
       />
-      
+
       <div className="min-h-screen bg-gradient-subtle">
         {/* Header */}
         <header className="bg-gradient-hero text-white py-8">
           <div className="container mx-auto px-4">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -229,7 +228,7 @@ const StrategySession = () => {
                 </span>
               </h1>
               <p className="text-xl text-gray-200 mb-8 leading-relaxed max-w-3xl">
-                Discover untapped growth opportunities with a personalized 60-minute consultation. 
+                Discover untapped growth opportunities with a personalized 60-minute consultation.
                 Our experts will analyze your business and create a custom roadmap for success.
               </p>
               <div className="flex items-center gap-6 text-sm">
@@ -325,144 +324,144 @@ const StrategySession = () => {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleFormSubmit} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Input
-                        name="firstName"
-                        placeholder="First Name"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        required
-                      />
-                      <Input
-                        name="lastName"
-                        placeholder="Last Name"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    
-                    <Input
-                      name="email"
-                      type="email"
-                      placeholder="Email Address"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    
-                    <Input
-                      name="company"
-                      placeholder="Company Name"
-                      value={formData.company}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    
-                    <Input
-                      name="phone"
-                      placeholder="Phone Number"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    
-                    <Input
-                      name="website"
-                      placeholder="Website URL (if applicable)"
-                      value={formData.website}
-                      onChange={handleInputChange}
-                    />
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Current Marketing Efforts</label>
-                      <Textarea
-                        name="currentMarketing"
-                        placeholder="Tell us about your current marketing activities..."
-                        value={formData.currentMarketing}
-                        onChange={handleInputChange}
-                        className="min-h-[80px]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Primary Goals</label>
-                      <Textarea
-                        name="goals"
-                        placeholder="What are your main business goals for the next 12 months?"
-                        value={formData.goals}
-                        onChange={handleInputChange}
-                        className="min-h-[80px]"
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Monthly Budget Range</label>
-                        <select
-                          name="budget"
-                          value={formData.budget}
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          name="firstName"
+                          placeholder="First Name"
+                          value={formData.firstName}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-200 rounded-md"
                           required
-                        >
-                          <option value="">Select Range</option>
-                          <option value="under-1k">Under £1,000</option>
-                          <option value="1k-5k">£1,000 - £5,000</option>
-                          <option value="5k-10k">£5,000 - £10,000</option>
-                          <option value="10k-25k">£10,000 - £25,000</option>
-                          <option value="25k-plus">£25,000+</option>
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Timeline</label>
-                        <select
-                          name="timeline"
-                          value={formData.timeline}
+                        />
+                        <Input
+                          name="lastName"
+                          placeholder="Last Name"
+                          value={formData.lastName}
                           onChange={handleInputChange}
-                          className="w-full p-3 border border-gray-200 rounded-md"
                           required
-                        >
-                          <option value="">Select Timeline</option>
-                          <option value="asap">ASAP</option>
-                          <option value="1-month">Within 1 month</option>
-                          <option value="3-months">Within 3 months</option>
-                          <option value="6-months">Within 6 months</option>
-                        </select>
+                        />
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Preferred Contact Method</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { value: 'phone', icon: <Phone className="w-4 h-4" />, label: 'Phone' },
-                          { value: 'video', icon: <Video className="w-4 h-4" />, label: 'Video Call' },
-                          { value: 'email', icon: <MessageSquare className="w-4 h-4" />, label: 'Email' }
-                        ].map((method) => (
-                          <label key={method.value} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                            <input
-                              type="radio"
-                              name="preferredContact"
-                              value={method.value}
-                              checked={formData.preferredContact === method.value}
-                              onChange={handleInputChange}
-                              className="sr-only"
-                            />
-                            <div className={`w-4 h-4 rounded-full border-2 ${formData.preferredContact === method.value ? 'bg-primary border-primary' : 'border-gray-300'}`} />
-                            {method.icon}
-                            <span className="text-sm">{method.label}</span>
-                          </label>
-                        ))}
+                      <Input
+                        name="email"
+                        type="email"
+                        placeholder="Email Address"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                      />
+
+                      <Input
+                        name="company"
+                        placeholder="Company Name"
+                        value={formData.company}
+                        onChange={handleInputChange}
+                        required
+                      />
+
+                      <Input
+                        name="phone"
+                        placeholder="Phone Number"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                      />
+
+                      <Input
+                        name="website"
+                        placeholder="Website URL (if applicable)"
+                        value={formData.website}
+                        onChange={handleInputChange}
+                      />
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Current Marketing Efforts</label>
+                        <Textarea
+                          name="currentMarketing"
+                          placeholder="Tell us about your current marketing activities..."
+                          value={formData.currentMarketing}
+                          onChange={handleInputChange}
+                          className="min-h-[80px]"
+                        />
                       </div>
-                    </div>
 
-                      <Button 
-                        type="submit" 
-                        variant="premium" 
-                        size="lg" 
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">Primary Goals</label>
+                        <Textarea
+                          name="goals"
+                          placeholder="What are your main business goals for the next 12 months?"
+                          value={formData.goals}
+                          onChange={handleInputChange}
+                          className="min-h-[80px]"
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Monthly Budget Range</label>
+                          <select
+                            name="budget"
+                            value={formData.budget}
+                            onChange={handleInputChange}
+                            className="w-full p-3 border border-gray-200 rounded-md"
+                            required
+                          >
+                            <option value="">Select Range</option>
+                            <option value="under-1k">Under £1,000</option>
+                            <option value="1k-5k">£1,000 - £5,000</option>
+                            <option value="5k-10k">£5,000 - £10,000</option>
+                            <option value="10k-25k">£10,000 - £25,000</option>
+                            <option value="25k-plus">£25,000+</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Timeline</label>
+                          <select
+                            name="timeline"
+                            value={formData.timeline}
+                            onChange={handleInputChange}
+                            className="w-full p-3 border border-gray-200 rounded-md"
+                            required
+                          >
+                            <option value="">Select Timeline</option>
+                            <option value="asap">ASAP</option>
+                            <option value="1-month">Within 1 month</option>
+                            <option value="3-months">Within 3 months</option>
+                            <option value="6-months">Within 6 months</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-3 block">Preferred Contact Method</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { value: 'phone', icon: <Phone className="w-4 h-4" />, label: 'Phone' },
+                            { value: 'video', icon: <Video className="w-4 h-4" />, label: 'Video Call' },
+                            { value: 'email', icon: <MessageSquare className="w-4 h-4" />, label: 'Email' }
+                          ].map((method) => (
+                            <label key={method.value} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                              <input
+                                type="radio"
+                                name="preferredContact"
+                                value={method.value}
+                                checked={formData.preferredContact === method.value}
+                                onChange={handleInputChange}
+                                className="sr-only"
+                              />
+                              <div className={`w-4 h-4 rounded-full border-2 ${formData.preferredContact === method.value ? 'bg-primary border-primary' : 'border-gray-300'}`} />
+                              {method.icon}
+                              <span className="text-sm">{method.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        variant="premium"
+                        size="lg"
                         className="w-full text-lg py-6 h-auto"
                       >
                         Continue to Select Time
@@ -495,15 +494,15 @@ const StrategySession = () => {
                       />
 
                       <div className="flex gap-3 mt-6">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={() => setStep('form')}
                           className="flex-1"
                         >
                           <ArrowLeft className="mr-2 h-4 w-4" />
                           Back
                         </Button>
-                        <Button 
+                        <Button
                           variant="premium"
                           onClick={handleFinalSubmit}
                           disabled={!selectedSlot || isSubmitting}

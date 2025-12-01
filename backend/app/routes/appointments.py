@@ -78,7 +78,7 @@ class AppointmentBookingRequest(BaseModel):
             raise ValueError("Invalid ISO datetime")
         return v
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_time_order_and_duration(cls, values):
         st = values.get('start_time')
         et = values.get('end_time')
@@ -106,7 +106,7 @@ class AppointmentRescheduleRequest(BaseModel):
             raise ValueError("Invalid ISO datetime")
         return v
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_time_order_and_duration(cls, values):
         st = values.get('new_start_time')
         et = values.get('new_end_time')
@@ -211,14 +211,14 @@ async def get_availability(
 
 @router.post("/book")
 @limiter.limit("10/minute")
-async def book_appointment(request: AppointmentBookingRequest, _: bool = Depends(require_api_key)):
+async def book_appointment(request: Request, booking_data: AppointmentBookingRequest):
     """Book a new appointment."""
     appointment_id = str(uuid.uuid4())
     
     try:
         # Parse times and check conflicts
-        start_dt = datetime.fromisoformat(request.start_time.replace('Z', '+00:00'))
-        end_dt = datetime.fromisoformat(request.end_time.replace('Z', '+00:00'))
+        start_dt = datetime.fromisoformat(booking_data.start_time.replace('Z', '+00:00'))
+        end_dt = datetime.fromisoformat(booking_data.end_time.replace('Z', '+00:00'))
 
         # Check for existing overlapping appointments (scheduled/rescheduled)
         sb = get_supabase_client()
@@ -241,22 +241,22 @@ async def book_appointment(request: AppointmentBookingRequest, _: bool = Depends
             pass
 
         # Create calendar event
-        summary = f"{request.appointment_type.replace('_', ' ').title()} - {request.name}"
+        summary = f"{booking_data.appointment_type.replace('_', ' ').title()} - {booking_data.name}"
         description = f"""
 Appointment Details:
-- Type: {request.appointment_type}
-- Name: {request.name}
-- Email: {request.email}
-- Phone: {request.phone}
-- Company: {request.company or 'N/A'}
-- Notes: {request.notes or 'None'}
+- Type: {booking_data.appointment_type}
+- Name: {booking_data.name}
+- Email: {booking_data.email}
+- Phone: {booking_data.phone}
+- Company: {booking_data.company or 'N/A'}
+- Notes: {booking_data.notes or 'None'}
         """
         
         calendar_result = await create_calendar_event(
             summary=summary,
-            start_time=request.start_time,
-            end_time=request.end_time,
-            attendees=[request.email],
+            start_time=booking_data.start_time,
+            end_time=booking_data.end_time,
+            attendees=[booking_data.email],
             description=description
         )
         
@@ -268,15 +268,15 @@ Appointment Details:
         sb = get_supabase_client()
         appointment_data = {
             "id": appointment_id,
-            "name": request.name,
-            "email": request.email,
-            "phone": request.phone,
-            "company": request.company,
-            "start_time": request.start_time,
-            "end_time": request.end_time,
-            "appointment_type": request.appointment_type,
-            "notes": request.notes,
-            "timezone": request.timezone,
+            "name": booking_data.name,
+            "email": booking_data.email,
+            "phone": booking_data.phone,
+            "company": booking_data.company,
+            "start_time": booking_data.start_time,
+            "end_time": booking_data.end_time,
+            "appointment_type": booking_data.appointment_type,
+            "notes": booking_data.notes,
+            "timezone": booking_data.timezone,
             "status": "scheduled",
             "calendar_event_id": calendar_event_id,
             "created_at": datetime.utcnow().isoformat()
@@ -290,15 +290,15 @@ Appointment Details:
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <h2 style="color: #6366f1;">Appointment Confirmed!</h2>
-                <p>Hi {request.name},</p>
+                <p>Hi {booking_data.name},</p>
                 <p>Your appointment has been successfully scheduled.</p>
                 
                 <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <h3 style="margin-top: 0;">Appointment Details:</h3>
-                    <p><strong>Type:</strong> {request.appointment_type.replace('_', ' ').title()}</p>
-                    <p><strong>Date & Time:</strong> {datetime.fromisoformat(request.start_time.replace('Z', '+00:00')).strftime('%B %d, %Y at %I:%M %p')}</p>
+                    <p><strong>Type:</strong> {booking_data.appointment_type.replace('_', ' ').title()}</p>
+                    <p><strong>Date & Time:</strong> {datetime.fromisoformat(booking_data.start_time.replace('Z', '+00:00')).strftime('%B %d, %Y at %I:%M %p')}</p>
                     <p><strong>Duration:</strong> 60 minutes</p>
-                    <p><strong>Timezone:</strong> {request.timezone}</p>
+                    <p><strong>Timezone:</strong> {booking_data.timezone}</p>
                 </div>
                 
                 <p>A calendar invitation has been sent to your email.</p>
@@ -319,8 +319,8 @@ Appointment Details:
             """
             
             await send_email(
-                to_email=request.email,
-                subject=f"Appointment Confirmed - {request.appointment_type.replace('_', ' ').title()}",
+                to_email=booking_data.email,
+                subject=f"Appointment Confirmed - {booking_data.appointment_type.replace('_', ' ').title()}",
                 html_content=email_html
             )
         except Exception as e:
@@ -332,9 +332,9 @@ Appointment Details:
                 notification_type="appointment",
                 severity="info",
                 title="New Appointment Booked",
-                message=f"{request.name} booked a {request.appointment_type} appointment",
+                message=f"{booking_data.name} booked a {booking_data.appointment_type} appointment",
                 action_url=f"/dashboard/appointments/{appointment_id}",
-                metadata={"appointment_id": appointment_id, "type": request.appointment_type}
+                metadata={"appointment_id": appointment_id, "type": booking_data.appointment_type}
             )
         except Exception:
             pass
@@ -343,7 +343,7 @@ Appointment Details:
         try:
             publish_analytics_event("analytics:appointments", "appointment_booked", {
                 "appointment_id": appointment_id,
-                "type": request.appointment_type
+                "type": booking_data.appointment_type
             })
         except Exception:
             pass
@@ -355,6 +355,8 @@ Appointment Details:
             "calendar_event_id": calendar_event_id
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error booking appointment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to book appointment: {str(e)}")
