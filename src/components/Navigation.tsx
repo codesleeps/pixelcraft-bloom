@@ -22,16 +22,13 @@ const Navigation = () => {
     if (href === '/') {
       // Handle home link
       event?.preventDefault();
-      window.location.hash = '/';
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (href.startsWith('#')) {
+      event?.preventDefault();
       const id = href.slice(1);
       const element = document.getElementById(id);
       if (element) {
-        event?.preventDefault();
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Update URL hash without triggering additional scroll
-        window.history.replaceState(null, '', `/${href}`);
       }
     }
     // Close mobile menu if open
@@ -39,10 +36,10 @@ const Navigation = () => {
   };
 
   const isActive = (href: string) => {
-    if (href.startsWith('#')) {
-      return location.hash === href;
+    if (href === '/') {
+      return location.pathname === '/' && !location.hash;
     }
-    return location.pathname === href;
+    return false; // Section links don't need active state on home page
   };
 
   return (
@@ -69,17 +66,28 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href.startsWith('#') ? `/${item.href}` : item.href}
-                onClick={(e) => handleSmoothScroll(item.href, e)}
-                className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
-                  ? 'text-primary'
-                  : 'text-gray-600 hover:text-gray-900'
-                  }`}
-              >
-                {item.name}
-              </Link>
+              item.href.startsWith('#') ? (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  onClick={(e) => handleSmoothScroll(item.href, e)}
+                  className="text-sm font-medium transition-colors text-gray-600 hover:text-primary hover:text-gray-900 cursor-pointer"
+                >
+                  {item.name}
+                </a>
+              ) : (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={(e) => handleSmoothScroll(item.href, e)}
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
+                    ? 'text-primary'
+                    : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                >
+                  {item.name}
+                </Link>
+              )
             ))}
 
             {/* Auth Buttons */}
@@ -125,17 +133,28 @@ const Navigation = () => {
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href.startsWith('#') ? `/${item.href}` : item.href}
-                  onClick={(e) => handleSmoothScroll(item.href, e)}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
-                    ? 'text-primary'
-                    : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                >
-                  {item.name}
-                </Link>
+                item.href.startsWith('#') ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={(e) => handleSmoothScroll(item.href, e)}
+                    className="text-sm font-medium transition-colors text-gray-600 hover:text-primary hover:text-gray-900 cursor-pointer"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={(e) => handleSmoothScroll(item.href, e)}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.href)
+                      ? 'text-primary'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    {item.name}
+                  </Link>
+                )
               ))}
 
               {/* Mobile Auth */}

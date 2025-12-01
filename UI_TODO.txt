@@ -1,0 +1,66 @@
+PIXELCRAFT UI/UX TODOS
+HOME PAGE (index.html)
+
+Navigation bar
+1. Home link inactive
+2. Brand logo inactive 
+3. Duplicate dashboard link
+4. Sign In/Out inactive
+
+Hero section
+1. Subscribe & Watch Success Stories CTA inactive
+2. Update text to reflect how we will help your business with this application
+3. Add video to background can clip from success stories video still to be sourced 
+
+
+Services section
+1. Get Custom Strategy CTA button goes to the page, but is half way down make it go to the top of the Get Your Free Strategy Session page 
+2. Subscribe button inactive
+
+
+Testimonials section
+1. First card profile image doesn’t load 
+
+
+Ready to Join Our Success Stories? Card
+1. All CTA buttons inactive 
+
+
+Certified & Recognized By card
+1. Replace with the corresponding company logo  
+
+
+Ready To Scale Your Business? card
+1. Get Free Strategy Session CTA button goes to the page, but is half way down make it go to the top of the Get Your Free Strategy Session page 
+2. Subscribe button inactive
+
+
+Still Have Questions? Card
+1. First CTA 404 error code
+2. Second CTA inactive
+3. Third CTA inactive 
+
+Calculate Your Potential ROI section
+1. The popup card CTA buttons return 404 error
+
+
+See Our AI In Action section
+1. Needs a complete redesign with working CTA buttons and a live interactive demo card 
+2. Replace text with corresponding relevant information
+
+Ready to Experience the Difference? Card
+1. Both CTA buttons go to the same place half way down Get Your Free Strategy Session page 
+
+Choose Your Plan section
+Get started button triggers an alert pop up connect to Stripe Payment System 
+
+About Us section
+1. Subscribe button inactive
+
+
+Get Your Free Consultation form
+1. Subscribe  button triggers alert pop up unable to start checkout
+
+
+Dashboard 
+Needs more information more insights add tools to help clients UX

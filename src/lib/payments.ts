@@ -9,16 +9,25 @@ export interface CheckoutSessionRequest {
 
 export async function createCheckoutSession(req: CheckoutSessionRequest) {
   const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  const res = await fetch(`${apiBase}/api/payments/create-checkout-session`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  });
+  
+  try {
+    const res = await fetch(`${apiBase}/api/payments/create-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    });
 
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Failed to create checkout session: ${detail}`);
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${detail || 'Unknown error'}`);
+    }
+    
+    return res.json();
+  } catch (error) {
+    // Provide user-friendly error messages
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Cannot connect to payment server. Please ensure the backend is running at ' + apiBase);
+    }
+    throw error;
   }
-  return res.json();
 }
-
