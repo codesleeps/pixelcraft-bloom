@@ -565,7 +565,7 @@ async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequ
 
 @router.patch("/{appointment_id}/complete")
 @limiter.limit("10/minute")
-async def complete_appointment(appointment_id: str, _: bool = Depends(require_api_key)):
+async def complete_appointment(request: Request, appointment_id: str, _: bool = Depends(require_api_key)):
     """Mark an appointment as completed."""
     try:
         sb = get_supabase_client()

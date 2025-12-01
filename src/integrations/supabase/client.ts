@@ -9,7 +9,7 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY |
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
     persistSession: true,
@@ -43,7 +43,7 @@ function wrapQuery(operation: string, tableOrFn: string, method: () => Promise<a
 }
 
 // Instrument the Supabase client with Sentry monitoring
-const instrumentedSupabase = new Proxy(supabase, {
+const instrumentedSupabase = new Proxy(supabaseClient, {
   get(target, prop) {
     if (prop === 'from') {
       return (table: string) => {
@@ -67,7 +67,7 @@ const instrumentedSupabase = new Proxy(supabase, {
             return (...args: any[]) => {
               try {
                 Sentry.addBreadcrumb({
-                  message: `Auth ${method}`,
+                  message: `Auth ${String(method)}`,
                   category: 'auth',
                   level: 'info',
                 });
