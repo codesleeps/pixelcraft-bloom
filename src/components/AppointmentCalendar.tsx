@@ -39,8 +39,9 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     setLoading(true);
     try {
       const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/appointments/availability?date=${dateStr}&duration=60`
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/appointments/availability?date=${dateStr}&duration=60&timezone=${encodeURIComponent(tz)}`
       );
 
       if (!response.ok) {

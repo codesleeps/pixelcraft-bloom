@@ -76,6 +76,7 @@ const StrategySession = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-API-Key': import.meta.env.VITE_BACKEND_API_KEY || ''
           },
           body: JSON.stringify({
             name: `${formData.firstName} ${formData.lastName}`,
@@ -92,7 +93,8 @@ const StrategySession = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to book appointment');
+        const detail = await response.text();
+        throw new Error(`Failed to book appointment: ${detail}`);
       }
 
       const result = await response.json();

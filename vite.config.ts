@@ -14,7 +14,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     assetsDir: "assets",
-    sourcemap: true,
+    // Generate sourcemaps in dev. In prod, only when Sentry vars are set for upload.
+    sourcemap: mode === 'development' ? true : Boolean(process.env.SENTRY_AUTH_TOKEN),
     rollupOptions: {
       output: {
         manualChunks: undefined,

@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend - Lint, Typecheck, Build, Test, Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Build
+        run: npm run build
+        env:
+          # Ensure build doesn't upload sourcemaps unless Sentry vars are set
+          SENTRY_ORG: ""
+          SENTRY_PROJECT: ""
+          SENTRY_AUTH_TOKEN: ""
+
+      - name: Unit tests
+        run: npm test -- --run
+
+      - name: Production dependency audit (non-blocking)
+        run: npm audit --omit=dev
+        continue-on-error: true
+
+  backend:
+    name: Backend - Test and Audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Security audit with pip-audit (non-blocking)
+        run: |
+          pip install pip-audit
+          pip-audit
+        continue-on-error: true

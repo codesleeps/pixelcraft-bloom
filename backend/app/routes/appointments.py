@@ -1,13 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional
 from datetime import datetime, timedelta
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator, root_validator
+from enum import Enum
 import uuid
+import os
 
 from ..utils.supabase_client import get_supabase_client
 from ..utils.external_tools import check_calendar_availability, create_calendar_event, update_calendar_event, cancel_calendar_event, send_email
 from ..utils.notification_service import create_notification, create_notification_for_admins
 from ..utils.redis_client import publish_analytics_event
+from ..utils.limiter import limiter
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -19,6 +22,12 @@ class AppointmentSlot(BaseModel):
     available: bool = True
 
 
+class AppointmentTypeEnum(str, Enum):
+    strategy_session = "strategy_session"
+    discovery_call = "discovery_call"
+    consultation = "consultation"
+
+
 class AppointmentBookingRequest(BaseModel):
     name: str
     email: EmailStr
@@ -26,9 +35,62 @@ class AppointmentBookingRequest(BaseModel):
     company: Optional[str] = None
     start_time: str
     end_time: str
-    appointment_type: str  # strategy_session, discovery_call, consultation
+    appointment_type: AppointmentTypeEnum  # strategy_session, discovery_call, consultation
     notes: Optional[str] = None
     timezone: str = "UTC"
+
+    @validator('name')
+    def validate_name(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) > 120:
+            raise ValueError("name must be 1-120 characters")
+        return v
+
+    @validator('phone')
+    def validate_phone(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) > 50:
+            raise ValueError("phone is too long")
+        return v
+
+    @validator('company')
+    def validate_company(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > 120:
+            raise ValueError("company is too long")
+        return v
+
+    @validator('notes')
+    def validate_notes(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if len(v) > 2000:
+            raise ValueError("notes too long")
+        return v
+
+    @validator('start_time', 'end_time')
+    def validate_iso_dt(cls, v: str) -> str:
+        try:
+            _ = datetime.fromisoformat(v.replace('Z', '+00:00'))
+        except Exception:
+            raise ValueError("Invalid ISO datetime")
+        return v
+
+    @root_validator
+    def validate_time_order_and_duration(cls, values):
+        st = values.get('start_time')
+        et = values.get('end_time')
+        if st and et:
+            s = datetime.fromisoformat(st.replace('Z', '+00:00'))
+            e = datetime.fromisoformat(et.replace('Z', '+00:00'))
+            if e <= s:
+                raise ValueError("end_time must be after start_time")
+            minutes = int((e - s).total_seconds() // 60)
+            if minutes != 60:
+                raise ValueError("Appointment duration must be 60 minutes")
+        return values
 
 
 class AppointmentRescheduleRequest(BaseModel):
@@ -36,9 +98,40 @@ class AppointmentRescheduleRequest(BaseModel):
     new_end_time: str
     reason: Optional[str] = None
 
+    @validator('new_start_time', 'new_end_time')
+    def validate_iso_dt(cls, v: str) -> str:
+        try:
+            _ = datetime.fromisoformat(v.replace('Z', '+00:00'))
+        except Exception:
+            raise ValueError("Invalid ISO datetime")
+        return v
+
+    @root_validator
+    def validate_time_order_and_duration(cls, values):
+        st = values.get('new_start_time')
+        et = values.get('new_end_time')
+        if st and et:
+            s = datetime.fromisoformat(st.replace('Z', '+00:00'))
+            e = datetime.fromisoformat(et.replace('Z', '+00:00'))
+            if e <= s:
+                raise ValueError("new_end_time must be after new_start_time")
+            minutes = int((e - s).total_seconds() // 60)
+            if minutes != 60:
+                raise ValueError("Appointment duration must be 60 minutes")
+        return values
+
 
 class AppointmentCancelRequest(BaseModel):
     reason: Optional[str] = None
+
+
+def require_api_key(request: Request):
+    api_key = os.environ.get("BACKEND_API_KEY")
+    if api_key:
+        provided = request.headers.get("X-API-Key")
+        if provided != api_key:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+    return True
 
 
 @router.get("/availability")
@@ -117,11 +210,36 @@ async def get_availability(
 
 
 @router.post("/book")
-async def book_appointment(request: AppointmentBookingRequest):
+@limiter.limit("10/minute")
+async def book_appointment(request: AppointmentBookingRequest, _: bool = Depends(require_api_key)):
     """Book a new appointment."""
     appointment_id = str(uuid.uuid4())
     
     try:
+        # Parse times and check conflicts
+        start_dt = datetime.fromisoformat(request.start_time.replace('Z', '+00:00'))
+        end_dt = datetime.fromisoformat(request.end_time.replace('Z', '+00:00'))
+
+        # Check for existing overlapping appointments (scheduled/rescheduled)
+        sb = get_supabase_client()
+        try:
+            existing_result = sb.table("appointments").select("*").in_("status", ["scheduled", "rescheduled"]).execute()
+            existing = existing_result.data or []
+            for appt in existing:
+                try:
+                    es = datetime.fromisoformat(str(appt.get("start_time", "")).replace('Z', '+00:00'))
+                    ee = datetime.fromisoformat(str(appt.get("end_time", "")).replace('Z', '+00:00'))
+                except Exception:
+                    continue
+                # Overlap if existing_start < new_end and existing_end > new_start
+                if es < end_dt and ee > start_dt:
+                    raise HTTPException(status_code=409, detail="Requested time conflicts with an existing appointment")
+        except HTTPException:
+            raise
+        except Exception:
+            # If conflict check fails due to DB issues, continue (do not block booking)
+            pass
+
         # Create calendar event
         summary = f"{request.appointment_type.replace('_', ' ').title()} - {request.name}"
         description = f"""
@@ -292,7 +410,8 @@ async def list_appointments(
 
 
 @router.patch("/{appointment_id}/reschedule")
-async def reschedule_appointment(appointment_id: str, request: AppointmentRescheduleRequest):
+@limiter.limit("10/minute")
+async def reschedule_appointment(appointment_id: str, request: AppointmentRescheduleRequest, _: bool = Depends(require_api_key)):
     """Reschedule an existing appointment."""
     try:
         sb = get_supabase_client()
@@ -362,7 +481,8 @@ async def reschedule_appointment(appointment_id: str, request: AppointmentResche
 
 
 @router.patch("/{appointment_id}/cancel")
-async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequest):
+@limiter.limit("10/minute")
+async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequest, _: bool = Depends(require_api_key)):
     """Cancel an appointment."""
     try:
         sb = get_supabase_client()

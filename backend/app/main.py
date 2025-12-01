@@ -45,6 +45,31 @@ from fastapi import Request, Depends
 from .config import settings, get_settings
 
 logger = logging.getLogger("pixelcraft.backend")
+  
+
+def configure_logging() -> None:
+    """Configure application-wide logging with consistent formatting.
+    This avoids duplicate handlers and ensures INFO level by default.
+    """
+    level = logging.INFO
+    root = logging.getLogger()
+    root.setLevel(level)
+
+    # Remove any pre-existing handlers to prevent duplicate logs
+    for h in list(root.handlers):
+        root.removeHandler(h)
+
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s %(name)s - %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S%z",
+    )
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+
+
+# Apply logging configuration at import time so startup logs are formatted
+configure_logging()
 
 # Global ModelManager instance
 model_manager_instance: Optional[ModelManager] = None
