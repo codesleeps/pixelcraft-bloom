@@ -19,14 +19,80 @@ from ..models.analytics import (
     CustomerLTV,
     SubscriptionTrendPoint,
     SubscriptionTrendsResponse,
+    ModelMetrics,
 )
 from ..utils.auth import get_current_user, require_admin
 from ..utils.supabase_client import get_supabase_client
 from ..utils.logger import logger
 from ..utils.cache import cache
 import sentry_sdk
+from collections import defaultdict
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+
+@router.get("/models/metrics", response_model=List[ModelMetrics])
+async def get_model_metrics(
+    time_range: TimeRangeParams = Depends(),
+    current_user: dict = Depends(require_admin),
+):
+    """Get performance metrics for AI models."""
+    sentry_sdk.set_user({"id": current_user["user_id"], "role": current_user["role"]})
+    sb = get_supabase_client()
+    try:
+        with sentry_sdk.start_span(op="db.query", description="get_model_metrics") as span:
+            span.set_tag("analytics.metric", "model_metrics")
+            span.set_tag("analytics.time_range", f"{time_range.start_date}_to_{time_range.end_date}")
+            
+            # Fetch raw metrics from Supabase
+            # Note: In a production env with many records, this should be an RPC call
+            start_ts = time_range.start_date.timestamp()
+            end_ts = time_range.end_date.timestamp()
+            
+            result = sb.table("model_metrics") \
+                .select("*") \
+                .gte("timestamp", start_ts) \
+                .lte("timestamp", end_ts) \
+                .execute()
+                
+        if not result.data:
+            return []
+            
+        # Aggregate in memory
+        metrics = defaultdict(lambda: {
+            "total_requests": 0,
+            "total_latency": 0.0,
+            "success_count": 0,
+            "total_tokens": 0,
+            "error_count": 0
+        })
+        
+        for row in result.data:
+            m = metrics[row["model_name"]]
+            m["total_requests"] += 1
+            m["total_latency"] += row["latency"]
+            m["total_tokens"] += row.get("token_usage", 0)
+            if row["success"]:
+                m["success_count"] += 1
+            else:
+                m["error_count"] += 1
+                
+        return [
+            ModelMetrics(
+                model_name=name,
+                total_requests=data["total_requests"],
+                avg_latency=data["total_latency"] / data["total_requests"] if data["total_requests"] > 0 else 0,
+                success_rate=data["success_count"] / data["total_requests"] if data["total_requests"] > 0 else 0,
+                total_tokens=data["total_tokens"],
+                error_count=data["error_count"]
+            )
+            for name, data in metrics.items()
+        ]
+            
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Analytics error in get_model_metrics: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.get("/leads/summary", response_model=LeadMetrics)

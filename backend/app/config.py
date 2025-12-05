@@ -113,6 +113,10 @@ class AppConfig(BaseSettings):
 
 @lru_cache()
 def get_settings() -> AppConfig:
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    load_dotenv()
+    
     # Load settings from environment automatically via pydantic-settings
     settings = AppConfig()
     # If SUPABASE_URL and SUPABASE_KEY are set, attach a SupabaseConfig

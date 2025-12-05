@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
+import { authenticatedFetch } from '@/lib/api';
 
 interface Lead {
   id: string;
@@ -77,7 +78,7 @@ const LeadsList: React.FC = () => {
         params.append('search', searchQuery);
       }
 
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leads?${params}`
       );
 
@@ -112,7 +113,7 @@ const LeadsList: React.FC = () => {
 
   const getScoreBadge = (score?: number) => {
     if (!score) return null;
-    
+
     let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
     if (score >= 75) variant = 'default';
     else if (score >= 50) variant = 'secondary';

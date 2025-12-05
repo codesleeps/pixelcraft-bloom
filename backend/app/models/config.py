@@ -2,6 +2,10 @@ from enum import Enum
 from typing import Dict, Optional, List
 from pydantic import BaseModel, Field
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Use OLLAMA_HOST environment variable when available so endpoints work inside
 # Docker Compose networks (service hostname `ollama`). Fall back to localhost.

@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { authenticatedFetch } from '@/lib/api';
 
 interface Lead {
   id: string;
@@ -92,7 +93,7 @@ const LeadDetail: React.FC = () => {
   const fetchLead = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leads/${id}`
       );
 
@@ -123,7 +124,7 @@ const LeadDetail: React.FC = () => {
 
     setSaving(true);
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leads/${id}`,
         {
           method: 'PATCH',
@@ -161,7 +162,7 @@ const LeadDetail: React.FC = () => {
 
     setSaving(true);
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leads/${id}`,
         {
           method: 'PATCH',
@@ -200,7 +201,7 @@ const LeadDetail: React.FC = () => {
 
     setAnalyzing(true);
     try {
-      const response = await fetch(
+      const response = await authenticatedFetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/leads/${id}/analyze`,
         {
           method: 'POST',

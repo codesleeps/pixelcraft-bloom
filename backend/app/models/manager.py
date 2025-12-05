@@ -41,13 +41,18 @@ class ModelManager:
     
     async def _check_model_availability(self):
         """Check which models are available"""
+        logger.info("Starting model availability check...")
         for model_name, config in MODELS.items():
             try:
                 if config.provider == ModelProvider.OLLAMA:
-                    self._health_checks[model_name] = await self.ollama_client.is_ready(config.name)
+                    logger.info(f"Checking Ollama model: {model_name} (actual name: {config.name})")
+                    is_available = await self.ollama_client.is_ready(config.name)
+                    self._health_checks[model_name] = is_available
+                    logger.info(f"Model {model_name} ({config.name}): {'✓ AVAILABLE' if is_available else '✗ UNAVAILABLE'}")
                 else:  # HuggingFace
                     if not self._hf_api_key:
                         self._health_checks[model_name] = False
+                        logger.info(f"Model {model_name}: ✗ UNAVAILABLE (no HF API key)")
                         continue
                     # Ping HuggingFace API with a lightweight request
                     headers = {"Authorization": f"Bearer {self._hf_api_key}"}
@@ -57,9 +62,14 @@ class ModelManager:
                         json={"inputs": "test", "parameters": {"max_new_tokens": 1}}
                     ) as response:
                         self._health_checks[model_name] = response.status == 200
+                        logger.info(f"Model {model_name}: {'✓ AVAILABLE' if response.status == 200 else '✗ UNAVAILABLE'}")
             except Exception as e:
                 logger.error(f"Error checking {model_name}: {str(e)}")
                 self._health_checks[model_name] = False
+        
+        available_count = sum(1 for v in self._health_checks.values() if v)
+        logger.info(f"Model availability check complete: {available_count}/{len(self._health_checks)} models available")
+        logger.info(f"Health checks: {self._health_checks}")
     
     def get_available_models(self, task_type: str) -> List[ModelConfig]:
         """Get available models for a task in priority order, considering health and circuit breaker"""

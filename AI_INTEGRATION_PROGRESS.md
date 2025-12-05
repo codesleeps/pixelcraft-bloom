@@ -55,33 +55,37 @@
 
 ## 📋 Remaining Critical Tasks
 
-### Phase 1: Fix AI Integration (CURRENT)
+### Phase 1: Fix AI Integration (COMPLETED)
 1. ✅ Connect agents to ModelManager
-2. 🔧 **Fix model health checks** (IN PROGRESS)
-3. ⏳ Test real Ollama responses
-4. ⏳ Verify lead scoring with AI
-5. ⏳ Test chat conversations with AI
+2. ✅ Fix model health checks
+3. ✅ Test real Ollama responses
+4. ✅ Verify lead scoring with AI
+5. ✅ Test chat conversations with AI
 
-### Phase 2: Service Integration
+### Phase 2: Service Integration (COMPLETED)
 1. ✅ Configure Google Calendar API (Docs created in `EXTERNAL_SERVICES_SETUP.md`)
 2. ✅ Test appointment booking flow (Verified with `test_external_services.py`)
 3. ✅ Configure SendGrid for emails (Docs created, mocks verified)
 4. ✅ Test HubSpot CRM integration (Verified with mocks)
 
-### Phase 3: Frontend Development
+### Phase 3: Frontend Development (COMPLETED)
 1. ✅ Build minimal chat UI component (`ChatWidget.tsx` integrated in `Index.tsx`)
 2. ✅ Create lead detail view page (`LeadDetail.tsx` created)
 3. ✅ Add lead list with filtering (`LeadsList.tsx` created)
 4. ✅ Implement real-time notifications (`useNotifications` hook updated with WebSocket support)
 
-### Phase 4: End-to-End Testing
+### Phase 4: End-to-End Testing (COMPLETED)
 1. ✅ Verify lead scoring with AI (Verified via curl and unit tests; model generation is slow ~9min cold start)
 2. ✅ Test chat conversations with AI (Verified via curl and unit tests)
 3. ✅ Validate full appointment booking flow (Verified via `test_appointments_flow.py`)
 4. ✅ Check real-time updates across clients (Verified via `test_websocket.py`)
 
-### Phase 5: Deployment & Optimization
-4. ⏳ Production deployment
+### Phase 5: Backend Refinements & Deployment
+1. ✅ Implement Model Analytics endpoint (`GET /analytics/models/metrics`)
+2. ✅ Frontend Integration (Chat, Leads, Appointments connected to backend APIs)
+3. ⏳ Integrate `payments.ts` with mock gateway
+4. ✅ Extend CI workflow (Verified in `.github/workflows/ci.yml`)
+5. ⏳ Production deployment
 
 ## 🧪 Testing Commands
 
@@ -128,6 +132,23 @@ curl -X POST http://localhost:8000/api/leads/submit \
     "analyze": true
   }'
 ```
+
+### Test Frontend Integration
+```bash
+# Run frontend tests
+npm test
+
+# Run integration tests specifically
+npm test -- src/test/integration
+
+# Start frontend dev server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+See `FRONTEND_INTEGRATION_TESTING.md` for comprehensive testing guide.
 
 ## 📝 Environment Variables Checklist
 
