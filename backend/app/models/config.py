@@ -45,7 +45,7 @@ class ModelPriority(BaseModel):
 # at least 16GB available Docker memory. See README.md for configuration.
 MODELS = {
     "mistral": ModelConfig(
-        name="mistral:latest",
+        name="mistral:7b",
         provider=ModelProvider.OLLAMA,
         endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
@@ -67,7 +67,7 @@ MODELS = {
         supports_streaming=False
     ),
     "mixtral": ModelConfig(
-        name="mixtral:latest",
+        name="mixtral:8x7b",
         provider=ModelProvider.OLLAMA,
         endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={

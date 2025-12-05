@@ -114,3 +114,12 @@ class CustomerLTV(BaseModel):
 class SubscriptionTrendsResponse(BaseModel):
     data: List[SubscriptionTrendPoint]
     aggregation: str
+
+
+class ModelMetrics(BaseModel):
+    model_name: str
+    total_requests: int
+    avg_latency: float
+    success_rate: float
+    total_tokens: int
+    error_count: int

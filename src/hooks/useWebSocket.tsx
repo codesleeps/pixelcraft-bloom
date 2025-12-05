@@ -46,6 +46,7 @@ interface UseWebSocketOptions {
   initialBackoffDelay?: number;
   maxBackoffDelay?: number;
   endpoint?: string;
+  onMessage?: (data: any) => void;
 }
 
 type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
@@ -57,9 +58,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     maxReconnectAttempts = 15,
     initialBackoffDelay = 1000,
     maxBackoffDelay = 30000,
-    endpoint = '/analytics'
+    endpoint = '/analytics',
+    onMessage
   } = options;
-  
+
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
@@ -67,7 +69,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const intentionalCloseRef = useRef(false);
-  
+
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
@@ -96,7 +98,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
     }
-    
+
     heartbeatIntervalRef.current = setInterval(sendHeartbeat, heartbeatInterval);
   }, [heartbeatInterval, sendHeartbeat]);
 
@@ -112,12 +114,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       wsRef.current.close();
       wsRef.current = null;
     }
-    
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    
+
     stopHeartbeat();
   }, [stopHeartbeat]);
 
@@ -129,7 +131,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
     // Clean up any existing connection
     cleanupConnection();
-    
+
     if (!window.WebSocket) {
       setError('WebSocket not supported by this browser');
       setConnectionStatus('error');
@@ -138,7 +140,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
     setConnectionStatus('connecting');
     intentionalCloseRef.current = false;
-    
+
     try {
       const wsUrl = buildWebSocketUrl();
       wsRef.current = new WebSocket(wsUrl);
@@ -155,12 +157,17 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       wsRef.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          
+
           // Handle heartbeat response
           if (message?.type === 'pong') {
             return;
           }
-          
+
+          // Call custom onMessage handler if provided
+          if (onMessage) {
+            onMessage(message);
+          }
+
           const { event_type } = message;
 
           switch (event_type) {
@@ -201,7 +208,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         console.log('WebSocket closed:', event.code, event.reason);
         setIsConnected(false);
         stopHeartbeat();
-        
+
         // Don't attempt to reconnect if this was an intentional close
         if (intentionalCloseRef.current) {
           setConnectionStatus('disconnected');
@@ -220,12 +227,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
             initialBackoffDelay * Math.pow(2, reconnectAttemptsRef.current),
             maxBackoffDelay
           );
-          
+
           setConnectionStatus('connecting');
           reconnectAttemptsRef.current += 1;
-          
+
           console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
-          
+
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
@@ -273,7 +280,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         reconnect();
       }
     };
-    
+
     const handleOffline = () => {
       console.log('Network offline, pausing WebSocket reconnection');
       if (reconnectTimeoutRef.current) {
@@ -282,7 +289,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       }
       setConnectionStatus('disconnected');
     };
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -293,9 +300,9 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     };
   }, [session, enabled, connect, disconnect, reconnect, isConnected]);
 
-  return { 
-    isConnected, 
-    error, 
+  return {
+    isConnected,
+    error,
     reconnect,
     connectionStatus,
     disconnect

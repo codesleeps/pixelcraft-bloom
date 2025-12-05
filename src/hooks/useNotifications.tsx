@@ -44,56 +44,38 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const [lastNotification, setLastNotification] = useState<Notification | null>(null);
-  
+
   // Use the enhanced WebSocket hook for notifications channel
-  const { 
-    isConnected, 
-    error: wsError, 
-    connectionStatus 
+  const {
+    isConnected,
+    error: wsError,
+    connectionStatus
   } = useWebSocket({
     enabled: !!session,
     heartbeatInterval: 30000,
     maxReconnectAttempts: 15,
-    endpoint: '/notifications'
-  });
-
-  // Setup notification listener for WebSocket events
-  useEffect(() => {
-    // Create a handler for notification events
-    const handleNotificationEvent = (event: MessageEvent) => {
+    endpoint: '/notifications',
+    onMessage: (data) => {
       try {
-        const data = JSON.parse(event.data);
-        
         // Handle notification-specific events
         if (data.event_type === 'notification_created') {
           // Update the notification cache
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          
+
           // Store the latest notification for UI updates
           if (data.notification) {
             setLastNotification(data.notification);
-            
+
             // Persist unread count in localStorage for session persistence
             const currentUnreadCount = parseInt(localStorage.getItem('unreadNotificationCount') || '0', 10);
             localStorage.setItem('unreadNotificationCount', (currentUnreadCount + 1).toString());
           }
         }
       } catch (err) {
-        console.error('Failed to parse notification WebSocket message:', err);
+        console.error('Failed to process notification message:', err);
       }
-    };
-
-    // Add event listener for WebSocket messages
-    window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'websocket_message') {
-        handleNotificationEvent(event.data.event);
-      }
-    });
-
-    return () => {
-      window.removeEventListener('message', handleNotificationEvent);
-    };
-  }, [queryClient]);
+    }
+  });
 
   const queryFn = async (): Promise<NotificationListResponse> => {
     if (!session?.access_token) {
@@ -117,11 +99,14 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
     enabled: !!session,
     refetchInterval: 60000,
     staleTime: 30000,
-    onSuccess: (data) => {
+  });
+
+  useEffect(() => {
+    if (data) {
       // Update the persisted unread count
       localStorage.setItem('unreadNotificationCount', data.unread_count.toString());
     }
-  });
+  }, [data]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -159,7 +144,7 @@ export const useNotifications = (options?: { unread_only?: boolean; notification
     if (data?.unread_count !== undefined) {
       return data.unread_count;
     }
-    
+
     // Fall back to localStorage if query hasn't loaded yet
     return parseInt(localStorage.getItem('unreadNotificationCount') || '0', 10);
   };
