@@ -57,7 +57,7 @@ const trustElements = [
 const certifications = [
   {
     name: 'Google Partner',
-    logo: './google-logo.webp',
+    logo: './symbol.webp',
     color: '#4285F4'
   },
   {
