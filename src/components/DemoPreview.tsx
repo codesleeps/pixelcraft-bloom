@@ -21,28 +21,48 @@ const DemoPreview = () => {
       title: 'AI Agent Dashboard',
       description: 'See how our AI agents work in real-time',
       icon: Eye,
-      preview: 'Live dashboard showing AI agent performance, intelligent lead scoring, and automated customer responses powered by machine learning.'
+      preview: 'Live dashboard showing AI agent performance, intelligent lead scoring, and automated customer responses powered by machine learning.',
+      gradient: 'from-blue-500 to-cyan-500',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30',
+      textColor: 'text-blue-600',
+      hoverColor: 'hover:bg-blue-500/20'
     },
     {
       id: 'analytics',
       title: 'Performance Analytics',
       description: 'Real-time insights and reporting',
       icon: TrendingUp,
-      preview: 'Interactive charts showing conversion rates, ROI, and campaign performance metrics with AI-driven recommendations for optimization.'
+      preview: 'Interactive charts showing conversion rates, ROI, and campaign performance metrics with AI-driven recommendations for optimization.',
+      gradient: 'from-green-500 to-emerald-500',
+      bgColor: 'bg-green-500/10',
+      borderColor: 'border-green-500/30',
+      textColor: 'text-green-600',
+      hoverColor: 'hover:bg-green-500/20'
     },
     {
       id: 'automation',
       title: 'Lead Qualification',
       description: 'Watch AI qualify leads automatically',
       icon: Users,
-      preview: 'Automated lead scoring, intelligent qualification, and smart routing to the right team member based on AI analysis.'
+      preview: 'Automated lead scoring, intelligent qualification, and smart routing to the right team member based on AI analysis.',
+      gradient: 'from-purple-500 to-pink-500',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/30',
+      textColor: 'text-purple-600',
+      hoverColor: 'hover:bg-purple-500/20'
     },
     {
       id: 'chat',
       title: 'AI Chat Assistant',
       description: 'Intelligent customer conversations',
       icon: MessageSquare,
-      preview: 'AI-powered chat that handles customer inquiries 24/7, schedules appointments, and provides instant support with natural language understanding.'
+      preview: 'AI-powered chat that handles customer inquiries 24/7, schedules appointments, and provides instant support with natural language understanding.',
+      gradient: 'from-orange-500 to-amber-500',
+      bgColor: 'bg-orange-500/10',
+      borderColor: 'border-orange-500/30',
+      textColor: 'text-orange-600',
+      hoverColor: 'hover:bg-orange-500/20'
     }
   ];
 
@@ -67,17 +87,26 @@ const DemoPreview = () => {
         <div className="max-w-6xl mx-auto">
           <Tabs value={activeDemo} onValueChange={setActiveDemo} className="w-full">
             {/* Demo Tabs */}
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8 bg-white/50 p-2 h-auto">
               {demos.map((demo) => {
                 const IconComponent = demo.icon;
+                const isActive = activeDemo === demo.id;
                 return (
                   <TabsTrigger
                     key={demo.id}
                     value={demo.id}
-                    className="flex items-center gap-2 p-4"
+                    className={`
+                      flex items-center gap-2 p-4 transition-all duration-300
+                      ${isActive 
+                        ? `bg-gradient-to-r ${demo.gradient} text-white shadow-lg scale-105 border-2 ${demo.borderColor}` 
+                        : `${demo.bgColor} ${demo.textColor} ${demo.hoverColor} border-2 border-transparent hover:scale-102`
+                      }
+                    `}
                   >
-                    <IconComponent className="w-4 h-4" />
-                    <span className="hidden sm:inline">{demo.title}</span>
+                    <IconComponent className={`w-4 h-4 ${isActive ? 'text-white' : demo.textColor}`} />
+                    <span className={`hidden sm:inline font-semibold ${isActive ? 'text-white' : demo.textColor}`}>
+                      {demo.title}
+                    </span>
                   </TabsTrigger>
                 );
               })}
@@ -86,11 +115,16 @@ const DemoPreview = () => {
             {/* Demo Content */}
             {demos.map((demo) => (
               <TabsContent key={demo.id} value={demo.id} className="space-y-6">
-                <div className="grid lg:grid-cols-2 gap-8 items-center">
+                <div className={`grid lg:grid-cols-2 gap-8 items-center p-6 rounded-xl border-2 ${demo.borderColor} ${demo.bgColor} shadow-sm`}>
                   {/* Demo Description */}
                   <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-3 rounded-lg bg-gradient-to-r ${demo.gradient}`}>
+                        {React.createElement(demo.icon, { className: 'w-6 h-6 text-white' })}
+                      </div>
+                      <h3 className="text-2xl font-bold">{demo.title}</h3>
+                    </div>
                     <div>
-                      <h3 className="text-2xl font-bold mb-4">{demo.title}</h3>
                       <p className="text-muted-foreground text-lg mb-6">
                         {demo.description}
                       </p>

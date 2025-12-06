@@ -57,23 +57,23 @@ const trustElements = [
 const certifications = [
   {
     name: 'Google Partner',
-    logo: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=100&h=100&fit=crop',
+    logo: '/google-logo.webp',
     color: '#4285F4'
   },
   {
     name: 'Meta Business Partner',
-    logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=100&h=100&fit=crop',
+    logo: '/meta-logo.webp',
     color: '#1877f2'
   },
   {
     name: 'HubSpot Certified',
-    logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&h=100&fit=crop',
+    logo: '/hubspot-logo.webp',
     color: '#ff7a50'
   },
   {
-    name: 'AWS Certified',
-    logo: 'https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=100&h=100&fit=crop',
-    color: '#ff9900'
+    name: 'Microsoft Partner',
+    logo: '/microsoft-logo.webp',
+    color: '#00a4ef'
   },
   {
     name: 'ISO 27001',
