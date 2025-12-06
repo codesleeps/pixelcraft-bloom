@@ -87,7 +87,7 @@ const certifications = [
   },
   {
     name: 'GDPR Compliant',
-    logo: './GDPR.webp',
+    logo: './gdpr.webp',
     color: '#258b5e'
   }
 ];
