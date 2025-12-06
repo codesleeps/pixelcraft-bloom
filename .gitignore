@@ -37,3 +37,7 @@ backend/.pytest_cache/
 coverage/
 .nyc_output/
 coverage.json
+
+# Node.js installation
+node-v20.11.0-darwin-x64/
+node-v20.11.0-darwin-x64.tar.gz
