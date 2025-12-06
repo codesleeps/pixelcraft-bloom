@@ -87,7 +87,7 @@ const certifications = [
   },
   {
     name: 'GDPR Compliant',
-    logo: 'https://www.gdpr.eu/wp-content/uploads/2018/03/GDPR-logo-1.png',
+    logo: './GDPR.webp',
     color: '#258b5e'
   }
 ];
@@ -160,11 +160,11 @@ const TrustSection = () => {
             {certifications.map((cert, index) => (
               <div key={index} className="flex items-center justify-center h-16 group">
                 <div className="text-center">
-                  <div className={`w-16 h-16 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300 overflow-hidden ${cert.name === 'HubSpot Certified' ? 'w-20 h-12' : ''}`}>
+                  <div className={`w-16 h-16 mx-auto mb-2 bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center group-hover:shadow-md transition-shadow duration-300 overflow-hidden ${(cert.name === 'HubSpot Certified' || cert.name === 'ISO 27001') ? 'w-20 h-12' : ''}`}>
                     <img
                       src={cert.logo}
                       alt={cert.name}
-                      className={`w-full h-full ${cert.name === 'HubSpot Certified' ? 'object-contain' : 'object-cover'}`}
+                      className={`w-full h-full ${(cert.name === 'HubSpot Certified' || cert.name === 'ISO 27001') ? 'object-contain' : 'object-cover'}`}
                       loading="lazy"
                       onError={(e) => {
                         // Fallback to text if image fails
