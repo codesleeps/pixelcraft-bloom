@@ -67,13 +67,18 @@ const certifications = [
   },
   {
     name: 'HubSpot Certified',
-    logo: '/hubspot-logo.webp',
+    logo: '/HubSpot-Logo-2006-500x281.webp',
     color: '#ff7a50'
   },
   {
     name: 'Microsoft Partner',
-    logo: '/microsoft-logo.webp',
+    logo: '/Microsoft-Symbol-700x394.webp',
     color: '#00a4ef'
+  },
+  {
+    name: 'AWS Partner',
+    logo: '/external-amazon-web-services-a-subsidiary-of-amazon-that-provides-on-demand-cloud-computing-logo-color-tal-revivo.webp',
+    color: '#FF9900'
   },
   {
     name: 'ISO 27001',
@@ -151,7 +156,7 @@ const TrustSection = () => {
         {/* Certifications */}
         <div className="text-center mb-16">
           <h3 className="text-2xl font-bold mb-8">Certified & Recognized By</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-8 items-center">
             {certifications.map((cert, index) => (
               <div key={index} className="flex items-center justify-center h-16 group">
                 <div className="text-center">
