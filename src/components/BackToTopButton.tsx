@@ -31,10 +31,10 @@ export const BackToTopButton = () => {
       onClick={scrollToTop}
       size="icon"
       className={cn(
-        "fixed bottom-8 right-8 z-50 rounded-full shadow-lg transition-all duration-300 hover:scale-110",
+        "fixed bottom-4 right-4 md:hidden z-50 rounded-full shadow-lg transition-all duration-300 hover:scale-110",
         "bg-primary hover:bg-primary/90 text-primary-foreground",
-        isVisible 
-          ? "opacity-100 translate-y-0 animate-fade-in" 
+        isVisible
+          ? "opacity-100 translate-y-0 animate-fade-in"
           : "opacity-0 translate-y-4 pointer-events-none"
       )}
       aria-label="Back to top"

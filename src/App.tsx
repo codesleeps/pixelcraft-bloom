@@ -8,6 +8,7 @@ import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { BackToTopButton } from "@/components/BackToTopButton";
 
 // Lazy load pages
 const Index = lazy(() => import("./pages/Index"));
@@ -99,6 +100,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
+        <BackToTopButton />
         <ErrorBoundary onError={(error, errorInfo) => { console.error('App Error:', error, errorInfo); /* Send to error tracking service */ }}>
           <SentryHashRouter>
             <AppContent />
