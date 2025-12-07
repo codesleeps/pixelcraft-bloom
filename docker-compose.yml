@@ -81,6 +81,6 @@ services:
 
 volumes:
   # PostgreSQL data volume (persists database across container restarts)
-  db_data: # Ollama model data volume
-
+  db_data:
+  # Ollama model data volume
   ollama_data:
