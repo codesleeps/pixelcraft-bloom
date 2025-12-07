@@ -55,8 +55,14 @@ class CalendarConfig(BaseSettings):
 class SupabaseConfig(BaseSettings):
     url: AnyHttpUrl
     key: str
-    jwt_secret: Optional[str] = None
+    jwt_secret: str
     jwt_algorithm: str = Field("HS256", description="JWT algorithm for decoding")
+
+    @validator("url")
+    def validate_url(cls, v):
+        if not str(v).startswith("https://"):
+            raise ValueError("SUPABASE_URL must start with https://")
+        return v
 
 
 class StripeConfig(BaseSettings):
@@ -91,13 +97,19 @@ class AppConfig(BaseSettings):
     log_level: str = Field("INFO", description="Logging level")
 
     ollama: OllamaConfig = Field(default_factory=OllamaConfig)
-    supabase: Optional[SupabaseConfig] = None
-    redis_url: Optional[str] = None
+    supabase: SupabaseConfig
+    redis_url: str
     crm: Optional[CRMConfig] = None
     email: Optional[EmailConfig] = None
     calendar: Optional[CalendarConfig] = None
     stripe: Optional[StripeConfig] = None
     sentry: Optional[SentryConfig] = None
+
+    @validator("redis_url")
+    def validate_redis_url(cls, v):
+        if not v.startswith("redis://"):
+            raise ValueError("REDIS_URL must start with redis://")
+        return v
 
     @validator("app_port")
     def port_range(cls, v):
@@ -116,22 +128,14 @@ def get_settings() -> AppConfig:
     # Load environment variables from .env file
     from dotenv import load_dotenv
     load_dotenv()
-    
+
     # Load settings from environment automatically via pydantic-settings
+    # This will fail fast if required fields are missing or malformed
     settings = AppConfig()
-    # If SUPABASE_URL and SUPABASE_KEY are set, attach a SupabaseConfig
+
+    # Load external service configurations (optional)
     from os import environ
 
-    if environ.get("SUPABASE_URL") and environ.get("SUPABASE_KEY"):
-        settings.supabase = SupabaseConfig(url=environ.get("SUPABASE_URL"), key=environ.get("SUPABASE_KEY"), jwt_secret=environ.get("SUPABASE_JWT_SECRET"))
-
-    if settings.supabase and settings.supabase.jwt_secret is None:
-        logging.warning("SUPABASE_JWT_SECRET is not set. JWT authentication will not work properly.")
-
-    # Redis optional
-    settings.redis_url = environ.get("REDIS_URL")
-
-    # Load external service configurations
     crm_api_key = environ.get("CRM_API_KEY")
     if crm_api_key:
         settings.crm = CRMConfig(

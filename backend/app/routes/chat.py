@@ -21,11 +21,11 @@ logger = logging.getLogger("pixelcraft.routes.chat")
 router = APIRouter(prefix="/chat", tags=["chat"])
   
   
-@router.post("/message", response_model=ChatResponse)
+@router.post("/message", response_model=ChatResponse, summary="Send chat message", description="Send a user message and receive an AI response using the specified model and conversation context.")
 @limiter.limit("100/minute")
 async def post_message(
-    req: ChatRequest, 
-    request: Request, 
+    req: ChatRequest,
+    request: Request,
     model: Optional[str] = Query(None, description="Optional model to use for generation"),
     mm: Optional[ModelManager] = Depends(get_model_manager)
 ):
@@ -111,16 +111,16 @@ def _sse_generator(message: str):
         # Yield an error chunk if possible, but since ChatStreamChunk may not have error, just capture
   
   
-@router.post("/stream")
+@router.post("/stream", summary="Stream chat response", description="Send a chat message and receive a streaming response using Server-Sent Events (SSE) for real-time AI interaction.")
 @limiter.limit("100/minute")
 async def post_stream(
-    req: ChatRequest, 
-    request: Request, 
+    req: ChatRequest,
+    request: Request,
     model: Optional[str] = Query(None, description="Optional model to use for generation"),
     mm: Optional[ModelManager] = Depends(get_model_manager)
 ):
     """Return a streaming response (SSE-like simple implementation) using ChatAgent with ModelManager.
-  
+
     The frontend can consume this chunked JSON stream. Replace with proper EventSourceResponse in production.
     """
     conversation_id = req.conversation_id or f"conv_{int(time.time())}"
@@ -153,7 +153,7 @@ async def post_stream(
         raise HTTPException(status_code=500, detail=f"Model streaming failed: {str(e)}")
   
   
-@router.get("/history/{conversation_id}", response_model=List[ChatMessage])
+@router.get("/history/{conversation_id}", response_model=List[ChatMessage], summary="Get conversation history", description="Retrieve the message history for a specific conversation with optional pagination.")
 async def get_history(conversation_id: str, limit: int = 50, offset: int = 0):
     sentry_sdk.set_context("chat_context", {"conversation_id": conversation_id, "limit": limit, "offset": offset})
     try:

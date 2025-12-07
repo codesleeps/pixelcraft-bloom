@@ -11,7 +11,7 @@ from datetime import datetime
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 
-@router.get("", response_model=AgentListResponse)
+@router.get("", response_model=AgentListResponse, summary="List available agents", description="Retrieve a list of all registered agents with their capabilities and current status.")
 async def list_agents():
     agents = []
     for agent_id, agent in orchestrator.registry.items():
@@ -29,7 +29,7 @@ async def get_agent(agent_type: str):
     return info
 
 
-@router.post("/invoke", response_model=AgentResponse)
+@router.post("/invoke", response_model=AgentResponse, summary="Invoke agent", description="Execute a specific agent with input data and return the processing results.")
 async def invoke_agent(req: AgentRequest):
     start = time.time()
     agent = orchestrator.get(req.agent_type)
