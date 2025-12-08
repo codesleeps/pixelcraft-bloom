@@ -15,7 +15,7 @@ from ..models.manager import ModelManager
 router = APIRouter(prefix="/leads", tags=["leads"])
 
 
-@router.patch("/{lead_id}", response_model=LeadResponse)
+@router.patch("/{lead_id}", response_model=LeadResponse, summary="Update lead information", description="Update specific fields of an existing lead record, such as status, assignment, or notes.")
 async def update_lead(lead_id: str, update: LeadUpdate):
     sb = get_supabase_client()
     
@@ -94,7 +94,7 @@ async def update_lead(lead_id: str, update: LeadUpdate):
 
 
 
-@router.post("/submit", response_model=LeadResponse)
+@router.post("/submit", response_model=LeadResponse, summary="Submit a new lead", description="Create a new lead with optional AI-powered qualification analysis and scoring.")
 async def submit_lead(req: LeadRequest, mm: Optional[ModelManager] = Depends(get_model_manager)):
     # Insert lead into Supabase and optionally run analysis
     lead_id = str(uuid4())
@@ -188,7 +188,7 @@ async def submit_lead(req: LeadRequest, mm: Optional[ModelManager] = Depends(get
     return LeadResponse(lead_id=lead_id, analysis=analysis, status="received")
 
 
-@router.get("/{lead_id}")
+@router.get("/{lead_id}", summary="Retrieve lead details", description="Get detailed information about a specific lead by its ID.")
 async def get_lead(lead_id: str):
     sb = get_supabase_client()
     try:
@@ -202,9 +202,9 @@ async def get_lead(lead_id: str):
         raise HTTPException(status_code=500, detail="Failed to retrieve lead")
 
 
-@router.get("")
+@router.get("", summary="List leads", description="Retrieve a paginated list of leads with optional filtering by status, assignment, and search query.")
 async def list_leads(
-    limit: int = 50, 
+    limit: int = 50,
     offset: int = 0,
     status: Optional[str] = None,
     assigned_to: Optional[str] = None,
@@ -234,7 +234,7 @@ async def list_leads(
         raise HTTPException(status_code=500, detail="Failed to list leads")
 
 
-@router.post("/{lead_id}/analyze", response_model=LeadAnalysis)
+@router.post("/{lead_id}/analyze", response_model=LeadAnalysis, summary="Analyze existing lead", description="Run AI-powered analysis on an existing lead to generate qualification score, insights, and recommendations.")
 async def analyze_lead(lead_id: str, mm: Optional[ModelManager] = Depends(get_model_manager)):
     """Re-run AI analysis on an existing lead and update stored analysis."""
     sb = get_supabase_client()

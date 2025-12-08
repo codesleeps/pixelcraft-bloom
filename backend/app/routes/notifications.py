@@ -14,7 +14,7 @@ from ..utils.notification_service import mark_notifications_read, get_unread_cou
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
-@router.get("/", response_model=NotificationListResponse)
+@router.get("/", response_model=NotificationListResponse, summary="List user notifications", description="Retrieve a paginated list of notifications for the current user with optional filtering by read status and type.")
 async def get_notifications(
     limit: int = Query(50),
     offset: int = Query(0),

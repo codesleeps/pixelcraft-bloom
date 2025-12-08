@@ -25,7 +25,7 @@ router = APIRouter()
 supabase: Client = get_supabase_client()
 
 
-@router.get("/packages", response_model=List[PricingPackage])
+@router.get("/packages", response_model=List[PricingPackage], summary="Get pricing packages", description="Retrieve all active pricing packages ordered by priority.")
 @cache(ttl=3600, prefix="pricing_packages")
 async def get_pricing_packages():
     """Get all active pricing packages."""

@@ -31,7 +31,7 @@ from collections import defaultdict
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
-@router.get("/models/metrics", response_model=List[ModelMetrics])
+@router.get("/models/metrics", response_model=List[ModelMetrics], summary="Get AI model performance metrics", description="Retrieve aggregated performance metrics for AI models including request counts, latency, success rates, and token usage.")
 async def get_model_metrics(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(require_admin),
@@ -95,7 +95,7 @@ async def get_model_metrics(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/leads/summary", response_model=LeadMetrics)
+@router.get("/leads/summary", response_model=LeadMetrics, summary="Get lead conversion summary", description="Retrieve aggregated lead metrics including total leads, qualified leads, conversion rates, and average lead scores.")
 @cache(ttl=300, prefix="lead_summary")
 async def get_lead_summary(
     time_range: TimeRangeParams = Depends(),
@@ -135,7 +135,7 @@ async def get_lead_summary(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/revenue/summary", response_model=RevenueSummary)
+@router.get("/revenue/summary", response_model=RevenueSummary, summary="Get revenue summary metrics", description="Retrieve key revenue metrics including MRR, ARR, total revenue, active subscriptions, and churn rate.")
 @cache(ttl=300, prefix="revenue_summary")
 async def get_revenue_summary(
     time_range: TimeRangeParams = Depends(),
@@ -172,7 +172,7 @@ async def get_revenue_summary(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/revenue/by-package", response_model=List[RevenueByPackage])
+@router.get("/revenue/by-package", response_model=List[RevenueByPackage], summary="Get revenue by package", description="Retrieve revenue breakdown by subscription packages including subscription counts and average revenue per package.")
 async def get_revenue_by_package(
     time_range: TimeRangeParams = Depends(),
     current_user: dict = Depends(get_current_user),
@@ -208,7 +208,7 @@ async def get_revenue_by_package(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/revenue/subscription-trends", response_model=SubscriptionTrendsResponse)
+@router.get("/revenue/subscription-trends", response_model=SubscriptionTrendsResponse, summary="Get subscription trends", description="Retrieve time-series data for subscription changes including new subscriptions, cancellations, and net growth over time.")
 async def get_subscription_trends(
     time_range: TimeRangeParams = Depends(),
     aggregation: str = Query('daily', regex='^(daily|weekly)$'),
@@ -246,7 +246,7 @@ async def get_subscription_trends(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/revenue/customer-ltv", response_model=List[CustomerLTV])
+@router.get("/revenue/customer-ltv", response_model=List[CustomerLTV], summary="Get customer lifetime value", description="Retrieve customer lifetime value metrics including total spent, subscription count, and estimated LTV for each customer.")
 async def get_customer_ltv(
     pagination: PaginationParams = Depends(),
     current_user: dict = Depends(get_current_user),
@@ -285,7 +285,7 @@ async def get_customer_ltv(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/revenue/subscriptions/list")
+@router.get("/revenue/subscriptions/list", summary="List user subscriptions", description="Retrieve a paginated list of user subscriptions with optional filtering by status and package.")
 async def get_subscriptions_list(
     pagination: PaginationParams = Depends(),
     filters: AnalyticsFilterParams = Depends(),
@@ -326,7 +326,7 @@ async def get_subscriptions_list(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/leads/trends", response_model=TimeSeriesResponse)
+@router.get("/leads/trends", response_model=TimeSeriesResponse, summary="Get lead creation trends", description="Retrieve time-series data for lead creation trends over the specified time range.")
 async def get_lead_trends(
     time_range: TimeRangeParams = Depends(),
     aggregation: str = Query("daily", regex="^(daily|weekly)$"),
@@ -358,7 +358,7 @@ async def get_lead_trends(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/conversations/summary", response_model=ConversationMetrics)
+@router.get("/conversations/summary", response_model=ConversationMetrics, summary="Get conversation metrics summary", description="Retrieve aggregated conversation metrics including total conversations, average messages per conversation, and active vs completed conversations.")
 @cache(ttl=300, prefix="conversation_summary")
 async def get_conversation_summary(
     time_range: TimeRangeParams = Depends(),
@@ -398,7 +398,7 @@ async def get_conversation_summary(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/conversations/trends", response_model=TimeSeriesResponse)
+@router.get("/conversations/trends", response_model=TimeSeriesResponse, summary="Get conversation trends", description="Retrieve time-series data for conversation activity trends with optional filtering by status and channel.")
 async def get_conversation_trends(
     time_range: TimeRangeParams = Depends(),
     aggregation: str = Query("daily", regex="^(daily|weekly)$"),
@@ -431,7 +431,7 @@ async def get_conversation_trends(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/conversations/list")
+@router.get("/conversations/list", summary="List conversations", description="Retrieve a paginated list of conversations with optional filtering by status, channel, and user.")
 async def get_conversation_list(
     pagination: PaginationParams = Depends(),
     filters: AnalyticsFilterParams = Depends(),
@@ -462,7 +462,7 @@ async def get_conversation_list(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/agents/summary", response_model=List[AgentPerformance])
+@router.get("/agents/summary", response_model=List[AgentPerformance], summary="Get agent performance summary", description="Retrieve performance metrics for AI agents including action counts, success rates, and execution times.")
 @cache(ttl=300, prefix="agent_summary")
 async def get_agent_summary(
     time_range: TimeRangeParams = Depends(),
@@ -500,7 +500,7 @@ async def get_agent_summary(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/agents/trends", response_model=TimeSeriesResponse)
+@router.get("/agents/trends", response_model=TimeSeriesResponse, summary="Get agent performance trends", description="Retrieve time-series data for agent success rate trends with optional filtering by agent type.")
 async def get_agent_trends(
     time_range: TimeRangeParams = Depends(),
     agent_type: Optional[str] = Query(None),
@@ -531,7 +531,7 @@ async def get_agent_trends(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/agents/logs")
+@router.get("/agents/logs", summary="Get agent logs", description="Retrieve a paginated list of agent execution logs with optional filtering by agent type and status.")
 async def get_agent_logs(
     pagination: PaginationParams = Depends(),
     filters: AnalyticsFilterParams = Depends(),
@@ -561,7 +561,7 @@ async def get_agent_logs(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.get("/services/recommendations", response_model=List[ServiceRecommendation])
+@router.get("/services/recommendations", response_model=List[ServiceRecommendation], summary="Get service recommendations insights", description="Retrieve insights on AI-generated service recommendations including acceptance rates and confidence scores.")
 async def get_service_recommendations(
     current_user: dict = Depends(get_current_user),
 ):

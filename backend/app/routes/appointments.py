@@ -142,7 +142,7 @@ def require_api_key(request: Request):
     return True
 
 
-@router.get("/availability")
+@router.get("/availability", summary="Get available appointment slots", description="Retrieve available time slots for appointments on a specific date with calendar integration.")
 async def get_availability(
     date: str,  # YYYY-MM-DD format
     duration: int = 60,  # minutes
@@ -217,7 +217,7 @@ async def get_availability(
         raise HTTPException(status_code=500, detail=f"Failed to fetch availability: {str(e)}")
 
 
-@router.post("/book")
+@router.post("/book", summary="Book a new appointment", description="Create a new appointment with calendar integration and email confirmation.")
 @limiter.limit("10/minute")
 async def book_appointment(request: Request, booking_data: AppointmentBookingRequest, current_user: dict = Depends(get_current_user)):
     """Book a new appointment."""
@@ -373,7 +373,7 @@ Appointment Details:
         raise HTTPException(status_code=500, detail=f"Failed to book appointment: {str(e)}")
 
 
-@router.get("/{appointment_id}")
+@router.get("/{appointment_id}", summary="Get appointment details", description="Retrieve detailed information about a specific appointment by ID.")
 async def get_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
     """Get appointment details."""
     try:
@@ -399,7 +399,7 @@ async def get_appointment(appointment_id: str, current_user: dict = Depends(get_
         raise HTTPException(status_code=500, detail=f"Failed to fetch appointment: {str(e)}")
 
 
-@router.get("")
+@router.get("", summary="List appointments", description="Retrieve a paginated list of appointments with optional filtering by status and email.")
 async def list_appointments(
     status: Optional[str] = None,
     email: Optional[str] = None,
@@ -433,7 +433,7 @@ async def list_appointments(
         raise HTTPException(status_code=500, detail=f"Failed to list appointments: {str(e)}")
 
 
-@router.patch("/{appointment_id}/reschedule")
+@router.patch("/{appointment_id}/reschedule", summary="Reschedule an appointment", description="Update the date and time of an existing appointment with calendar synchronization.")
 @limiter.limit("10/minute")
 async def reschedule_appointment(appointment_id: str, request: AppointmentRescheduleRequest, _: bool = Depends(require_api_key)):
     """Reschedule an existing appointment."""
@@ -504,7 +504,7 @@ async def reschedule_appointment(appointment_id: str, request: AppointmentResche
         raise HTTPException(status_code=500, detail=f"Failed to reschedule appointment: {str(e)}")
 
 
-@router.patch("/{appointment_id}/cancel")
+@router.patch("/{appointment_id}/cancel", summary="Cancel an appointment", description="Cancel an existing appointment and update calendar accordingly.")
 @limiter.limit("10/minute")
 async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequest, _: bool = Depends(require_api_key)):
     """Cancel an appointment."""
@@ -563,7 +563,7 @@ async def cancel_appointment(appointment_id: str, request: AppointmentCancelRequ
         raise HTTPException(status_code=500, detail=f"Failed to cancel appointment: {str(e)}")
 
 
-@router.patch("/{appointment_id}/complete")
+@router.patch("/{appointment_id}/complete", summary="Mark appointment as completed", description="Update an appointment status to completed and send confirmation email.")
 @limiter.limit("10/minute")
 async def complete_appointment(request: Request, appointment_id: str, _: bool = Depends(require_api_key)):
     """Mark an appointment as completed."""

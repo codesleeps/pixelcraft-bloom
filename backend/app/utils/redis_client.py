@@ -20,11 +20,18 @@ from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 import redis
+from tenacity import retry, stop_after_attempt, wait_exponential
 from ..config import settings
 from ..utils.logger import logger
 
 
 _redis_client: Optional[Any] = None
+
+
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10))
+def _create_redis_client() -> Any:
+    """Create a Redis client with retry logic for connection failures."""
+    return redis.from_url(settings.redis_url)
 
 
 @lru_cache()
@@ -43,11 +50,11 @@ def get_redis_client() -> Optional[Any]:
         return None
 
     try:
-        _redis_client = redis.from_url(settings.redis_url)
+        _redis_client = _create_redis_client()
         logger.info("Redis client initialized with URL: %s", settings.redis_url)
         return _redis_client
     except Exception as exc:
-        logger.exception("Failed to initialize Redis client: %s", exc)
+        logger.exception("Failed to initialize Redis client after retries: %s", exc)
         return None
 
 

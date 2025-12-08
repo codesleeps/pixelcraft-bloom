@@ -114,7 +114,7 @@ class ModelBenchmarkResponse(BaseModel):
 
 router = APIRouter()
 
-@router.get("/models/metrics", response_model=ModelMetricsResponse)
+@router.get("/models/metrics", response_model=ModelMetricsResponse, summary="Get model performance metrics", description="Retrieve aggregated performance metrics for AI models including success rates, response times, and usage statistics.")
 async def get_model_metrics(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,

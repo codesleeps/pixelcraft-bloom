@@ -41,15 +41,51 @@ Run the load test script:
 ./ops/run-load-tests.sh
 ```
 
+### Automated Load Testing
+Create `/opt/pixelcraft-bloom/ops/automated-load-test.sh`:
+```bash
+#!/bin/bash
+# Run automated load tests in staging environment
+# This should be scheduled to run weekly
+
+export HOST="https://staging.pixelcraft.com"
+export USERS=100
+export RUN_TIME="5m"
+
+./ops/run-load-tests.sh
+
+# Send results to monitoring system
+# TODO: Integrate with your monitoring/alerting system
+```
+
+### Interpreting Results
+- **Throughput**: Requests per second the system can handle
+- **Response Time (p95)**: 95th percentile response time - 95% of requests complete within this time
+- **Error Rate**: Percentage of failed requests (excluding expected rate limits)
+- **Concurrent Users**: Number of simultaneous users the system can support
+
+### Key Performance Indicators (KPIs)
+1. **Latency**: p95 response time should be <500ms for good UX
+2. **Availability**: Error rate should be <1% (excluding rate limits)
+3. **Throughput**: System should handle expected peak load
+4. **Resource Utilization**: Stay below 70% capacity for headroom
+
 ## 4. Load Testing Results Summary
 
+### Test Configuration
+- **Tool**: Locust (locustfile.py in backend/tests/load/)
+- **Test Duration**: 1 minute per scenario
+- **Target Host**: http://localhost:8000 (staging environment)
+- **User Classes**: ChatUser (70%), AnalyticsUser (20%), WebSocketUser (10%)
+- **Rate Limiting**: 100 requests/minute per user for chat endpoints
+
 ### Consolidated Test Results (Latest Run)
-| Component | Test Scenario | Throughput | Response Time (p95) | Error Rate | Status | Recommendations |
-|-----------|---------------|------------|---------------------|------------|--------|----------------|
-| **Chat API** | 50 concurrent users sending messages | ~50 req/sec | <500ms | 0% (429 rate limits expected) | ✅ Stable | Maintain current rate limits |
-| **Analytics API** | 20 concurrent users querying metrics | ~25 req/sec | <800ms | 15% (DB connection issues) | ⚠️ Needs DB setup | Ensure Supabase connection for tests |
-| **Authentication** | Token validation under load | ~100 req/sec | <200ms | 0% | ✅ Stable | No changes needed |
-| **WebSocket** | Real-time message streaming | ~30 connections | <300ms | 5% | ⚠️ Monitor | Implement connection pooling |
+| Component | Test Scenario | Concurrent Users | Throughput | Response Time (p95) | Error Rate | Status | Recommendations |
+|-----------|---------------|------------------|------------|---------------------|------------|--------|----------------|
+| **Chat API** (`/api/chat/message`) | 50 users sending messages | 35 (70%) | ~50 req/sec | <500ms | 0% (429 rate limits expected) | ✅ Stable | Maintain current rate limits |
+| **Analytics API** (`/api/analytics/*`) | 20 users querying metrics | 10 (20%) | ~25 req/sec | <800ms | 15% (DB connection issues) | ⚠️ Needs DB setup | Ensure Supabase connection for tests |
+| **Authentication** | Token validation under load | All users | ~100 req/sec | <200ms | 0% | ✅ Stable | No changes needed |
+| **WebSocket** (`/api/ws/*`) | Real-time message streaming | 5 (10%) | ~30 connections | <300ms | 5% | ⚠️ Monitor | Implement connection pooling |
 
 ### Detailed Results by Endpoint
 

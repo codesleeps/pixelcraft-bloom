@@ -26,7 +26,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/analytics")
+@router.websocket("/analytics", summary="Analytics WebSocket", description="Real-time WebSocket connection for receiving analytics events and metrics updates.")
 async def analytics_websocket(websocket: WebSocket, token: str = Query(...)):
     connection_id = str(uuid.uuid4())
     # Authenticate the token

@@ -134,7 +134,7 @@ def _upsert_subscription(client: Any, sub: Dict[str, Any], email: Optional[str] 
         return (None, user_id)
 
 
-@router.post("/create-checkout-session")
+@router.post("/create-checkout-session", summary="Create Stripe checkout session", description="Create a new Stripe checkout session for subscription or one-time payment with customizable success and cancel URLs.")
 async def create_checkout_session(body: CheckoutRequest):
     try:
         init_stripe()
@@ -169,7 +169,7 @@ async def create_checkout_session(body: CheckoutRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/webhook")
+@router.post("/webhook", summary="Stripe webhook handler", description="Handle incoming Stripe webhook events for payment processing and subscription updates.")
 async def stripe_webhook(request: Request):
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")

@@ -167,7 +167,7 @@ async def get_history(conversation_id: str, limit: int = 50, offset: int = 0):
         raise HTTPException(status_code=500, detail="Failed to fetch history")
   
   
-@router.delete("/history/{conversation_id}")
+@router.delete("/history/{conversation_id}", summary="Delete conversation history", description="Soft delete all messages in a conversation by setting a deleted_at timestamp.")
 async def delete_history(conversation_id: str):
     sentry_sdk.set_context("chat_context", {"conversation_id": conversation_id})
     try:
