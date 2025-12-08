@@ -114,6 +114,117 @@ class ModelBenchmarkResponse(BaseModel):
 
 router = APIRouter()
 
+@router.get("/models", response_model=ModelListResponse, summary="List all available models", description="Retrieve a list of all AI models with their health status, provider information, and performance metrics.")
+async def list_models(mm: Optional[ModelManager] = Depends(get_model_manager)):
+    """
+    List all available AI models with comprehensive health and performance data.
+    
+    Returns information about each configured model including:
+    - Health status (whether the model is currently available)
+    - Provider (ollama, huggingface, etc.)
+    - Performance metrics (success rate, latency, request count)
+    - Capabilities (chat, completion, code generation, etc.)
+    - Configuration (context window, max tokens, temperature)
+    
+    This endpoint is useful for:
+    - Monitoring model availability
+    - Selecting appropriate models for tasks
+    - Tracking model performance over time
+    - Debugging model connectivity issues
+    
+    Returns:
+        ModelListResponse: List of models with their current status and metrics
+        
+    Raises:
+        HTTPException: 503 if ModelManager is not available
+    """
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
+    
+    models_list = []
+    for model_name, config in MODELS.items():
+        health = mm._health_checks.get(model_name, False)
+        metrics = mm.metrics.get(model_name, {'requests': 0, 'successes': 0, 'total_latency': 0, 'total_tokens': 0})
+        
+        # Calculate metrics
+        reqs = metrics['requests']
+        success_rate = (metrics['successes'] / reqs * 100) if reqs > 0 else 0
+        avg_latency = (metrics['total_latency'] / reqs * 1000) if reqs > 0 else 0
+        
+        models_list.append(ModelInfo(
+            name=model_name,
+            provider=config.provider.value,
+            health=health,
+            metrics={
+                "success_rate": round(success_rate, 2),
+                "avg_latency_ms": round(avg_latency, 2),
+                "total_requests": reqs,
+                "total_tokens": metrics['total_tokens'],
+                "capabilities": config.capabilities,
+                "context_window": config.context_window,
+                "max_tokens": config.max_tokens
+            }
+        ))
+    
+    return ModelListResponse(models=models_list)
+
+@router.get("/models/{model_name}", response_model=ModelInfo, summary="Get model details", description="Retrieve detailed information about a specific AI model including health status and performance metrics.")
+async def get_model_details(model_name: str, mm: Optional[ModelManager] = Depends(get_model_manager)):
+    """
+    Get detailed information about a specific AI model.
+    
+    Provides comprehensive details including:
+    - Current health status and availability
+    - Provider and endpoint configuration
+    - Performance metrics (success rate, average latency)
+    - Usage statistics (total requests, tokens processed)
+    - Model capabilities and features
+    - Configuration parameters (temperature, context window, etc.)
+    
+    Args:
+        model_name: The identifier of the model (e.g., 'mistral', 'mixtral')
+        
+    Returns:
+        ModelInfo: Detailed model information and metrics
+        
+    Raises:
+        HTTPException: 404 if model not found, 503 if ModelManager unavailable
+    """
+    if mm is None:
+        raise HTTPException(status_code=503, detail="ModelManager not available")
+    
+    if model_name not in MODELS:
+        raise HTTPException(status_code=404, detail=f"Model '{model_name}' not found")
+    
+    config = MODELS[model_name]
+    health = mm._health_checks.get(model_name, False)
+    metrics = mm.metrics.get(model_name, {'requests': 0, 'successes': 0, 'total_latency': 0, 'total_tokens': 0})
+    
+    # Calculate metrics
+    reqs = metrics['requests']
+    success_rate = (metrics['successes'] / reqs * 100) if reqs > 0 else 0
+    avg_latency = (metrics['total_latency'] / reqs * 1000) if reqs > 0 else 0
+    
+    return ModelInfo(
+        name=model_name,
+        provider=config.provider.value,
+        health=health,
+        metrics={
+            "success_rate": round(success_rate, 2),
+            "avg_latency_ms": round(avg_latency, 2),
+            "total_requests": reqs,
+            "total_tokens": metrics['total_tokens'],
+            "capabilities": config.capabilities,
+            "context_window": config.context_window,
+            "max_tokens": config.max_tokens,
+            "model_full_name": config.name,
+            "endpoint": config.endpoint,
+            "temperature": config.temperature,
+            "supports_streaming": config.supports_streaming,
+            "supports_functions": config.supports_functions
+        }
+    )
+
 @router.get("/models/metrics", response_model=ModelMetricsResponse, summary="Get model performance metrics", description="Retrieve aggregated performance metrics for AI models including success rates, response times, and usage statistics.")
 async def get_model_metrics(
     start_date: Optional[str] = None,
