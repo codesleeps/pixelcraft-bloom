@@ -90,6 +90,8 @@ class SentryConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
+    model_config = {"env_nested_delimiter": "__"}
+    
     app_env: str = Field("development", description="Application environment")
     app_host: str = Field("0.0.0.0", description="Host to bind the server")
     app_port: int = Field(8000, description="Port for the server")

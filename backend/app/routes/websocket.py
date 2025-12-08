@@ -26,8 +26,19 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/analytics", summary="Analytics WebSocket", description="Real-time WebSocket connection for receiving analytics events and metrics updates.")
+@router.websocket("/analytics")
 async def analytics_websocket(websocket: WebSocket, token: str = Query(...)):
+    """
+    Real-time WebSocket connection for receiving analytics events and metrics updates.
+    
+    Provides real-time updates for:
+    - Lead creation and analysis events
+    - Conversation messages and deletions
+    - Revenue and subscription changes
+    - Agent logs and performance metrics
+    
+    Authentication: Requires valid Supabase JWT token as query parameter
+    """
     connection_id = str(uuid.uuid4())
     # Authenticate the token
     try:
