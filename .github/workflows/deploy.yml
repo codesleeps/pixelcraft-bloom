@@ -1,72 +1,205 @@
-name: Deploy to GitHub Pages
+name: PixelCraft Bloom CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/pixelcraft-bloom
+  DOMAIN: agentsflow.cloud
+  API_DOMAIN: api.agentsflow.cloud
 
 jobs:
-  build-and-deploy:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pixelcraft_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:6
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install pytest
 
-      - name: Build
-        run: npm run build
-        env:
-          NODE_ENV: production
+    - name: Run backend tests
+      run: |
+        cd backend
+        pytest --cov=app --cov-report=xml
+      env:
+        SUPABASE_DB_URL: postgresql://postgres:postgres@localhost:5432/pixelcraft_test
+        REDIS_URL: redis://localhost:6379/0
+        APP_ENV: test
 
-      # Sentry release tracking steps (frontend only; backend handled separately)
-      # Required GitHub secrets: SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT
-      - name: Create Sentry release
-        uses: getsentry/action-release@v1
-        continue-on-error: true  # Ensure deployment continues if Sentry fails
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          version: ${{ github.sha }}
-          environment: production
-          set_commits: auto
-          finalize: true
-          deploy: true
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        file: backend/coverage.xml
+        flags: backend
+        name: pixelcraft-backend
 
-      - name: Upload source maps to Sentry
-        uses: getsentry/action-upload-sourcemaps@v1
-        continue-on-error: true  # Ensure deployment continues if Sentry fails
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          sourcemaps: ./dist
-          release: ${{ github.sha }}
+  build:
+    name: Build Docker Image
+    needs: test
+    runs-on: ubuntu-latest
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./dist"
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.DOCKER_IMAGE }}:latest
+          ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+    - name: Deploy to server
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+        # Create deployment directory if it doesn't exist
+        mkdir -p /opt/pixelcraft-bloom
+
+        # Pull latest code
+        cd /opt/pixelcraft-bloom || exit 1
+        git pull origin main
+
+        # Update environment variables
+        echo "Updating environment variables..."
+        sed -i "s|SUPABASE__URL=.*|SUPABASE__URL=${{ secrets.SUPABASE_URL }}|" backend/.env
+        sed -i "s|SUPABASE__KEY=.*|SUPABASE__KEY=${{ secrets.SUPABASE_KEY }}|" backend/.env
+        sed -i "s|SUPABASE__JWT_SECRET=.*|SUPABASE__JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}|" backend/.env
+        sed -i "s|REDIS_URL=.*|REDIS_URL=${{ secrets.REDIS_URL }}|" backend/.env
+        sed -i "s|BACKUP_ENCRYPTION_KEY=.*|BACKUP_ENCRYPTION_KEY=${{ secrets.BACKUP_ENCRYPTION_KEY }}|" backend/.env
+
+        # Run deployment script
+        echo "Running deployment script..."
+        sudo ./ops/deploy-production.sh
+
+        # Restart services
+        echo "Restarting services..."
+        docker compose down
+        docker compose up -d
+
+        # Verify deployment
+        echo "Verifying deployment..."
+        sleep 30
+        curl -sSf https://api.${{ env.DOMAIN }}/health || exit 1
+
+        echo "Deployment successful!"
+        EOF
+
+    - name: Notify deployment status
+      if: always()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
+        SLACK_TITLE: "PixelCraft Bloom Deployment"
+        SLACK_MESSAGE: |
+          *Deployment Status*: ${{ job.status }}
+          *Branch*: ${{ github.ref }}
+          *Commit*: ${{ github.sha }}
+          *URL*: https://api.${{ env.DOMAIN }}
+          *Logs*: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  monitor:
+    name: Post-Deployment Monitoring
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Health check
+      run: |
+        # Simple health check
+        for i in {1..10}; do
+          if curl -sSf "https://api.${{ env.DOMAIN }}/health" | grep -q '"status":"ok"'; then
+            echo "Health check passed"
+            exit 0
+          fi
+          sleep 10
+        done
+        echo "Health check failed after 10 attempts"
+        exit 1
+
+    - name: Performance test
+      run: |
+        # Basic performance test
+        echo "Running performance test..."
+        curl -s -o /dev/null -w "Response time: %{time_total}s\n" "https://api.${{ env.DOMAIN }}/health"
+
+    - name: Security scan
+      run: |
+        # Basic security headers check
+        echo "Checking security headers..."
+        curl -sI "https://api.${{ env.DOMAIN }}/health" | grep -E "Strict-Transport-Security|X-Content-Type-Options|X-Frame-Options"
+
+    - name: Backup verification
+      run: |
+        # Verify backup system is working
+        echo "Checking backup system..."
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "ls -la /var/backups/pixelcraft/ | tail -5"
