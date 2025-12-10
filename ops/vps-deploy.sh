@@ -8,10 +8,10 @@
 DOMAIN="agentsflow.cloud"
 API_DOMAIN="api.agentsflow.cloud"
 ADMIN_EMAIL="admin@agentsflow.cloud"
-PROJECT_DIR="/opt/pixelcraft-bloom"
-BACKUP_DIR="/var/backups/pixelcraft"
-LOG_DIR="/var/log/pixelcraft"
-DOCKER_IMAGE="ghcr.io/your-username/pixelcraft-bloom:latest"
+PROJECT_DIR="/opt/agentsflowai"
+BACKUP_DIR="/var/backups/agentsflowai"
+LOG_DIR="/var/log/agentsflowai"
+DOCKER_IMAGE="ghcr.io/your-username/agentsflowai:latest"
 
 # Colors
 GREEN='\033[0;32m'
@@ -174,7 +174,7 @@ success "SSL certificates configured with automatic renewal"
 
 # 6. Nginx Configuration
 log "6. Configuring Nginx..."
-cat > "/etc/nginx/sites-available/pixelcraft-bloom" << EOF
+cat > "/etc/nginx/sites-available/agentsflowai" << EOF
 # HTTP to HTTPS redirect
 server {
     listen 80;
@@ -255,7 +255,7 @@ server {
 EOF
 
 # Enable site
-ln -sf "/etc/nginx/sites-available/pixelcraft-bloom" "/etc/nginx/sites-enabled/"
+ln -sf "/etc/nginx/sites-available/agentsflowai" "/etc/nginx/sites-enabled/"
 rm -f "/etc/nginx/sites-enabled/default"
 
 # Test and reload

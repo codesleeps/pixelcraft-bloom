@@ -1,4 +1,4 @@
-# 🚀 PixelCraft Bloom VPS Quick Start Guide
+# 🚀 AgentsFlowAI VPS Quick Start Guide
 
 This guide provides the fastest way to deploy PixelCraft Bloom on your VPS using the automated deployment script.
 

@@ -1,8 +1,8 @@
-# Welcome to PixelCraft Bloom
+# Welcome to AgentsFlowAI
 
 ## Project info
 
-**URL**: <https://codesleeps.github.io/pixelcraft-bloom/>
+**URL**: <https://codesleeps.github.io/agentsflowai/>
 
 ## Backend API
 
@@ -427,7 +427,7 @@ This repository includes Docker support for the FastAPI backend. Below are examp
 Build the development image (uses `--reload` by default):
 
 ```bash
-docker build -t pixelcraft-bloom-backend:dev -f backend/Dockerfile .
+docker build -t agentsflowai-backend:dev -f backend/Dockerfile .
 ```
 
 Run the development container (reads `.env` from repository root):
@@ -524,6 +524,6 @@ Notes:
 
 ## How can I deploy this project?
 
-Simply open [GitHub](https://github.com/codesleeps/pixelcraft-bloom/) and click on Share -> Publish.
+Simply open [GitHub](https://github.com/codesleeps/agentsflowai/) and click on Share -> Publish.
 
 

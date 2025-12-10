@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-BACKUP_DIR="/var/backups/pixelcraft"
+BACKUP_DIR="/var/backups/agentsflowai"
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="/var/log/pixelcraft/redis-backup.log"
+LOG_FILE="/var/log/agentsflowai/redis-backup.log"
 
 # Ensure backup directory exists
 mkdir -p "$BACKUP_DIR"

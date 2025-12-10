@@ -1,8 +1,8 @@
 #!/bin/bash
 
-BACKUP_DIR="/var/backups/pixelcraft"
-LOG_FILE="/var/log/pixelcraft/backup-monitor.log"
-ALERT_EMAIL="${ALERT_EMAIL:-admin@pixelcraft.com}"
+BACKUP_DIR="/var/backups/agentsflowai"
+LOG_FILE="/var/log/agentsflowai/backup-monitor.log"
+ALERT_EMAIL="${ALERT_EMAIL:-admin@agentsflow.cloud}"
 
 # Ensure log directory exists
 mkdir -p "$(dirname "$LOG_FILE")"

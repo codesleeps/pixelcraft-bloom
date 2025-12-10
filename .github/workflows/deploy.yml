@@ -1,4 +1,4 @@
-name: PixelCraft Bloom CI/CD Pipeline
+name: AgentsFlowAI CI/CD Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/pixelcraft-bloom
+  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/agentsflowai
   DOMAIN: agentsflow.cloud
   API_DOMAIN: api.agentsflow.cloud
 

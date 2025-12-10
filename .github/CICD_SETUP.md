@@ -1,4 +1,4 @@
-# PixelCraft Bloom CI/CD Pipeline Setup
+# AgentsFlowAI CI/CD Pipeline Setup
 
 This guide explains how to set up the CI/CD pipeline for PixelCraft Bloom using GitHub Actions.
 

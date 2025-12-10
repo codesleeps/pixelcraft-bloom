@@ -2,12 +2,12 @@
 set -e
 
 # Configuration
-BACKUP_DIR="/var/backups/pixelcraft"
+BACKUP_DIR="/var/backups/agentsflowai"
 RETENTION_DAYS=30
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="$BACKUP_DIR/backup_$DATE.sql.gz"
 ENCRYPTED_FILE="$BACKUP_FILE.gpg"
-LOG_FILE="/var/log/pixelcraft/backup.log"
+LOG_FILE="/var/log/agentsflowai/backup.log"
 
 # Ensure backup directory exists
 mkdir -p "$BACKUP_DIR"

@@ -2,8 +2,8 @@
 set -e
 
 # Configuration
-BACKUP_DIR="/var/backups/pixelcraft"
-LOG_FILE="/var/log/pixelcraft/restore.log"
+BACKUP_DIR="/var/backups/agentsflowai"
+LOG_FILE="/var/log/agentsflowai/restore.log"
 
 # Load environment variables
 if [ -f "/opt/pixelcraft-bloom/backend/.env" ]; then
