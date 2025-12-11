@@ -1,15 +1,18 @@
 # AgentsFlowAI CI/CD Pipeline Setup
 
-This guide explains how to set up the CI/CD pipeline for PixelCraft Bloom using GitHub Actions.
+This guide explains how to set up the CI/CD pipeline for AgentsFlowAI using GitHub Actions.
 
-## Prerequisites
+## 🎯 Overview
 
-1. GitHub repository with admin access
-2. Production server with SSH access
-3. Domain name configured (agentsflow.cloud)
-4. Docker and Docker Compose installed on production server
+The CI/CD pipeline includes:
+- **Testing**: Automated backend tests with PostgreSQL and Redis
+- **Building**: Docker image creation and push to GitHub Container Registry
+- **Deployment**: Production deployment via SSH
+- **Monitoring**: Post-deployment health checks
+- **GitHub Pages**: Frontend deployment for documentation
+- **Documentation**: Automatic README updates
 
-## Setup Instructions
+## 🚀 Setup Instructions
 
 ### 1. Configure GitHub Secrets
 
@@ -17,7 +20,7 @@ Go to your repository **Settings > Secrets > Actions** and add the following sec
 
 #### Required Secrets:
 - `SSH_PRIVATE_KEY` - Private SSH key for server access
-- `SSH_USER` - SSH username (e.g., `root` or `pixelcraft`)
+- `SSH_USER` - SSH username (e.g., `root` or `agentsflowai`)
 - `SSH_HOST` - Server IP address or hostname
 - `KNOWN_HOSTS` - Server's SSH host key (run `ssh-keyscan your-server-ip`)
 - `SUPABASE_URL` - Production Supabase database URL
@@ -36,9 +39,9 @@ On your production server:
 
 ```bash
 # Create user if needed
-sudo adduser pixelcraft
-sudo usermod -aG sudo pixelcraft
-sudo usermod -aG docker pixelcraft
+sudo adduser agentsflowai
+sudo usermod -aG sudo agentsflowai
+sudo usermod -aG docker agentsflowai
 
 # Set up SSH key authentication
 mkdir -p ~/.ssh
@@ -50,7 +53,7 @@ chmod 600 ~/.ssh/authorized_keys
 echo "your-public-key-here" >> ~/.ssh/authorized_keys
 
 # Test SSH access
-ssh pixelcraft@your-server-ip
+ssh agentsflowai@your-server-ip
 ```
 
 ### 3. Prepare Production Server
@@ -61,19 +64,19 @@ sudo apt update
 sudo apt install -y docker.io docker-compose git nginx certbot python3-certbot-nginx postgresql-client redis-tools gnupg
 
 # Clone repository
-git clone https://github.com/your-username/pixelcraft-bloom.git /opt/pixelcraft-bloom
-cd /opt/pixelcraft-bloom
+git clone https://github.com/your-username/agentsflowai.git /opt/agentsflowai
+cd /opt/agentsflowai
 
 # Create directories
-sudo mkdir -p /var/backups/pixelcraft
-sudo mkdir -p /var/log/pixelcraft
-sudo chown -R pixelcraft:pixelcraft /var/backups/pixelcraft
-sudo chown -R pixelcraft:pixelcraft /var/log/pixelcraft
+sudo mkdir -p /var/backups/agentsflowai
+sudo mkdir -p /var/log/agentsflowai
+sudo chown -R agentsflowai:agentsflowai /var/backups/agentsflowai
+sudo chown -R agentsflowai:agentsflowai /var/log/agentsflowai
 ```
 
 ### 4. Configure Environment Variables
 
-Create `/opt/pixelcraft-bloom/backend/.env` with the following content:
+Create `/opt/agentsflowai/backend/.env` with the following content:
 
 ```env
 # Application
@@ -112,20 +115,20 @@ SENTRY_ENVIRONMENT=production
 Run the deployment script manually for the first time:
 
 ```bash
-cd /opt/pixelcraft-bloom
+cd /opt/agentsflowai
 sudo ./ops/deploy-production.sh
 ```
 
 ### 6. Start Services
 
 ```bash
-cd /opt/pixelcraft-bloom
+cd /opt/agentsflowai
 docker compose up -d
 ```
 
-## Pipeline Workflow
+## 📊 Pipeline Workflow
 
-The CI/CD pipeline consists of 5 jobs:
+The CI/CD pipeline consists of 6 jobs:
 
 ### 1. Test Job
 - Runs on every push and pull request
@@ -135,7 +138,7 @@ The CI/CD pipeline consists of 5 jobs:
 
 ### 2. Build Job
 - Runs after tests pass
-- Builds Docker image with GitHub Container Registry
+- Builds Docker image and pushes to GitHub Container Registry
 - Tags images with commit SHA and "latest"
 - Uses Docker layer caching for faster builds
 
@@ -154,7 +157,18 @@ The CI/CD pipeline consists of 5 jobs:
 - Checks security headers
 - Validates backup system
 
-## Manual Deployment
+### 5. GitHub Pages Job
+- Builds frontend for documentation
+- Deploys to GitHub Pages
+- Makes app viewable at `https://username.github.io/agentsflowai/`
+- Updates automatically on each push
+
+### 6. Documentation Job
+- Updates README with GitHub Pages URL
+- Commits documentation updates
+- Ensures URLs are always current
+
+## 🎯 Manual Deployment
 
 To trigger a manual deployment:
 
@@ -165,15 +179,15 @@ git pull origin main
 git push origin main
 ```
 
-## Monitoring and Maintenance
+## 📊 Monitoring and Maintenance
 
 ### View Deployment Logs
 
 ```bash
 # On production server
-tail -f /var/log/pixelcraft/deploy.log
-tail -f /var/log/pixelcraft/backup.log
-tail -f /var/log/pixelcraft/ssl-monitor.log
+tail -f /var/log/agentsflowai/deploy.log
+tail -f /var/log/agentsflowai/backup.log
+tail -f /var/log/agentsflowai/ssl-monitor.log
 ```
 
 ### Check Service Status
@@ -201,7 +215,7 @@ certbot certificates
 - Check database connection strings
 - Verify test data setup
 
-## Security Best Practices
+## 🔐 Security Best Practices
 
 1. **Rotate secrets regularly** (every 90 days)
 2. **Use strong encryption keys** (32+ characters)
@@ -209,7 +223,7 @@ certbot certificates
 4. **Enable GitHub branch protection** for main branch
 5. **Review deployment logs** for suspicious activity
 
-## Performance Optimization
+## 📈 Performance Optimization
 
 The pipeline includes basic performance monitoring. For advanced optimization:
 
@@ -219,32 +233,11 @@ The pipeline includes basic performance monitoring. For advanced optimization:
 4. **Add load testing** to monitor job
 5. **Optimize Docker layers** for faster builds
 
-## Backup and Recovery
-
-The deployment script sets up automated backups:
-
-- **Daily database backups** at 2:00 AM
-- **Daily Redis backups** at 2:30 AM
-- **30-day retention policy**
-- **AES-256 encryption**
-
-To restore from backup:
-
-```bash
-# List available backups
-ls -la /var/backups/pixelcraft/
-
-# Restore specific backup
-sudo ./ops/restore.sh /var/backups/pixelcraft/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
-```
-
-## Rollback Procedure
-
-To rollback to previous version:
+## 🔄 Rollback Procedure
 
 ```bash
 # Find previous commit
-git log --oneline -5
+git log --oneline -10
 
 # Checkout previous version
 git checkout previous-commit-hash
@@ -252,12 +245,74 @@ git checkout previous-commit-hash
 # Redeploy
 sudo ./ops/deploy-production.sh
 docker compose up -d
+
+# Verify rollback
+curl https://api.agentsflow.cloud/health
 ```
 
-## Cost Optimization
+## 📋 Maintenance Checklist
 
-1. **Use GitHub Actions caching** for dependencies
-2. **Limit concurrent workflows** in repository settings
-3. **Use smaller runners** for test jobs
-4. **Schedule non-critical jobs** during off-peak hours
-5. **Clean up old artifacts** regularly
+### Daily Tasks
+- [ ] Check health endpoints
+- [ ] Review error logs
+- [ ] Monitor rate limit hits
+- [ ] Verify backup completion
+
+### Weekly Tasks
+- [ ] Review performance metrics
+- [ ] Check disk space usage
+- [ ] Update dependencies
+- [ ] Test backup restore procedure
+
+### Monthly Tasks
+- [ ] Full disaster recovery drill
+- [ ] Security audit
+- [ ] Performance optimization review
+- [ ] Capacity planning update
+
+## 🎉 Success Criteria
+
+Your deployment is successful when:
+
+✅ **All Docker containers are running** (`docker compose ps`)
+✅ **Health endpoint returns 200 OK** (`curl https://api.agentsflow.cloud/health`)
+✅ **Models endpoint shows `"health": true`** (`curl https://api.agentsflow.cloud/api/models`)
+✅ **SSL certificate is valid** (lock icon in browser)
+✅ **Swagger UI is accessible** (`https://api.agentsflow.cloud/docs`)
+✅ **No errors in logs** (`tail -f /var/log/agentsflowai/*.log`)
+✅ **Backups are running** (`ls -la /var/backups/agentsflowai/`)
+✅ **Monitoring is active** (`crontab -l`)
+✅ **GitHub Pages is deployed** (`https://username.github.io/agentsflowai/`)
+
+## 📚 Additional Resources
+
+- **Hostinger Deployment Guide**: `HOSTINGER_DEPLOYMENT_GUIDE.md`
+- **Production Readiness**: `ops/PRODUCTION_READINESS_COMPLETE.md`
+- **Quick Reference**: `DEPLOYMENT_QUICK_REFERENCE.md`
+- **Testing Instructions**: `TESTING_INSTRUCTIONS.md`
+
+## 🆘 Support
+
+For deployment issues:
+
+1. **Check logs** in `/var/log/agentsflowai/`
+2. **Review documentation** in this guide
+3. **Test components individually** (database, Redis, API)
+4. **Consult error messages** for specific troubleshooting steps
+5. **Contact support** if issues persist
+
+---
+
+**Congratulations!** 🎉 Your AgentsFlowAI backend is now deployed and ready for production use.
+
+**Next Steps:**
+1. Deploy frontend application
+2. Update frontend API URLs to use `https://api.agentsflow.cloud`
+3. Test complete application end-to-end
+4. Monitor performance and optimize as needed
+5. Set up user analytics and error tracking
+
+**Production URL:** https://api.agentsflow.cloud
+**Documentation:** https://api.agentsflow.cloud/docs
+**Health Check:** https://api.agentsflow.cloud/health
+**GitHub Pages:** https://username.github.io/agentsflowai/

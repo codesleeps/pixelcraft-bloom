@@ -22,7 +22,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pixelcraft_test
+          POSTGRES_DB: agentsflowai_test
         ports:
           - 5432:5432
         options: >-
@@ -61,7 +61,7 @@ jobs:
         cd backend
         pytest --cov=app --cov-report=xml
       env:
-        SUPABASE_DB_URL: postgresql://postgres:postgres@localhost:5432/pixelcraft_test
+        SUPABASE_DB_URL: postgresql://postgres:postgres@localhost:5432/agentsflowai_test
         REDIS_URL: redis://localhost:6379/0
         APP_ENV: test
 
@@ -70,7 +70,7 @@ jobs:
       with:
         file: backend/coverage.xml
         flags: backend
-        name: pixelcraft-backend
+        name: agentsflowai-backend
 
   build:
     name: Build Docker Image
@@ -202,4 +202,64 @@ jobs:
       run: |
         # Verify backup system is working
         echo "Checking backup system..."
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "ls -la /var/backups/pixelcraft/ | tail -5"
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "ls -la /var/backups/agentsflowai/ | tail -5"
+
+  github-pages:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build frontend
+      run: npm run build
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        publish_branch: gh-pages
+        force_orphan: true
+        enable_jekyll: false
+        allow_empty_commit: false
+        commit_message: "Deploy to GitHub Pages: ${{ github.sha }}"
+
+    - name: Update GitHub Pages URL
+      run: |
+        echo "GitHub Pages deployed to: https://${{ github.repository_owner }}.github.io/agentsflowai/"
+        echo "Live URL: https://${{ github.repository_owner }}.github.io/agentsflowai/"
+
+  documentation:
+    name: Update Documentation
+    needs: github-pages
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update README with GitHub Pages URL
+      run: |
+        # Update README with GitHub Pages URL
+        sed -i "s|https://codesleeps.github.io/pixelcraft-bloom/|https://${{ github.repository_owner }}.github.io/agentsflowai/|g" README.md
+        sed -i "s|codesleeps.github.io/pixelcraft-bloom|codesleeps.github.io/agentsflowai|g" README.md
+
+    - name: Commit documentation updates
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add README.md
+        git commit -m "Update documentation with GitHub Pages URL"
+        git push

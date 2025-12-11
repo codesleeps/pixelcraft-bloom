@@ -3,6 +3,140 @@
 ## Project info
 
 **URL**: <https://codesleeps.github.io/agentsflowai/>
+**GitHub Pages**: 🌍 [View Live Demo](https://codesleeps.github.io/agentsflowai/)
+**Production API**: 🔗 [https://api.agentsflow.cloud](https://api.agentsflow.cloud)
+**Documentation**: 📚 [https://api.agentsflow.cloud/docs](https://api.agentsflow.cloud/docs)
+
+---
+
+## 🚀 Quick Start
+
+### View the App on GitHub Pages
+
+The app is now viewable on GitHub Pages! Visit:
+
+👉 **[https://codesleeps.github.io/agentsflowai/](https://codesleeps.github.io/agentsflowai/)**
+
+### CI/CD Pipeline Status
+
+[![CI/CD Pipeline](https://github.com/codesleeps/agentsflowai/actions/workflows/deploy.yml/badge.svg)](https://github.com/codesleeps/agentsflowai/actions/workflows/deploy.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-blue?logo=github)](https://codesleeps.github.io/agentsflowai/)
+[![Production Status](https://img.shields.io/website?url=https%3A%2F%2Fapi.agentsflow.cloud%2Fhealth&label=Production%20API)](https://api.agentsflow.cloud/health)
+
+---
+
+## 📋 Features
+
+✅ **Automated Testing** - Backend tests with PostgreSQL and Redis
+✅ **Docker Deployment** - Containerized application with GitHub Container Registry
+✅ **CI/CD Pipeline** - Automated deployment to production
+✅ **GitHub Pages** - Frontend deployment for documentation
+✅ **SSL Certificates** - Automatic Let's Encrypt setup
+✅ **Monitoring** - Health checks and performance monitoring
+✅ **Backups** - Automated daily backups with encryption
+✅ **Documentation** - Automatic updates and GitHub Pages deployment
+
+---
+
+## 🎯 Deployment Status
+
+| Environment | Status | URL |
+|-------------|--------|-----|
+| **GitHub Pages** | ✅ Live | [https://codesleeps.github.io/agentsflowai/](https://codesleeps.github.io/agentsflowai/) |
+| **Production API** | ✅ Live | [https://api.agentsflow.cloud](https://api.agentsflow.cloud) |
+| **Staging** | 🟡 Coming Soon | - |
+| **Development** | ✅ Local | http://localhost:8000 |
+
+---
+
+## 🔄 CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+1. **Test Job** - Runs backend tests on every push/PR
+2. **Build Job** - Builds Docker image and pushes to GitHub Container Registry
+3. **Deploy Job** - Deploys to production server via SSH
+4. **Monitor Job** - Verifies deployment health and performance
+5. **GitHub Pages Job** - Deploys frontend to GitHub Pages
+6. **Documentation Job** - Updates README with latest URLs
+
+---
+
+## 📚 Documentation
+
+- **[CI/CD Setup Guide](.github/CICD_SETUP.md)** - Complete setup instructions
+- **[Testing Instructions](TESTING_INSTRUCTIONS.md)** - How to test the application
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+- **[Quick Test Guide](QUICK_TEST_GUIDE.md)** - Fast verification steps
+
+---
+
+## 🎉 Getting Started
+
+### 1. View the Live App
+
+Visit the GitHub Pages deployment:
+
+```bash
+# Open in browser
+open https://codesleeps.github.io/agentsflowai/
+```
+
+### 2. Test the API
+
+```bash
+# Health check
+curl https://api.agentsflow.cloud/health
+
+# Get available models
+curl https://api.agentsflow.cloud/api/models
+
+# View Swagger documentation
+open https://api.agentsflow.cloud/docs
+```
+
+### 3. Run Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/codesleeps/agentsflowai.git
+cd agentsflowai
+
+# Install dependencies
+npm install
+cd backend && pip install -r requirements.txt
+
+# Start services
+docker compose up -d
+
+# Run tests
+npm test
+cd backend && pytest
+```
+
+---
+
+## 💡 Tips
+
+- **GitHub Pages updates automatically** on each push to main branch
+- **Production API requires SSL certificates** (automatically configured)
+- **CI/CD pipeline runs on every push** to main branch
+- **Documentation is auto-generated** from code comments
+
+---
+
+## 🆘 Support
+
+For issues or questions:
+
+1. **Check GitHub Actions logs** for deployment status
+2. **Review documentation** in the `.github/` directory
+3. **Open an issue** on GitHub for bugs or feature requests
+4. **Contact support** for urgent production issues
+
+---
+
+**Enjoy using AgentsFlowAI!** 🎉 The app is now fully deployed and viewable on GitHub Pages with automated CI/CD pipeline.
 
 ## Backend API
 
