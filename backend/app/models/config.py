@@ -20,7 +20,7 @@ class ModelConfig(BaseModel):
     provider: ModelProvider
     endpoint: str
     api_key: Optional[str] = None
-    parameters: Dict = Field(default_factory=dict)
+    parameters: Dict[str, any] = Field(default_factory=dict)
     timeout: int = 30
     max_tokens: int = 2048
     temperature: float = 0.7
@@ -48,6 +48,28 @@ class ModelPriority(BaseModel):
 # To use additional models (llama2, llama3, codellama), ensure your system has
 # at least 16GB available Docker memory. See README.md for configuration.
 MODELS = {
+    "tinyllama": ModelConfig(
+        name="tinyllama:1.1b",
+        provider=ModelProvider.OLLAMA,
+        endpoint=f"{OLLAMA_HOST}/api/generate",
+        parameters={
+            "num_ctx": 2048,
+            "num_thread": 2,
+            "top_k": 50,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        },
+        max_tokens=2048,
+        context_window=2048,
+        capabilities={
+            "chat": True,
+            "completion": True,
+            "embedding": False,
+            "code_completion": False,
+            "vision": False
+        },
+        supports_streaming=False
+    ),
     "mistral": ModelConfig(
         name="mistral:7b",
         provider=ModelProvider.OLLAMA,
@@ -70,80 +92,60 @@ MODELS = {
         },
         supports_streaming=False
     ),
-    "mixtral": ModelConfig(
-        name="mixtral:8x7b",
-        provider=ModelProvider.OLLAMA,
-        endpoint=f"{OLLAMA_HOST}/api/generate",
-        parameters={
-            "num_ctx": 4096,
-            "num_thread": 8,  # Use more threads for larger model
-            "top_k": 50,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1
-        },
-        max_tokens=4096,
-        context_window=32768,  # Mixtral has larger context
-        capabilities={
-            "chat": True,
-            "completion": True,
-            "embedding": True,
-            "code_completion": True,
-            "vision": False
-        },
-        supports_streaming=False
-    ),
 }
   
 # Task-specific model priorities
+# Using tinyllama as primary model for limited resource systems
+# mistral:7b as fallback when more resources are available
 MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "code": ModelPriority(
         task_type="code",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "service_recommendation": ModelPriority(
         task_type="service_recommendation",
-        models=["mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "web_development": ModelPriority(
         task_type="web_development",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "digital_marketing": ModelPriority(
         task_type="digital_marketing",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "brand_design": ModelPriority(
         task_type="brand_design",
-        models=["mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "ecommerce_solutions": ModelPriority(
         task_type="ecommerce_solutions",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "content_creation": ModelPriority(
         task_type="content_creation",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     ),
     "analytics_consulting": ModelPriority(
         task_type="analytics_consulting",
-        models=["mixtral", "mistral"],
-        fallback_model="mistral"
+        models=["tinyllama", "mistral"],
+        fallback_model="tinyllama"
     )
 }
