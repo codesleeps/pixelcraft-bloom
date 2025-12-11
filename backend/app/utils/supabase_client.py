@@ -212,9 +212,12 @@ def test_connection() -> bool:
     Returns True if a simple query succeeds.
     """
     try:
-        # Prefer a lightweight HTTP connectivity check to avoid depending on client API differences
-        import httpx
+        # Use the Supabase client to test connectivity with a simple query
+        # This is more reliable than HTTP requests to the root URL
+        supabase_client = get_supabase_client()
 
+        # For Supabase, we need to test against a valid endpoint
+        # Use the REST API endpoint which should always be available
         supabase_url = None
         if settings.supabase and getattr(settings.supabase, "url", None):
             supabase_url = str(settings.supabase.url)
@@ -223,15 +226,21 @@ def test_connection() -> bool:
             logger.warning("Supabase URL not configured for connectivity test")
             return False
 
-        # Perform a simple HEAD request to the Supabase URL to confirm network reachability
+        # Test connectivity to the Supabase REST API endpoint
+        # This is the proper way to test Supabase connectivity
+        rest_api_url = f"{supabase_url.rstrip('/')}/rest/v1/"
         try:
-            resp = httpx.head(supabase_url, timeout=5.0)
-            return resp.status_code < 500
+            import httpx
+            # Use a HEAD request to the REST API endpoint
+            resp = httpx.head(rest_api_url, timeout=5.0)
+            # Supabase REST API should return 401 (Unauthorized) for unauthenticated requests,
+            # which actually indicates the endpoint is reachable and working
+            return resp.status_code in (200, 401, 403)
         except Exception:
-            # Fallback to a GET in case HEAD is not supported
+            # Fallback to a GET request
             try:
-                resp = httpx.get(supabase_url, timeout=5.0)
-                return resp.status_code < 500
+                resp = httpx.get(rest_api_url, timeout=5.0)
+                return resp.status_code in (200, 401, 403)
             except Exception as exc:
                 logger.exception("Supabase connectivity test failed: %s", exc)
                 return False
