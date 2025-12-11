@@ -44,9 +44,9 @@ class ModelPriority(BaseModel):
     fallback_model: str
 
 # Model configurations
-# DEVELOPMENT NOTE: Using only mistral:latest for development on macOS Docker.
-# To use additional models (llama2, llama3, codellama), ensure your system has
-# at least 16GB available Docker memory. See README.md for configuration.
+# OPTIMIZED FOR RESOURCE-CONSTRAINED ENVIRONMENTS: Using only lightweight models
+# that can run reliably on systems with limited memory (< 16GB)
+# Large models like mistral:7b and glm-4.6:cloud are disabled to prevent timeouts
 MODELS = {
     "tinyllama": ModelConfig(
         name="tinyllama:1.1b",
@@ -75,20 +75,20 @@ MODELS = {
         timeout=60
     ),
     "mistral": ModelConfig(
-        name="mistral:7b",
+        name="tinyllama:latest",  # Changed from mistral:7b to tinyllama:latest for reliability
         provider=ModelProvider.OLLAMA,
         endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
-            "num_ctx": 4096,
-            "num_thread": 6,  # Increased for better CPU utilization
+            "num_ctx": 2048,  # Reduced from 4096 to match tinyllama capabilities
+            "num_thread": 2,  # Reduced for better resource management
             "top_k": 50,
             "top_p": 0.9,
             "repeat_penalty": 1.1,
             "temperature": 0.7,  # Balanced for quality/speed
-            "num_predict": 4096
+            "num_predict": 2048  # Reduced from 4096
         },
-        max_tokens=4096,
-        context_window=8192,
+        max_tokens=2048,
+        context_window=2048,
         temperature=0.7,
         capabilities={
             "chat": True,
@@ -98,23 +98,23 @@ MODELS = {
             "vision": False
         },
         supports_streaming=True,  # Enable streaming support
-        timeout=120
+        timeout=60  # Reduced from 120 to prevent long hangs
     ),
     "glm4": ModelConfig(
-        name="glm-4.6:cloud",
+        name="tinyllama:latest",  # Changed from glm-4.6:cloud to tinyllama:latest for reliability
         provider=ModelProvider.OLLAMA,
         endpoint=f"{OLLAMA_HOST}/api/generate",
         parameters={
-            "num_ctx": 8192,
-            "num_thread": 4,
+            "num_ctx": 2048,  # Reduced from 8192 to match tinyllama capabilities
+            "num_thread": 2,  # Reduced for better resource management
             "top_k": 50,
             "top_p": 0.8,  # Optimized for quality
             "repeat_penalty": 1.2,
             "temperature": 0.3,  # Lower for more deterministic responses
-            "num_predict": 8192
+            "num_predict": 2048  # Reduced from 8192
         },
-        max_tokens=8192,
-        context_window=8192,
+        max_tokens=2048,
+        context_window=2048,
         temperature=0.3,
         capabilities={
             "chat": True,
@@ -124,63 +124,64 @@ MODELS = {
             "vision": False
         },
         supports_streaming=True,  # Enable streaming support
-        timeout=180
+        timeout=60  # Reduced from 180 to prevent long hangs
     )
 }
 
 # Task-specific model priorities
-# Using glm4 as primary model for cloud-based performance
-# mistral:7b as secondary option when cloud is unavailable
-# tinyllama as fallback for resource-constrained environments
+# OPTIMIZED FOR RESOURCE-CONSTRAINED ENVIRONMENTS:
+# All tasks now use tinyllama as the primary model since mistral and glm4
+# are actually using tinyllama under the hood for reliability
+# This prevents large model loading issues and ensures consistent performance
 MODEL_PRIORITIES = {
     "chat": ModelPriority(
         task_type="chat",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "code": ModelPriority(
         task_type="code",
-        models=["mistral", "glm4", "tinyllama"],  # Mistral often better for code
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "lead_qualification": ModelPriority(
         task_type="lead_qualification",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "service_recommendation": ModelPriority(
         task_type="service_recommendation",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "web_development": ModelPriority(
         task_type="web_development",
-        models=["mistral", "glm4", "tinyllama"],  # Mistral better for technical tasks
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "digital_marketing": ModelPriority(
         task_type="digital_marketing",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "brand_design": ModelPriority(
         task_type="brand_design",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "ecommerce_solutions": ModelPriority(
         task_type="ecommerce_solutions",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "content_creation": ModelPriority(
         task_type="content_creation",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     ),
     "analytics_consulting": ModelPriority(
         task_type="analytics_consulting",
-        models=["glm4", "mistral", "tinyllama"],
+        models=["tinyllama", "mistral", "glm4"],  # tinyllama first for reliability
         fallback_model="tinyllama"
     )
 }
