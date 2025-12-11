@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    image: pixelcraft-bloom-backend:dev
+    image: agentsflowai-backend:dev
     # Only load root .env for runtime configuration. Do not load example files containing
     # placeholder secrets (e.g., SENTRY_DSN with 'project-id') which can cause runtime errors.
     env_file:

@@ -30,7 +30,7 @@ class CRMConfig(BaseSettings):
 class EmailConfig(BaseSettings):
     provider: str = Field("sendgrid", description="Email provider (sendgrid, mailgun)")
     api_key: Optional[str] = None
-    from_email: Optional[str] = Field("noreply@pixelcraft.com", description="Default sender email")
+    from_email: Optional[str] = Field("noreply@agentsflowai.com", description="Default sender email")
 
     @validator("api_key")
     def check_api_key(cls, v):
@@ -153,7 +153,7 @@ def get_settings() -> AppConfig:
         settings.email = EmailConfig(
             provider=environ.get("EMAIL_PROVIDER", "sendgrid"),
             api_key=email_api_key,
-            from_email=environ.get("EMAIL_FROM", "noreply@pixelcraft.com")
+            from_email=environ.get("EMAIL_FROM", "noreply@agentsflowai.com")
         )
     elif environ.get("EMAIL_PROVIDER"):
         logging.warning("EMAIL_API_KEY is not set. Email integration will not work properly.")

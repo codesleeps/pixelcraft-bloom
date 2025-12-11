@@ -12,7 +12,7 @@ from ..utils.logger import logger, audit_logger
 
 
 router = APIRouter(prefix="/payments", tags=["payments"])
-logger = logging.getLogger("pixelcraft.payments")
+logger = logging.getLogger("agentsflowai.payments")
 
 
 def init_stripe() -> None:

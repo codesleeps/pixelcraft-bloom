@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PixelCraft Bloom VPS Deployment Script
+# AgentsFlowAI VPS Deployment Script
 # This script automates the complete deployment process on a fresh VPS
 # Designed for Ubuntu 22.04 LTS
 
@@ -42,7 +42,7 @@ if [ "$(id -u)" -ne 0 ]; then
     error "This script must be run as root. Use: sudo $0"
 fi
 
-log "Starting PixelCraft Bloom VPS Deployment..."
+log "Starting AgentsFlowAI VPS Deployment..."
 log "Domain: $DOMAIN"
 log "API Domain: $API_DOMAIN"
 log "Project Directory: $PROJECT_DIR"
@@ -102,7 +102,7 @@ if [ -d "$PROJECT_DIR/.git" ]; then
     cd "$PROJECT_DIR" || exit 1
     git pull origin main
 else
-    git clone https://github.com/your-username/pixelcraft-bloom.git "$PROJECT_DIR"
+    git clone https://github.com/your-username/agentsflowai.git "$PROJECT_DIR"
     cd "$PROJECT_DIR" || exit 1
 fi
 
@@ -393,7 +393,7 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}🎉 VPS Deployment Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo "PixelCraft Bloom has been successfully deployed to your VPS."
+echo "AgentsFlowAI has been successfully deployed to your VPS."
 echo ""
 echo "Deployment Summary:"
 echo "  ✅ System updated and dependencies installed"
@@ -435,4 +435,4 @@ echo "  - Nginx logs: /var/log/nginx/error.log"
 echo "  - Docker logs: docker compose logs"
 echo "  - Application logs: $LOG_DIR/"
 echo ""
-echo "Thank you for using PixelCraft Bloom! 🚀"
+echo "Thank you for using AgentsFlowAI! 🚀"

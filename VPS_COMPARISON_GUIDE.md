@@ -1,4 +1,4 @@
-# VPS Comparison Guide for PixelCraft Backend
+# VPS Comparison Guide for AgentsFlowAI Backend
 
 **Date**: December 8, 2024  
 **Purpose**: Choose the best VPS provider for production deployment
@@ -7,7 +7,7 @@
 
 ## 🎯 Your Requirements
 
-Based on your PixelCraft backend setup:
+Based on your AgentsFlowAI backend setup:
 
 ### Minimum Specifications
 - **CPU**: 4 vCPUs (for Ollama AI models)
@@ -154,7 +154,7 @@ Based on your PixelCraft backend setup:
 
 ---
 
-## 🎯 Recommendation for PixelCraft
+## 🎯 Recommendation for AgentsFlowAI
 
 ### For Production (High Traffic)
 **🥇 Google Cloud Platform**
@@ -347,8 +347,8 @@ sh get-docker.sh
 apt install docker-compose-plugin -y
 
 # Clone your repo
-git clone https://github.com/your-repo/pixelcraft-bloom.git
-cd pixelcraft-bloom
+git clone https://github.com/your-repo/agentsflowai.git
+cd agentsflowai
 
 # Configure environment
 cp .env.example .env

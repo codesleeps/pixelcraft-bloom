@@ -1,6 +1,6 @@
 # Backend API and WebSocket Documentation
 
-This document describes the REST API endpoints, WebSocket channels and authentication, environment configuration, and database schema mapping used by the PixelCraft Bloom backend.
+This document describes the REST API endpoints, WebSocket channels and authentication, environment configuration, and database schema mapping used by the AgentsFlowAI backend.
 
 ---
 
@@ -8,8 +8,8 @@ This document describes the REST API endpoints, WebSocket channels and authentic
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-repo/pixelcraft-bloom.git
-   cd pixelcraft-bloom/backend
+   git clone https://github.com/your-repo/agentsflowai.git
+   cd agentsflowai/backend
    ```
 
 2. Install Python dependencies:

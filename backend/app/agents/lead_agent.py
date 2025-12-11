@@ -8,7 +8,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..utils.supabase_client import get_supabase_client
 from ..models.manager import ModelManager
 
-logger = logging.getLogger("pixelcraft.agents.lead")
+logger = logging.getLogger("agentsflowai.agents.lead")
 
 # Scoring weights for different attributes
 SCORE_WEIGHTS = {
@@ -45,7 +45,7 @@ def create_lead_qualification_agent(model_manager: Optional[ModelManager] = None
         description="Expert system for scoring and qualifying leads",
         temperature=0.3,
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's lead qualification specialist.
+        system_prompt="""You are AgentsFlowAI's lead qualification specialist.
         Analyze lead information to determine quality, potential value, and priority.
         Focus on:
         1. Budget alignment

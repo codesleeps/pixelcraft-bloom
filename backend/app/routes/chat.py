@@ -16,7 +16,7 @@ from ..utils.limiter import limiter
 from ..routes.models import get_model_manager
 from ..models.manager import ModelManager
   
-logger = logging.getLogger("pixelcraft.routes.chat")
+logger = logging.getLogger("agentsflowai.routes.chat")
   
 router = APIRouter(prefix="/chat", tags=["chat"])
   

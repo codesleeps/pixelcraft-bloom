@@ -15,7 +15,7 @@ from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, create_calendar_event
 
-logger = logging.getLogger("pixelcraft.agents.web_development")
+logger = logging.getLogger("agentsflowai.agents.web_development")
 
 # Web development service details
 WEB_DEV_SERVICES = {
@@ -120,11 +120,11 @@ async def create_project_lead(name: str, email: str, company: str, project_requi
         deal_id = deal_result.get("deal_id") if not deal_result.get("error") else None
     
     # Send confirmation email
-    email_subject = "Project Inquiry Received - PixelCraft Web Development"
+    email_subject = "Project Inquiry Received - AgentsFlowAI Web Development"
     email_content = f"""
     Dear {name},
 
-    Thank you for your interest in PixelCraft's web development services!
+    Thank you for your interest in AgentsFlowAI's web development services!
 
     Project Summary:
     - Requirements: {project_requirements}
@@ -139,7 +139,7 @@ async def create_project_lead(name: str, email: str, company: str, project_requi
     If you have any immediate questions, please reply to this email.
 
     Best regards,
-    PixelCraft Web Development Team
+    AgentsFlowAI Web Development Team
     """
     
     email_result = await send_email(
@@ -168,7 +168,7 @@ async def schedule_technical_consultation(client_email: str, client_name: str, p
         summary=f"Technical Consultation - {project_type}",
         start_time=start_time,
         end_time=end_time,
-        attendees=[client_email, "tech@pixelcraft.com"],
+        attendees=[client_email, "tech@agentsflowai.com"],
         description=f"Technical consultation for {project_type} project with {client_name}"
     )
     
@@ -176,7 +176,7 @@ async def schedule_technical_consultation(client_email: str, client_name: str, p
     event_link = event_result.get("link")
     
     # Send calendar invite email
-    email_subject = "Technical Consultation Scheduled - PixelCraft"
+    email_subject = "Technical Consultation Scheduled - AgentsFlowAI"
     email_content = f"""
     Dear {client_name},
 
@@ -197,7 +197,7 @@ async def schedule_technical_consultation(client_email: str, client_name: str, p
     Please ensure you have a stable internet connection and any relevant project materials ready.
 
     Best regards,
-    PixelCraft Technical Team
+    AgentsFlowAI Technical Team
     """
     
     email_result = await send_email(
@@ -218,11 +218,11 @@ def create_web_development_agent(model_manager: Optional[ModelManager] = None) -
     config = BaseAgentConfig(
         agent_id="web_development",
         name="Web Development Specialist",
-        description="Expert web development consultant for PixelCraft",
+        description="Expert web development consultant for AgentsFlowAI",
         default_model="llama2",
         temperature=0.3,  # Lower temperature for technical accuracy
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's web development specialist.
+        system_prompt="""You are AgentsFlowAI's web development specialist.
         Provide expert guidance on web development projects, technologies, and best practices.
 
         Focus on:

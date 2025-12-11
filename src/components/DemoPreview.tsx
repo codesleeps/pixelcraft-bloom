@@ -79,7 +79,7 @@ const DemoPreview = () => {
             See Our AI <span className="bg-gradient-primary bg-clip-text text-transparent">In Action</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Experience how PixelCraft's AI-powered automation can transform your business operations.
+            Experience how AgentsFlowAI's AI-powered automation can transform your business operations.
             Interactive demos of our most powerful features.
           </p>
         </div>
@@ -239,7 +239,7 @@ const DemoPreview = () => {
           <div className="bg-gradient-primary/5 border border-gradient-primary/20 rounded-lg p-8 max-w-4xl mx-auto">
             <h3 className="text-2xl font-bold mb-4">Ready to Experience the Difference?</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              See how PixelCraft's AI agents can transform your business operations with intelligent automation.
+              See how AgentsFlowAI's AI agents can transform your business operations with intelligent automation.
               Book a personalized demo today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

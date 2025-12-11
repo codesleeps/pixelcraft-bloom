@@ -32,7 +32,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">PC</span>
               </div>
-              <span className="text-xl font-bold">PixelCraft</span>
+              <span className="text-xl font-bold">AgentsFlowAI</span>
             </div>
             <p className="text-gray-300 text-sm">
               Award-winning digital marketing agency helping businesses scale with AI-powered strategies,
@@ -112,7 +112,7 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-sm text-gray-300">
                 <Mail className="w-4 h-4" />
-                <span>hello@pixelcraft.com</span>
+                <span>hello@agentsflowai.com</span>
               </div>
               <div className="flex items-center space-x-3 text-sm text-gray-300">
                 <Phone className="w-4 h-4" />
@@ -147,7 +147,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4 text-sm text-gray-400">
-            <span>&copy; {currentYear} PixelCraft. All rights reserved.</span>
+            <span>&copy; {currentYear} AgentsFlowAI. All rights reserved.</span>
             <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>

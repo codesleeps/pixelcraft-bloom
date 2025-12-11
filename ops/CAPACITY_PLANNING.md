@@ -42,13 +42,13 @@ Run the load test script:
 ```
 
 ### Automated Load Testing
-Create `/opt/pixelcraft-bloom/ops/automated-load-test.sh`:
+Create `/opt/agentsflowai/ops/automated-load-test.sh`:
 ```bash
 #!/bin/bash
 # Run automated load tests in staging environment
 # This should be scheduled to run weekly
 
-export HOST="https://staging.pixelcraft.com"
+export HOST="https://staging.agentsflowai.com"
 export USERS=100
 export RUN_TIME="5m"
 

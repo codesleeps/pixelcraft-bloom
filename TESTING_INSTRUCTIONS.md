@@ -38,7 +38,7 @@ python backend/validate_config.py
 **Expected Output**:
 ```
 ======================================================================
-PixelCraft Backend - Configuration Validation
+AgentsFlowAI Backend - Configuration Validation
 ======================================================================
 
 ✓ Configuration loaded successfully
@@ -86,7 +86,7 @@ python -m uvicorn app.main:app --reload
 ```
 INFO:     Uvicorn running on http://127.0.0.1:8000
 INFO:     Application startup complete.
-INFO:     Starting PixelCraft AI Backend (env=development)
+INFO:     Starting AgentsFlowAI AI Backend (env=development)
 INFO:     Ollama ready=True
 INFO:     Supabase connectivity: True
 INFO:     Redis connectivity: True

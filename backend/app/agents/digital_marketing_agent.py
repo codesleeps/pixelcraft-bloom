@@ -13,7 +13,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.supabase_client import get_supabase_client
 from ..utils.external_tools import create_crm_contact, create_crm_deal, send_email, send_template_email, create_calendar_event
 
-logger = logging.getLogger("pixelcraft.agents.digital_marketing")
+logger = logging.getLogger("agentsflowai.agents.digital_marketing")
 
 # Digital marketing service details
 DIGITAL_MARKETING_SERVICES = {
@@ -154,7 +154,7 @@ async def send_marketing_proposal(client_email: str, client_name: str, recommend
     <h3>ROI Projections:</h3>
     {roi_html}
     <p>Please find attached our detailed proposal PDF.</p>
-    <p>Best regards,<br>PixelCraft Digital Marketing Team</p>
+    <p>Best regards,<br>AgentsFlowAI Digital Marketing Team</p>
     """
     
     # Send email
@@ -172,7 +172,7 @@ async def schedule_strategy_session(client_email: str, client_name: str, preferr
         summary=f"Marketing Strategy Session - {client_name}",
         start_time=preferred_date,  # Assuming preferred_date is in ISO format
         end_time=(datetime.fromisoformat(preferred_date.replace('Z', '+00:00')) + datetime.timedelta(minutes=90)).isoformat(),
-        attendees=[client_email, "marketing@pixelcraft.com"],
+        attendees=[client_email, "marketing@agentsflowai.com"],
         description=f"Focus areas: {', '.join(focus_areas)}. Pre-session questionnaire will be sent separately."
     )
     
@@ -188,7 +188,7 @@ async def schedule_strategy_session(client_email: str, client_name: str, preferr
     <p>Meeting Link: {event_result.get('link', 'TBD')}</p>
     <p>Focus Areas: {', '.join(focus_areas)}</p>
     <p>Please complete the pre-session questionnaire attached.</p>
-    <p>Best regards,<br>PixelCraft Team</p>
+    <p>Best regards,<br>AgentsFlowAI Team</p>
     """
     
     email_result = await send_email(
@@ -208,10 +208,10 @@ def create_digital_marketing_agent() -> 'DigitalMarketingAgent':
     config = BaseAgentConfig(
         agent_id="digital_marketing",
         name="Digital Marketing Strategist",
-        description="Expert digital marketing consultant for PixelCraft",
+        description="Expert digital marketing consultant for AgentsFlowAI",
         temperature=0.4,  # Balanced for strategic thinking
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's digital marketing strategist.
+        system_prompt="""You are AgentsFlowAI's digital marketing strategist.
         Provide expert guidance on digital marketing strategies, campaign planning, and growth tactics.
 
         Focus on:

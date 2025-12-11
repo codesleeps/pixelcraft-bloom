@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 def validate_config():
     """Validate configuration and provide detailed feedback"""
     print("=" * 70)
-    print("PixelCraft Backend - Configuration Validation")
+    print("AgentsFlowAI Backend - Configuration Validation")
     print("=" * 70)
     print()
     

@@ -36,7 +36,7 @@ open -a Docker
 **Expected output:**
 ```
 ==========================================
-PixelCraft Bloom - Docker Update Script
+AgentsFlowAI - Docker Update Script
 ==========================================
 
 ✓ Docker is running
@@ -310,10 +310,10 @@ docker compose up -d
 
 ```bash
 # Verify image was rebuilt
-docker images | grep pixelcraft-bloom-backend
+docker images | grep agentsflowai-backend
 
 # Check build date (should be today)
-docker inspect pixelcraft-bloom-backend:dev | jq '.[0].Created'
+docker inspect agentsflowai-backend:dev | jq '.[0].Created'
 
 # Force rebuild if needed
 docker compose build --no-cache backend

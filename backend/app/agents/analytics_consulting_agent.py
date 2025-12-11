@@ -13,7 +13,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
-logger = logging.getLogger("pixelcraft.agents.analytics")
+logger = logging.getLogger("agentsflowai.agents.analytics")
 
 # Analytics service details
 ANALYTICS_SERVICES = {
@@ -98,11 +98,11 @@ def create_analytics_consulting_agent(model_manager: Optional[ModelManager] = No
     config = BaseAgentConfig(
         agent_id="analytics_consulting",
         name="Analytics Consulting Specialist",
-        description="Data analytics expert for PixelCraft",
+        description="Data analytics expert for AgentsFlowAI",
         default_model="llama2",
         temperature=0.2,  # Very precise and technical
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's analytics consulting specialist.
+        system_prompt="""You are AgentsFlowAI's analytics consulting specialist.
         Provide expert guidance on data analytics, tracking implementation, and performance measurement.
 
         Focus on:

@@ -13,7 +13,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
-logger = logging.getLogger("pixelcraft.agents.content_creation")
+logger = logging.getLogger("agentsflowai.agents.content_creation")
 
 # Content creation service details
 CONTENT_SERVICES = {
@@ -94,11 +94,11 @@ def create_content_creation_agent(model_manager: Optional[ModelManager] = None) 
     config = BaseAgentConfig(
         agent_id="content_creation",
         name="Content Creation Specialist",
-        description="Creative content strategist for PixelCraft",
+        description="Creative content strategist for AgentsFlowAI",
         default_model="llama2",
         temperature=0.6,  # Creative but focused
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's content creation specialist.
+        system_prompt="""You are AgentsFlowAI's content creation specialist.
         Provide expert guidance on content strategy, copywriting, and multi-channel content production.
 
         Focus on:

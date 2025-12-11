@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# PixelCraft Bloom Production Deployment Script
+# AgentsFlowAI Production Deployment Script
 # This script automates the remaining deployment tasks:
 # 1. SSL certificate setup with Let's Encrypt
 # 2. Nginx HTTPS configuration
@@ -14,8 +14,8 @@ API_DOMAIN="api.agentsflow.cloud"
 EMAIL="admin@agentsflow.cloud"
 BACKUP_DIR="/var/backups/pixelcraft"
 LOG_DIR="/var/log/pixelcraft"
-NGINX_CONFIG="/etc/nginx/sites-available/pixelcraft-bloom"
-NGINX_ENABLED="/etc/nginx/sites-enabled/pixelcraft-bloom"
+NGINX_CONFIG="/etc/nginx/sites-available/agentsflowai"
+NGINX_ENABLED="/etc/nginx/sites-enabled/agentsflowai"
 
 # Colors for output
 RED='\033[0;31m'
@@ -54,7 +54,7 @@ mkdir -p "$LOG_DIR"
 chmod 750 "$BACKUP_DIR"
 chmod 750 "$LOG_DIR"
 
-log "Starting PixelCraft Bloom production deployment..."
+log "Starting AgentsFlowAI production deployment..."
 
 # 1. SSL Certificate Setup
 log "Setting up SSL certificates with Let's Encrypt..."
@@ -81,7 +81,7 @@ log "Configuring Nginx for HTTPS..."
 
 # Create comprehensive Nginx configuration
 cat > "$NGINX_CONFIG" << 'EOF'
-# PixelCraft Bloom Production Nginx Configuration
+# AgentsFlowAI Production Nginx Configuration
 # HTTPS with SSL termination, security headers, and rate limiting
 
 # HTTP to HTTPS redirect for main domain
@@ -115,7 +115,7 @@ server {
     add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
     # Frontend static files
-    root /var/www/pixelcraft-bloom;
+    root /var/www/agentsflowai;
     index index.html;
 
     location / {
@@ -238,16 +238,16 @@ fi
 log "Setting up automated backup system..."
 
 # Make backup scripts executable
-chmod +x /opt/pixelcraft-bloom/ops/backup.sh
-chmod +x /opt/pixelcraft-bloom/ops/backup-redis.sh
-chmod +x /opt/pixelcraft-bloom/ops/monitor-backups.sh
-chmod +x /opt/pixelcraft-bloom/ops/restore.sh
+chmod +x /opt/agentsflowai/ops/backup.sh
+chmod +x /opt/agentsflowai/ops/backup-redis.sh
+chmod +x /opt/agentsflowai/ops/monitor-backups.sh
+chmod +x /opt/agentsflowai/ops/restore.sh
 
 # Set up cron jobs for backups
 CRON_JOBS=(
-    "0 2 * * * /opt/pixelcraft-bloom/ops/backup.sh >> /var/log/pixelcraft/backup.log 2>&1"
-    "30 2 * * * /opt/pixelcraft-bloom/ops/backup-redis.sh >> /var/log/pixelcraft/redis-backup.log 2>&1"
-    "0 */6 * * * /opt/pixelcraft-bloom/ops/monitor-backups.sh >> /var/log/pixelcraft/backup-monitor.log 2>&1"
+    "0 2 * * * /opt/agentsflowai/ops/backup.sh >> /var/log/pixelcraft/backup.log 2>&1"
+    "30 2 * * * /opt/agentsflowai/ops/backup-redis.sh >> /var/log/pixelcraft/redis-backup.log 2>&1"
+    "0 */6 * * * /opt/agentsflowai/ops/monitor-backups.sh >> /var/log/pixelcraft/backup-monitor.log 2>&1"
 )
 
 for job in "${CRON_JOBS[@]}"; do
@@ -295,9 +295,9 @@ fi
 log "Setting up monitoring..."
 
 # Create SSL monitoring script
-mkdir -p /opt/pixelcraft-bloom/scripts
+mkdir -p /opt/agentsflowai/scripts
 
-cat > /opt/pixelcraft-bloom/scripts/check-ssl-expiry.sh << 'EOF'
+cat > /opt/agentsflowai/scripts/check-ssl-expiry.sh << 'EOF'
 #!/bin/bash
 # SSL Certificate Expiry Monitoring
 
@@ -322,11 +322,11 @@ else
 fi
 EOF
 
-chmod +x /opt/pixelcraft-bloom/scripts/check-ssl-expiry.sh
+chmod +x /opt/agentsflowai/scripts/check-ssl-expiry.sh
 
 # Add SSL monitoring to cron
 if ! crontab -l | grep -q "check-ssl-expiry"; then
-    (crontab -l 2>/dev/null; echo "0 9 * * * /opt/pixelcraft-bloom/scripts/check-ssl-expiry.sh >> /var/log/pixelcraft/ssl-monitor.log 2>&1") | crontab -
+    (crontab -l 2>/dev/null; echo "0 9 * * * /opt/agentsflowai/scripts/check-ssl-expiry.sh >> /var/log/pixelcraft/ssl-monitor.log 2>&1") | crontab -
     log "Added SSL monitoring cron job"
 else
     log "SSL monitoring cron job already exists"
@@ -343,24 +343,24 @@ else
 fi
 
 # Test backup scripts
-if /opt/pixelcraft-bloom/ops/backup.sh --dry-run 2>/dev/null || true; then
+if /opt/agentsflowai/ops/backup.sh --dry-run 2>/dev/null || true; then
     log "Backup script test passed"
 else
     warn "Backup script test failed - check environment variables"
 fi
 
 # Test monitoring scripts
-if /opt/pixelcraft-bloom/ops/monitor-backups.sh 2>/dev/null || true; then
+if /opt/agentsflowai/ops/monitor-backups.sh 2>/dev/null || true; then
     log "Monitoring script test passed"
 else
     warn "Monitoring script test failed - this may be expected if no backups exist yet"
 fi
 
-log "${GREEN}🎉 PixelCraft Bloom production deployment completed successfully!${NC}"
+log "${GREEN}🎉 AgentsFlowAI production deployment completed successfully!${NC}"
 log ""
 log "Next steps:"
 log "1. Configure DNS to point to your server IP"
-log "2. Update environment variables in /opt/pixelcraft-bloom/backend/.env"
+log "2. Update environment variables in /opt/agentsflowai/backend/.env"
 log "3. Start your application services"
 log "4. Test all endpoints: https://api.agentsflow.cloud/health"
 log "5. Monitor logs in /var/log/pixelcraft/"

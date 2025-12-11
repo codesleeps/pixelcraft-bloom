@@ -113,8 +113,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 docker-compose -f docker-compose.prod.yml up -d
 
 # Option 3: Systemd
-sudo systemctl start pixelcraft-backend
-sudo systemctl enable pixelcraft-backend
+sudo systemctl start agentsflowai-backend
+sudo systemctl enable agentsflowai-backend
 ```
 
 ---
@@ -219,7 +219,7 @@ curl https://api.yourdomain.com/health
 curl https://api.yourdomain.com/api/models
 
 # Error logs
-tail -f /var/log/pixelcraft/backend.log
+tail -f /var/log/agentsflowai/backend.log
 ```
 
 ### Weekly Checks
@@ -247,13 +247,13 @@ df -h /var/backups
 ### Rollback Procedure
 ```bash
 # Stop current deployment
-sudo systemctl stop pixelcraft-backend
+sudo systemctl stop agentsflowai-backend
 
 # Restore from backup
-./ops/restore.sh /var/backups/pixelcraft/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
+./ops/restore.sh /var/backups/agentsflowai/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
 
 # Start previous version
-sudo systemctl start pixelcraft-backend
+sudo systemctl start agentsflowai-backend
 
 # Verify health
 curl https://api.yourdomain.com/health

@@ -1,4 +1,4 @@
-# Hostinger VPS Deployment Guide - PixelCraft Backend
+# Hostinger VPS Deployment Guide - AgentsFlowAI Backend
 
 **Complete Step-by-Step Guide**  
 **Estimated Time**: 1-2 hours  
@@ -9,7 +9,7 @@
 ## 📋 Prerequisites
 
 Before starting, have these ready:
-- [ ] Domain name (e.g., pixelcraft.com)
+- [ ] Domain name (e.g., agentsflowai.com)
 - [ ] GitHub account with your code
 - [ ] Supabase project URL and keys
 - [ ] Credit card for Hostinger payment
@@ -95,16 +95,16 @@ apt upgrade -y
 
 ```bash
 # Create new user
-adduser pixelcraft
+adduser agentsflowai
 
 # Enter password when prompted (save this!)
 # Press Enter for other prompts (can leave blank)
 
 # Add user to sudo group
-usermod -aG sudo pixelcraft
+usermod -aG sudo agentsflowai
 
 # Switch to new user
-su - pixelcraft
+su - agentsflowai
 ```
 
 ### Step 4: Set Up SSH Key Authentication (Optional but Recommended)
@@ -119,7 +119,7 @@ cat ~/.ssh/id_ed25519.pub
 # Copy the output
 ```
 
-**Back on VPS (as pixelcraft user):**
+**Back on VPS (as agentsflowai user):**
 ```bash
 # Create .ssh directory
 mkdir -p ~/.ssh
@@ -136,7 +136,7 @@ chmod 600 ~/.ssh/authorized_keys
 **Test SSH key login:**
 ```bash
 # From local machine (new terminal)
-ssh pixelcraft@YOUR_VPS_IP
+ssh agentsflowai@YOUR_VPS_IP
 
 # Should login without password!
 ```
@@ -252,7 +252,7 @@ To                         Action      From
 
 ---
 
-## Part 5: Deploy PixelCraft Backend
+## Part 5: Deploy AgentsFlowAI Backend
 
 ### Step 1: Clone Your Repository
 
@@ -261,10 +261,10 @@ To                         Action      From
 cd ~
 
 # Clone your repository
-git clone https://github.com/YOUR_USERNAME/pixelcraft-bloom.git
+git clone https://github.com/YOUR_USERNAME/agentsflowai.git
 
 # Navigate to project
-cd pixelcraft-bloom
+cd agentsflowai
 
 # Verify files
 ls -la
@@ -409,7 +409,7 @@ curl http://localhost:8000/api/models
 
 ```bash
 # Create Nginx configuration for backend
-sudo nano /etc/nginx/sites-available/pixelcraft-backend
+sudo nano /etc/nginx/sites-available/agentsflowai-backend
 ```
 
 **Add this configuration:**
@@ -461,7 +461,7 @@ server {
 
 ```bash
 # Enable the site
-sudo ln -s /etc/nginx/sites-available/pixelcraft-backend /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/agentsflowai-backend /etc/nginx/sites-enabled/
 
 # Test Nginx configuration
 sudo nginx -t
@@ -517,23 +517,23 @@ nano ~/backup.sh
 **Add this script:**
 ```bash
 #!/bin/bash
-# PixelCraft Backup Script
+# AgentsFlowAI Backup Script
 
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=~/backups
-PROJECT_DIR=~/pixelcraft-bloom
+PROJECT_DIR=~/agentsflowai
 
 # Create backup directory
 mkdir -p $BACKUP_DIR
 
 # Backup Docker volumes
 docker run --rm \
-  -v pixelcraft-bloom_db_data:/data \
+  -v agentsflowai_db_data:/data \
   -v $BACKUP_DIR:/backup \
   ubuntu tar czf /backup/db_backup_$DATE.tar.gz /data
 
 docker run --rm \
-  -v pixelcraft-bloom_ollama_data:/data \
+  -v agentsflowai_ollama_data:/data \
   -v $BACKUP_DIR:/backup \
   ubuntu tar czf /backup/ollama_backup_$DATE.tar.gz /data
 
@@ -568,7 +568,7 @@ crontab -e
 
 # Choose editor (nano is easiest)
 # Add this line at the end:
-0 2 * * * /home/pixelcraft/backup.sh >> /home/pixelcraft/backup.log 2>&1
+0 2 * * * /home/agentsflowai/backup.sh >> /home/agentsflowai/backup.log 2>&1
 
 # This runs backup daily at 2 AM
 ```
@@ -595,19 +595,19 @@ bash <(curl -Ss https://my-netdata.io/kickstart.sh)
 
 ```bash
 # Create log rotation config
-sudo nano /etc/logrotate.d/pixelcraft
+sudo nano /etc/logrotate.d/agentsflowai
 ```
 
 **Add this configuration:**
 ```
-/home/pixelcraft/pixelcraft-bloom/*.log {
+/home/agentsflowai/agentsflowai/*.log {
     daily
     rotate 7
     compress
     delaycompress
     missingok
     notifempty
-    create 0640 pixelcraft pixelcraft
+    create 0640 agentsflowai agentsflowai
 }
 ```
 
@@ -938,7 +938,7 @@ docker compose restart ollama
 - **Knowledge Base**: https://support.hostinger.com
 - **Email**: support@hostinger.com
 
-### PixelCraft Documentation
+### AgentsFlowAI Documentation
 - **Production Guide**: ops/PRODUCTION_READINESS_COMPLETE.md
 - **Quick Reference**: DEPLOYMENT_QUICK_REFERENCE.md
 - **Troubleshooting**: Backend logs and health endpoints
@@ -952,7 +952,7 @@ docker compose restart ollama
 
 ## 🎉 Success!
 
-Your PixelCraft backend is now deployed on Hostinger VPS!
+Your AgentsFlowAI backend is now deployed on Hostinger VPS!
 
 **Your endpoints:**
 - **API**: https://api.yourdomain.com

@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# PixelCraft Bloom VPS Setup Script
+# AgentsFlowAI VPS Setup Script
 # Usage: ./setup-vps.sh [domain] [email]
 # Example: ./setup-vps.sh api.yourdomain.com admin@yourdomain.com
 
 DOMAIN=${1:-""}
 EMAIL=${2:-""}
 APP_USER="pixelcraft"
-APP_DIR="/opt/pixelcraft-bloom"
+APP_DIR="/opt/agentsflowai"
 LOG_DIR="/var/log/pixelcraft"
 
 # Colors for output
@@ -114,7 +114,7 @@ clone_repository() {
     fi
     
     # Note: In production, you'd clone from your actual repo
-    # git clone https://github.com/yourusername/pixelcraft-bloom.git "$APP_DIR"
+    # git clone https://github.com/yourusername/agentsflowai.git "$APP_DIR"
     # For now, we'll create the structure
     mkdir -p "$APP_DIR/backend"
     chown -R "$APP_USER:$APP_USER" "$APP_DIR"
@@ -265,7 +265,7 @@ print_next_steps() {
 }
 
 main() {
-    log "Starting PixelCraft Bloom VPS setup..."
+    log "Starting AgentsFlowAI VPS setup..."
     
     check_root
     validate_inputs

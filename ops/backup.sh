@@ -13,8 +13,8 @@ LOG_FILE="/var/log/agentsflowai/backup.log"
 mkdir -p "$BACKUP_DIR"
 
 # Load environment variables
-if [ -f "/opt/pixelcraft-bloom/backend/.env" ]; then
-    source "/opt/pixelcraft-bloom/backend/.env"
+if [ -f "/opt/agentsflowai/backend/.env" ]; then
+    source "/opt/agentsflowai/backend/.env"
 else
     echo "Error: .env file not found"
     exit 1

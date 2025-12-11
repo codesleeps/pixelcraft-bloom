@@ -16,7 +16,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse
 from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
 
-logger = logging.getLogger("pixelcraft.agents.recommendation")
+logger = logging.getLogger("agentsflowai.agents.recommendation")
 
 # Mapping services to relevant keywords for matching
 SERVICE_KEYWORDS = {
@@ -57,10 +57,10 @@ def create_recommendation_agent(model_manager: Optional[ModelManager] = None) ->
     config = BaseAgentConfig(
         agent_id="service_recommendation",
         name="Service Recommendation Specialist",
-        description="Expert system for recommending PixelCraft services",
+        description="Expert system for recommending AgentsFlowAI services",
         temperature=0.4,  # Moderate temperature for balanced recommendations
         max_tokens=2000,
-        system_prompt="""You are PixelCraft's service recommendation specialist.
+        system_prompt="""You are AgentsFlowAI's service recommendation specialist.
         Analyze client needs, goals, and constraints to recommend the most suitable services.
         Consider factors like:
         1. Business goals and challenges

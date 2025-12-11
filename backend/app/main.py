@@ -44,7 +44,7 @@ from .middleware.csrf_config import get_csrf_config
 from fastapi import Request, Depends
 from .config import settings, get_settings
 
-logger = logging.getLogger("pixelcraft.backend")
+logger = logging.getLogger("agentsflowai.backend")
   
 
 def configure_logging() -> None:
@@ -99,7 +99,7 @@ def create_app() -> FastAPI:
         )
         logger.info("Sentry initialized for environment: %s, release: %s", settings.sentry.environment, settings.sentry.release or "N/A")
 
-    app = FastAPI(title="PixelCraft AI Backend", version="1.0.0", description="AI-powered backend for PixelCraft using AgentScope and Ollama")
+    app = FastAPI(title="AgentsFlowAI AI Backend", version="1.0.0", description="AI-powered backend for AgentsFlowAI using AgentScope and Ollama")
     
     # Initialize Rate Limiter
     app.state.limiter = limiter
@@ -148,7 +148,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        logger.info("Starting PixelCraft AI Backend (env=%s)", settings.app_env)
+        logger.info("Starting AgentsFlowAI AI Backend (env=%s)", settings.app_env)
 
         # Initialize and validate Ollama (with retries for slower startup)
         try:
@@ -228,7 +228,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown_event():
-        logger.info("Shutting down PixelCraft AI Backend")
+        logger.info("Shutting down AgentsFlowAI AI Backend")
         # Cleanup ModelManager
         if model_manager_instance:
             await model_manager_instance.cleanup()
@@ -253,7 +253,7 @@ def create_app() -> FastAPI:
 
     @app.get("/", tags=["root"])
     async def root():
-        return {"message": "Welcome to PixelCraft AI Backend", "docs": "/docs"}
+        return {"message": "Welcome to AgentsFlowAI AI Backend", "docs": "/docs"}
 
     @app.get("/api/csrf-token", tags=["security"])
     async def get_csrf_token(csrf_protect: CsrfProtect = Depends()):

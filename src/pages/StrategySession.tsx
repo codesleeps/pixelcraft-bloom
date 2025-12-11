@@ -181,7 +181,7 @@ const StrategySession = () => {
     "description": "Comprehensive digital marketing consultation to develop custom growth strategies for businesses",
     "provider": {
       "@type": "Organization",
-      "name": "PixelCraft Digital Marketing"
+      "name": "AgentsFlowAI Digital Marketing"
     },
     "offers": {
       "@type": "Offer",
@@ -199,10 +199,10 @@ const StrategySession = () => {
   return (
     <>
       <SEOHead
-        title="Free Digital Marketing Strategy Session | PixelCraft"
+        title="Free Digital Marketing Strategy Session | AgentsFlowAI"
         description="Get a free 60-minute digital marketing strategy session. Discover growth opportunities, receive custom recommendations, and create your roadmap to success."
         keywords="free marketing consultation, strategy session, digital marketing audit, marketing strategy, business growth consultation"
-        canonical="https://pixelcraft.lovable.app/strategy-session"
+        canonical="https://agentsflow.cloud/strategy-session"
         schema={strategySchema}
       />
 

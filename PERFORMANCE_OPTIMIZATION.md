@@ -1,6 +1,6 @@
-# PixelCraft Bloom Performance Optimization Guide
+# AgentsFlowAI Performance Optimization Guide
 
-This guide provides performance optimization strategies for PixelCraft Bloom in production environments.
+This guide provides performance optimization strategies for AgentsFlowAI in production environments.
 
 ## 📊 Current Performance Baseline
 
@@ -187,7 +187,7 @@ http {
 # In backend/app/main.py
 
 app = FastAPI(
-    title="PixelCraft Bloom API",
+    title="AgentsFlowAI API",
     description="AI-powered business automation platform",
     version="1.0.0",
     docs_url="/docs",
@@ -267,7 +267,7 @@ engine = create_engine(
     pool_recycle=180,
     echo=True,  # Enable for debugging, disable in production
     connect_args={
-        "application_name": "pixelcraft-bloom",
+        "application_name": "agentsflowai",
         "statement_timeout": 5000,  # 5 second query timeout
     }
 )
@@ -484,7 +484,7 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'pixelcraft-bloom'
+  - job_name: 'agentsflowai'
     static_configs:
       - targets: ['localhost:8000']
 
@@ -597,7 +597,7 @@ async def get_metrics():
 curl -s -o /dev/null -w "Connect: %{time_connect}s\nTTFB: %{time_starttransfer}s\nTotal: %{time_total}s\n" https://api.agentsflow.cloud/health
 
 # Check database queries
-tail -f /var/log/pixelcraft/api.log | grep "Slow query"
+tail -f /var/log/agentsflowai/api.log | grep "Slow query"
 
 # Check Redis performance
 redis-cli --latency-history
@@ -641,7 +641,7 @@ redis-cli info memory | grep used_memory
 
 ## 🎉 Performance Optimization Summary
 
-This guide provides a comprehensive approach to optimizing PixelCraft Bloom performance:
+This guide provides a comprehensive approach to optimizing AgentsFlowAI performance:
 
 ✅ **Immediate Wins**: Database indexes, Redis caching, connection pooling
 ✅ **Quick Improvements**: Nginx tuning, Gzip compression, rate limiting

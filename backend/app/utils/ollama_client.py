@@ -7,7 +7,7 @@ import aiohttp
 
 from ..config import settings
 
-logger = logging.getLogger("pixelcraft.ollama")
+logger = logging.getLogger("agentsflowai.ollama")
 
 
 class OllamaClient:

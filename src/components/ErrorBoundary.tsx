@@ -154,7 +154,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                     variant="ghost"
                     onClick={() =>
                       window.open(
-                        `mailto:support@pixelcraft.com?subject=Error Report&body=${encodeURIComponent(
+                        `mailto:support@agentsflowai.com?subject=Error Report&body=${encodeURIComponent(
                           this.state.error!.message
                         )}`
                       )

@@ -69,8 +69,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center space-x-2 px-2">
-            <img src="/logo.png" alt="PixelCraft" className="h-8 w-8" />
-            <span className="text-lg font-semibold">PixelCraft</span>
+            <img src="/logo.png" alt="AgentsFlowAI" className="h-8 w-8" />
+            <span className="text-lg font-semibold">AgentsFlowAI</span>
           </div>
         </SidebarHeader>
         <SidebarContent>

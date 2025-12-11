@@ -11,25 +11,25 @@ mkdir -p /var/backups/pixelcraft
 mkdir -p /var/log/pixelcraft
 
 # Set permissions
-chmod +x /opt/pixelcraft-bloom/ops/backup.sh
-chmod +x /opt/pixelcraft-bloom/ops/restore.sh
-chmod +x /opt/pixelcraft-bloom/ops/backup-redis.sh
-chmod +x /opt/pixelcraft-bloom/ops/monitor-backups.sh
+chmod +x /opt/agentsflowai/ops/backup.sh
+chmod +x /opt/agentsflowai/ops/restore.sh
+chmod +x /opt/agentsflowai/ops/backup-redis.sh
+chmod +x /opt/agentsflowai/ops/monitor-backups.sh
 
 # Setup Cron Jobs
 # Database backup: Daily at 2 AM
-DB_CRON_CMD="/opt/pixelcraft-bloom/ops/backup.sh >> /var/log/pixelcraft/backup.log 2>&1"
+DB_CRON_CMD="/opt/agentsflowai/ops/backup.sh >> /var/log/pixelcraft/backup.log 2>&1"
 DB_JOB="0 2 * * * $DB_CRON_CMD"
 
 # Redis backup: Daily at 2:30 AM
-REDIS_CRON_CMD="/opt/pixelcraft-bloom/ops/backup-redis.sh >> /var/log/pixelcraft/redis-backup.log 2>&1"
+REDIS_CRON_CMD="/opt/agentsflowai/ops/backup-redis.sh >> /var/log/pixelcraft/redis-backup.log 2>&1"
 REDIS_JOB="30 2 * * * $REDIS_CRON_CMD"
 
 # Backup monitoring: Every 6 hours
-MONITOR_CRON_CMD="/opt/pixelcraft-bloom/ops/monitor-backups.sh >> /var/log/pixelcraft/backup-monitor.log 2>&1"
+MONITOR_CRON_CMD="/opt/agentsflowai/ops/monitor-backups.sh >> /var/log/pixelcraft/backup-monitor.log 2>&1"
 MONITOR_JOB="0 */6 * * * $MONITOR_CRON_CMD"
 
-if crontab -l | grep -q "pixelcraft-bloom/ops/backup.sh"; then
+if crontab -l | grep -q "agentsflowai/ops/backup.sh"; then
     echo "Cron job already exists."
 else
     (crontab -l 2>/dev/null; echo "$JOB") | crontab -

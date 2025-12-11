@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PixelCraft Bloom Final Deployment Verification Script
+# AgentsFlowAI Final Deployment Verification Script
 # This script verifies that all deployment components are working correctly
 
 # Colors for output
@@ -31,7 +31,7 @@ DOMAIN="agentsflow.cloud"
 API_DOMAIN="api.agentsflow.cloud"
 BACKUP_DIR="/var/backups/pixelcraft"
 LOG_DIR="/var/log/pixelcraft"
-PROJECT_DIR="/opt/pixelcraft-bloom"
+PROJECT_DIR="/opt/agentsflowai"
 
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -43,7 +43,7 @@ else
 fi
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}PixelCraft Bloom Deployment Verification${NC}"
+echo -e "${BLUE}AgentsFlowAI Deployment Verification${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -142,7 +142,7 @@ else
     log_error "Nginx configuration has errors"
 fi
 
-if [ -f "/etc/nginx/sites-available/pixelcraft-bloom" ]; then
+if [ -f "/etc/nginx/sites-available/agentsflowai" ]; then
     log_success "Nginx site configuration exists"
 else
     log_error "Nginx site configuration NOT found"
@@ -354,7 +354,7 @@ echo ""
 if [ "$ERROR_COUNT" -eq 0 ] && [ "$WARNING_COUNT" -le 3 ]; then
     echo -e "${GREEN}🎉 Deployment verification PASSED!${NC}"
     echo ""
-    echo "Your PixelCraft Bloom deployment is ready for production."
+    echo "Your AgentsFlowAI deployment is ready for production."
     echo ""
     echo "Next steps:"
     echo "1. Monitor system performance for 24-48 hours"

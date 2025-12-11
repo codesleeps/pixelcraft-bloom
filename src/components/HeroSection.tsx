@@ -99,7 +99,7 @@ const HeroSection = () => {
                 variant="glass"
                 size="lg"
                 className="text-lg px-8 py-6 h-auto"
-                aria-label="Start your digital marketing journey with PixelCraft"
+                aria-label="Start your digital marketing journey with AgentsFlowAI"
               >
                 Start Your Growth Journey
                 <ArrowRight className="ml-2" aria-hidden="true" />
@@ -109,7 +109,7 @@ const HeroSection = () => {
               variant="hero"
               size="lg"
               className="text-lg px-8 py-6 h-auto"
-              aria-label="Subscribe to PixelCraft"
+              aria-label="Subscribe to AgentsFlowAI"
               onClick={handleSubscribe}
             >
               Subscribe

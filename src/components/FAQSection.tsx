@@ -15,7 +15,7 @@ const faqs = [
     answer: "Yes! We work with startups, small businesses, mid-market companies, and enterprise clients. Our pricing and service packages are designed to scale with your business needs, from basic SEO to comprehensive digital transformation."
   },
   {
-    question: "What makes PixelCraft different from other agencies?",
+    question: "What makes AgentsFlowAI different from other agencies?",
     answer: "We combine AI-powered insights with human expertise to deliver results that traditional agencies can't match. Our average client sees 300% ROI, and we use data-driven strategies backed by real results from 500+ successful campaigns."
   },
   {
@@ -93,7 +93,7 @@ const FAQSection = () => {
             Got Questions? <span className="bg-gradient-primary bg-clip-text text-transparent">We Have Answers</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Everything you need to know about working with PixelCraft and our AI-powered services.
+            Everything you need to know about working with AgentsFlowAI and our AI-powered services.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ const FAQSection = () => {
             <h3 className="text-2xl font-bold mb-4">Still Have Questions?</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
               Can't find what you're looking for? Our team is here to help you understand how
-              PixelCraft can transform your business.
+              AgentsFlowAI can transform your business.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="default" size="lg" onClick={handleStrategyClick}>

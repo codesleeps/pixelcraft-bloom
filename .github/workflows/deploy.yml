@@ -119,10 +119,10 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
         # Create deployment directory if it doesn't exist
-        mkdir -p /opt/pixelcraft-bloom
+        mkdir -p /opt/agentsflowai
 
         # Pull latest code
-        cd /opt/pixelcraft-bloom || exit 1
+        cd /opt/agentsflowai || exit 1
         git pull origin main
 
         # Update environment variables
@@ -156,7 +156,7 @@ jobs:
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_COLOR: ${{ job.status == 'success' && 'good' || 'danger' }}
-        SLACK_TITLE: "PixelCraft Bloom Deployment"
+        SLACK_TITLE: "AgentsFlowAI Deployment"
         SLACK_MESSAGE: |
           *Deployment Status*: ${{ job.status }}
           *Branch*: ${{ github.ref }}

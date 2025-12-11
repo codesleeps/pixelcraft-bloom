@@ -5,7 +5,7 @@ from typing import Callable, Dict, Any, Optional
 from datetime import datetime
 import logging
 
-logger = logging.getLogger("pixelcraft.health")
+logger = logging.getLogger("agentsflowai.health")
 
 class CircuitState(Enum):
     CLOSED = "closed"  # Normal operation

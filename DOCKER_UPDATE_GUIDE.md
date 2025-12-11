@@ -60,7 +60,7 @@ docker compose build
  => [backend] exporting to image
  => => exporting layers
  => => writing image sha256:...
- => => naming to docker.io/library/pixelcraft-bloom-backend:dev
+ => => naming to docker.io/library/agentsflowai-backend:dev
 ```
 
 ### Step 3: Stop Running Containers
@@ -196,10 +196,10 @@ docker compose build --no-cache backend
 **Solution**:
 ```bash
 # Verify the image was rebuilt
-docker images | grep pixelcraft-bloom-backend
+docker images | grep agentsflowai-backend
 
 # Check the build date (should be recent)
-docker inspect pixelcraft-bloom-backend:dev | jq '.[0].Created'
+docker inspect agentsflowai-backend:dev | jq '.[0].Created'
 
 # If old, force rebuild
 docker compose build --no-cache backend
@@ -310,17 +310,17 @@ For production deployment with updated images:
 docker compose -f docker-compose.prod.yml build
 
 # Or build specific production image
-docker build -f backend/Dockerfile.prod -t pixelcraft-bloom-backend:prod .
+docker build -f backend/Dockerfile.prod -t agentsflowai-backend:prod .
 ```
 
 ### 2. Tag and Push to Registry
 
 ```bash
 # Tag for your registry
-docker tag pixelcraft-bloom-backend:dev your-registry.com/pixelcraft-bloom-backend:latest
+docker tag agentsflowai-backend:dev your-registry.com/agentsflowai-backend:latest
 
 # Push to registry
-docker push your-registry.com/pixelcraft-bloom-backend:latest
+docker push your-registry.com/agentsflowai-backend:latest
 ```
 
 ### 3. Deploy to Production

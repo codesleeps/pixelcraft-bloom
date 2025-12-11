@@ -122,7 +122,7 @@ const TrustSection = () => {
             <span className="text-sm font-medium text-green-800">Trusted & Secure</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Why Choose <span className="bg-gradient-primary bg-clip-text text-transparent">PixelCraft?</span>
+            Why Choose <span className="bg-gradient-primary bg-clip-text text-transparent">AgentsFlowAI?</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             We're not just another agency. We're your growth partners, backed by certifications,
@@ -213,7 +213,7 @@ const TrustSection = () => {
             <Globe className="w-12 h-12 text-blue-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold mb-4">Ready to Scale Your Business?</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Join hundreds of successful businesses that trust PixelCraft with their digital growth.
+              Join hundreds of successful businesses that trust AgentsFlowAI with their digital growth.
               Get your free strategy session today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

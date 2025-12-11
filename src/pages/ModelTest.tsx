@@ -5,7 +5,7 @@ export default function ModelTest() {
   return (
     <>
       <SEOHead 
-        title="Model Testing | PixelCraft Bloom"
+        title="Model Testing | AgentsFlowAI Bloom"
         description="Test and evaluate AI model performance"
       />
       <ModelTester />

@@ -317,11 +317,11 @@ Appointment Details:
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
                 
                 <p style="font-size: 14px; color: #6b7280;">
-                    Need to reschedule? <a href="https://pixelcraft.lovable.app/#/dashboard/appointments/{appointment_id}">Manage your appointment</a>
+                    Need to reschedule? <a href="https://agentsflowai.lovable.app/#/dashboard/appointments/{appointment_id}">Manage your appointment</a>
                 </p>
                 
                 <p style="font-size: 12px; color: #9ca3af;">
-                    PixelCraft Digital Marketing<br>
+                    AgentsFlowAI Digital Marketing<br>
                     Professional Digital Solutions
                 </p>
             </body>

@@ -11,7 +11,7 @@ interface SEOHeadProps {
 }
 
 const SEOHead = ({
-  title = "Digital Marketing Agency - Transform Your Digital Presence | PixelCraft",
+  title = "Digital Marketing Agency - Transform Your Digital Presence | AgentsFlowAI",
   description = "Award-winning digital marketing agency helping businesses scale with SEO, social media, web design, and data-driven strategies. 300% average ROI guaranteed.",
   keywords = "digital marketing, SEO, social media marketing, web design, PPC, content marketing, marketing strategy, business growth",
   ogImage = "/hero-marketing.jpg",

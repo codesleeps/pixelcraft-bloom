@@ -1,12 +1,12 @@
-# PixelCraft Bloom - AI-Powered Business Automation Platform
+# AgentsFlowAI - AI-Powered Business Automation Platform
 
 **Transform your business operations with intelligent automation**
 
 ---
 
-## 🎯 What is PixelCraft Bloom?
+## 🎯 What is AgentsFlowAI?
 
-PixelCraft Bloom is an **AI-powered business automation platform** that combines multiple AI agents to handle customer interactions, lead qualification, service recommendations, and business analytics - all in one intelligent system.
+AgentsFlowAI is an **AI-powered business automation platform** that combines multiple AI agents to handle customer interactions, lead qualification, service recommendations, and business analytics - all in one intelligent system.
 
 Think of it as having a team of AI specialists working 24/7 to:
 - Qualify and nurture leads automatically
@@ -24,7 +24,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Agency receives 100+ inquiries per week. Sales team spends 20 hours manually qualifying leads and scheduling consultations.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - AI Chat Agent handles initial inquiries 24/7
 - Lead Qualification Agent scores and prioritizes leads automatically
 - Service Recommendation Agent suggests appropriate packages
@@ -46,7 +46,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Consultants spend hours answering repetitive questions about services, pricing, and capabilities. Potential clients drop off due to slow response times.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - AI agents provide instant, accurate answers about services
 - Automatically qualify leads based on business size and needs
 - Recommend appropriate service packages (Basic, Growth, Enterprise)
@@ -68,7 +68,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Studio loses potential clients because they can't respond quickly enough to inquiries. Project scoping takes too long, and many leads go cold.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - Chat Agent engages visitors instantly on website
 - Gathers project requirements automatically
 - Recommends appropriate service tier (Starter, Professional, Enterprise)
@@ -91,7 +91,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Small team can't handle growing inbound leads. Need to qualify enterprise vs SMB customers and route appropriately.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - AI qualifies leads by company size, budget, and needs
 - Routes enterprise leads to senior sales team
 - Handles SMB leads with self-service onboarding
@@ -114,7 +114,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Firm offers multiple services (branding, marketing, web design). Clients often don't know which service they need, leading to mismatched projects.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - Service Recommendation Agent asks diagnostic questions
 - Identifies client's actual needs (not just what they think they need)
 - Recommends appropriate service combinations
@@ -137,7 +137,7 @@ Think of it as having a team of AI specialists working 24/7 to:
 
 **Problem**: Platform connects freelancers with clients but struggles with lead quality and matching.
 
-**Solution with PixelCraft**:
+**Solution with AgentsFlowAI**:
 - AI qualifies client projects automatically
 - Matches projects with appropriate freelancer tier
 - Handles initial client questions
@@ -259,7 +259,7 @@ Based on real-world implementations:
 - Labor: 80 hours × $50 = $4,000
 - Lost opportunities: ~$10,000
 
-**With PixelCraft:**
+**With AgentsFlowAI:**
 - Platform cost: $240/month (Hostinger VPS)
 - Labor: 10 hours × $50 = $500
 - Conversion rate: 25% (improved qualification)
@@ -303,23 +303,23 @@ Based on real-world implementations:
 
 ---
 
-## 🌟 Why PixelCraft Bloom?
+## 🌟 Why AgentsFlowAI?
 
 ### vs Traditional Chatbots
 - ❌ **Chatbots**: Scripted responses, limited intelligence
-- ✅ **PixelCraft**: True AI understanding, context-aware
+- ✅ **AgentsFlowAI**: True AI understanding, context-aware
 
 ### vs Hiring More Staff
 - ❌ **Hiring**: $50k+/year per person, limited hours
-- ✅ **PixelCraft**: $240/month, 24/7 availability
+- ✅ **AgentsFlowAI**: $240/month, 24/7 availability
 
 ### vs Manual Processes
 - ❌ **Manual**: Slow, inconsistent, doesn't scale
-- ✅ **PixelCraft**: Instant, consistent, infinitely scalable
+- ✅ **AgentsFlowAI**: Instant, consistent, infinitely scalable
 
 ### vs Enterprise Solutions
 - ❌ **Enterprise**: $10k+/month, complex setup
-- ✅ **PixelCraft**: $240/month, deploy in 2 hours
+- ✅ **AgentsFlowAI**: $240/month, deploy in 2 hours
 
 ---
 
@@ -346,7 +346,7 @@ Based on real-world implementations:
 ### "We went from 15% to 28% conversion rate in the first month"
 *- Digital Marketing Agency, 12 employees*
 
-### "PixelCraft handles 90% of our initial inquiries. Our team focuses on closing deals."
+### "AgentsFlowAI handles 90% of our initial inquiries. Our team focuses on closing deals."
 *- Web Development Studio, 5 employees*
 
 ### "Best investment we made. Paid for itself in the first week."
@@ -408,7 +408,7 @@ Based on real-world implementations:
 
 ## 🎉 Bottom Line
 
-PixelCraft Bloom is like hiring a team of AI specialists for the cost of a Netflix subscription.
+AgentsFlowAI is like hiring a team of AI specialists for the cost of a Netflix subscription.
 
 **It's perfect when you need to:**
 - Scale without hiring

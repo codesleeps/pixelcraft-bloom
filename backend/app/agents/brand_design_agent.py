@@ -13,7 +13,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..models.manager import ModelManager
 from ..utils.supabase_client import get_supabase_client
   
-logger = logging.getLogger("pixelcraft.agents.brand_design")
+logger = logging.getLogger("agentsflowai.agents.brand_design")
   
 # Brand design service details
 BRAND_DESIGN_SERVICES = {
@@ -99,11 +99,11 @@ def create_brand_design_agent(model_manager: Optional[ModelManager] = None) -> '
     config = BaseAgentConfig(
         agent_id="brand_design",
         name="Brand Design Specialist",
-        description="Creative brand design consultant for PixelCraft",
+        description="Creative brand design consultant for AgentsFlowAI",
         default_model="llama2",
         temperature=0.5,  # Creative but structured
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's brand design specialist.
+        system_prompt="""You are AgentsFlowAI's brand design specialist.
         Provide expert guidance on brand identity, visual design, and creative strategy.
   
         Focus on:

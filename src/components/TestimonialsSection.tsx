@@ -13,7 +13,7 @@ const testimonials = [
     role: 'CEO',
     avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
     rating: 5,
-    testimonial: 'PixelCraft transformed our online presence completely. Our leads increased by 300% and we saw a 150% improvement in conversion rates within just 3 months.',
+    testimonial: 'AgentsFlowAI transformed our online presence completely. Our leads increased by 300% and we saw a 150% improvement in conversion rates within just 3 months.',
     results: ['300% Lead Increase', '150% Conversion Boost', '3 Months ROI']
   },
   {
@@ -31,7 +31,7 @@ const testimonials = [
     role: 'Founder',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
     rating: 5,
-    testimonial: 'Working with PixelCraft was the best decision we made this year. Their strategic approach and attention to detail delivered results beyond our expectations.',
+    testimonial: 'Working with AgentsFlowAI was the best decision we made this year. Their strategic approach and attention to detail delivered results beyond our expectations.',
     results: ['Exceeded Expectations', 'Strategic Approach', 'Detailed Execution']
   },
   {
@@ -40,7 +40,7 @@ const testimonials = [
     role: 'CTO',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
     rating: 5,
-    testimonial: 'The technical expertise and innovative solutions provided by PixelCraft helped us scale our digital infrastructure seamlessly. Outstanding service!',
+    testimonial: 'The technical expertise and innovative solutions provided by AgentsFlowAI helped us scale our digital infrastructure seamlessly. Outstanding service!',
     results: ['Technical Expertise', 'Infrastructure Scaling', 'Innovative Solutions']
   },
   {
@@ -49,7 +49,7 @@ const testimonials = [
     role: 'VP of Marketing',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
     rating: 5,
-    testimonial: 'From day one, PixelCraft understood our vision and delivered exceptional results. Their team is professional, responsive, and truly cares about our success.',
+    testimonial: 'From day one, AgentsFlowAI understood our vision and delivered exceptional results. Their team is professional, responsive, and truly cares about our success.',
     results: ['Professional Team', 'Responsive Service', 'Vision Alignment']
   },
   {
@@ -58,7 +58,7 @@ const testimonials = [
     role: 'Product Manager',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
     rating: 5,
-    testimonial: 'The ROI we achieved with PixelCraft exceeded all our projections. Their data-driven approach and creative strategies are second to none.',
+    testimonial: 'The ROI we achieved with AgentsFlowAI exceeded all our projections. Their data-driven approach and creative strategies are second to none.',
     results: ['Exceeded ROI Goals', 'Data-Driven Approach', 'Creative Strategies']
   }
 ];
@@ -103,7 +103,7 @@ const TestimonialsSection = () => {
             Trusted by <span className="bg-gradient-primary bg-clip-text text-transparent">500+ Businesses</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Don't just take our word for it. See what our clients say about working with PixelCraft.
+            Don't just take our word for it. See what our clients say about working with AgentsFlowAI.
           </p>
         </div>
 
@@ -167,7 +167,7 @@ const TestimonialsSection = () => {
           <div className="bg-gradient-primary/5 border border-gradient-primary/20 rounded-lg p-8 max-w-4xl mx-auto">
             <h3 className="text-2xl font-bold mb-4">Ready to Join Our Success Stories?</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Join 500+ businesses that have transformed their digital presence with PixelCraft.
+              Join 500+ businesses that have transformed their digital presence with AgentsFlowAI.
               Start your growth journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

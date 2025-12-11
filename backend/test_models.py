@@ -80,7 +80,7 @@ async def test_automatic_failover(model_manager):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("task_type,prompt", [
-    ("chat", "What services does PixelCraft offer?"),
+    ("chat", "What services does AgentsFlowAI offer?"),
     ("code", "Write a Python function to calculate Fibonacci numbers"),
     ("lead_qualification", "Company: Acme Corp, Budget: $10k, Timeline: Q1 2026"),
     ("service_recommendation", "Client needs: E-commerce website with SEO"),
@@ -101,7 +101,7 @@ async def test_all_task_types(model_manager, task_type, prompt):
             response = await model_manager.generate(
                 prompt=prompt,
                 task_type=task_type,
-                system_prompt="You are an AI assistant for PixelCraft."
+                system_prompt="You are an AI assistant for AgentsFlowAI."
             )
             
             assert response == f"Response for {task_type}"

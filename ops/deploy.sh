@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-# PixelCraft Bloom - Zero(ish)-downtime deploy script
+# AgentsFlowAI - Zero(ish)-downtime deploy script
 # Usage: sudo ./ops/deploy.sh [branch]
 # Defaults: BRANCH=main
 
 BRANCH=${1:-main}
-APP_DIR="/opt/pixelcraft-bloom"
+APP_DIR="/opt/agentsflowai"
 SERVICE_NAME="pixelcraft-api"
 ENV_PATH="$APP_DIR/backend/.env"
 VENV_PATH="$APP_DIR/backend/.venv"

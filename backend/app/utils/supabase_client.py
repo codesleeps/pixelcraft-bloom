@@ -4,7 +4,7 @@ from ..config import settings
 import logging
 import sentry_sdk
 
-logger = logging.getLogger("pixelcraft.supabase")
+logger = logging.getLogger("agentsflowai.supabase")
 
 
 def instrument_supabase_query(func, table_name, operation_type, **tags):

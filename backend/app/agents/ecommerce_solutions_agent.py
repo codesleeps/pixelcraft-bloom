@@ -13,7 +13,7 @@ from .base import BaseAgent, BaseAgentConfig, AgentResponse, AgentTool
 from ..utils.supabase_client import get_supabase_client
 from ..models.manager import ModelManager
 
-logger = logging.getLogger("pixelcraft.agents.ecommerce")
+logger = logging.getLogger("agentsflowai.agents.ecommerce")
 
 # E-commerce service details
 ECOMMERCE_SERVICES = {
@@ -99,10 +99,10 @@ def create_ecommerce_solutions_agent(model_manager: Optional[ModelManager] = Non
     config = BaseAgentConfig(
         agent_id="ecommerce_solutions",
         name="E-commerce Solutions Specialist",
-        description="Expert e-commerce consultant for PixelCraft",
+        description="Expert e-commerce consultant for AgentsFlowAI",
         temperature=0.3,  # Technical and precise
         max_tokens=1500,
-        system_prompt="""You are PixelCraft's e-commerce solutions specialist.
+        system_prompt="""You are AgentsFlowAI's e-commerce solutions specialist.
         Provide expert guidance on online store development, platform selection, and sales optimization.
 
         Focus on:

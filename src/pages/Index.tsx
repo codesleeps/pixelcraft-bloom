@@ -19,13 +19,13 @@ const Index = () => {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "PixelCraft - Digital Marketing Agency",
+    "name": "AgentsFlowAI - Digital Marketing Agency",
     "description": "Award-winning digital marketing agency helping businesses scale with SEO, social media, web design, and data-driven strategies.",
-    "url": "https://pixelcraft.lovable.app",
+    "url": "https://agentsflow.cloud",
     "mainEntity": {
       "@type": "Organization",
-      "name": "PixelCraft Digital Marketing",
-      "url": "https://pixelcraft.lovable.app",
+      "name": "AgentsFlowAI Digital Marketing",
+      "url": "https://agentsflow.cloud",
       "description": "Professional digital marketing services including SEO, social media marketing, web design, and PPC advertising.",
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -44,10 +44,10 @@ const Index = () => {
   return (
     <>
       <SEOHead
-        title="PixelCraft - Digital Marketing Agency | Transform Your Business"
+        title="AgentsFlowAI - Digital Marketing Agency | Transform Your Business"
         description="Award-winning digital marketing agency helping businesses scale with SEO, social media, web design, and data-driven strategies. 300% average ROI guaranteed."
-        keywords="digital marketing, SEO, social media marketing, web design, PPC, content marketing, marketing strategy, business growth, PixelCraft"
-        canonical="https://pixelcraft.lovable.app"
+        keywords="digital marketing, SEO, social media marketing, web design, PPC, content marketing, marketing strategy, business growth, AgentsFlowAI"
+        canonical="https://agentsflow.cloud"
         schema={organizationSchema}
       />
       <PerformanceOptimizer />

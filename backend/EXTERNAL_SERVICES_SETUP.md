@@ -1,6 +1,6 @@
 # External Services Setup Guide
 
-This guide explains how to configure external services (Google Calendar, SendGrid, HubSpot) for the PixelCraft backend.
+This guide explains how to configure external services (Google Calendar, SendGrid, HubSpot) for the AgentsFlowAI backend.
 
 ## 1. Google Calendar Integration
 
@@ -9,7 +9,7 @@ Required for: Appointment booking and availability checks.
 ### Steps:
 1.  **Create a Google Cloud Project:**
     *   Go to [Google Cloud Console](https://console.cloud.google.com/).
-    *   Create a new project (e.g., "PixelCraft-Bloom").
+    *   Create a new project (e.g., "AgentsFlowAI-Bloom").
 
 2.  **Enable Google Calendar API:**
     *   In the dashboard, go to "APIs & Services" > "Library".
@@ -70,7 +70,7 @@ Required for: Syncing leads and contacts.
 2.  **Create Private App:**
     *   Go to Settings > Integrations > Private Apps.
     *   Click "Create a private app".
-    *   Name it "PixelCraft Backend".
+    *   Name it "AgentsFlowAI Backend".
     *   Under "Scopes", select `crm.objects.contacts` (read/write) and `crm.objects.deals` (read/write).
 
 3.  **Get Access Token:**

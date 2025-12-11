@@ -129,21 +129,21 @@ const Partnership = () => {
   const partnershipSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "name": "PixelCraft Partnership Program",
+    "name": "AgentsFlowAI Partnership Program",
     "description": "Join our partnership program and grow your business with our proven digital marketing solutions",
     "provider": {
       "@type": "Organization",
-      "name": "PixelCraft Digital Marketing"
+      "name": "AgentsFlowAI Digital Marketing"
     }
   };
 
   return (
     <>
       <SEOHead
-        title="Partnership Program | Join PixelCraft Partners"
+        title="Partnership Program | Join AgentsFlowAI Partners"
         description="Join our partnership program and earn up to 30% commission. White-label solutions, training, and support available. Apply now!"
         keywords="partnership program, affiliate marketing, white label, reseller program, marketing partnership, revenue sharing"
-        canonical="https://pixelcraft.lovable.app/partnership"
+        canonical="https://agentsflow.cloud/partnership"
         schema={partnershipSchema}
       />
       
@@ -166,7 +166,7 @@ const Partnership = () => {
               <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                 Partner With
                 <span className="block bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                  PixelCraft
+                  AgentsFlowAI
                 </span>
               </h1>
               <p className="text-xl text-gray-200 mb-8 leading-relaxed max-w-3xl">

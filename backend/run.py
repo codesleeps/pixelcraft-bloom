@@ -4,7 +4,7 @@ from app.config import settings
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run PixelCraft FastAPI backend")
+    parser = argparse.ArgumentParser(description="Run AgentsFlowAI FastAPI backend")
     parser.add_argument("--host", help="Host to bind", default=settings.app_host)
     parser.add_argument("--port", help="Port to bind", type=int, default=settings.app_port)
     parser.add_argument("--reload", help="Enable reload", action="store_true")

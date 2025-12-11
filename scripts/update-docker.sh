@@ -1,5 +1,5 @@
 #!/bin/bash
-# PixelCraft Bloom - Docker Update Script
+# AgentsFlowAI - Docker Update Script
 # Updates Docker images to match local code changes
 
 set -e
@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================="
-echo "PixelCraft Bloom - Docker Update Script"
+echo "AgentsFlowAI - Docker Update Script"
 echo -e "==========================================${NC}"
 echo ""
 

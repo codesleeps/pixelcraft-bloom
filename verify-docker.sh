@@ -1,5 +1,5 @@
 #!/bin/bash
-# Docker verification script for PixelCraft Bloom
+# Docker verification script for AgentsFlowAI
 
 set -e
 
@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo "=========================================="
-echo "PixelCraft Bloom - Docker Verification"
+echo "AgentsFlowAI - Docker Verification"
 echo "=========================================="
 echo ""
 

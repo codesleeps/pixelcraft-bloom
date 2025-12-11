@@ -1,5 +1,5 @@
 [Unit]
-Description=PixelCraft Bloom API Server
+Description=AgentsFlowAI API Server
 After=network.target postgresql.service redis.service
 Wants=postgresql.service redis.service
 
@@ -7,11 +7,11 @@ Wants=postgresql.service redis.service
 Type=exec
 User=pixelcraft
 Group=pixelcraft
-WorkingDirectory=/opt/pixelcraft-bloom/backend
-Environment=PATH=/opt/pixelcraft-bloom/backend/.venv/bin
-Environment=PYTHONPATH=/opt/pixelcraft-bloom/backend
-EnvironmentFile=/opt/pixelcraft-bloom/backend/.env
-ExecStart=/opt/pixelcraft-bloom/backend/.venv/bin/gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 --access-logfile /var/log/pixelcraft/access.log --error-logfile /var/log/pixelcraft/error.log
+WorkingDirectory=/opt/agentsflowai/backend
+Environment=PATH=/opt/agentsflowai/backend/.venv/bin
+Environment=PYTHONPATH=/opt/agentsflowai/backend
+EnvironmentFile=/opt/agentsflowai/backend/.env
+ExecStart=/opt/agentsflowai/backend/.venv/bin/gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000 --access-logfile /var/log/pixelcraft/access.log --error-logfile /var/log/pixelcraft/error.log
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 Restart=always
@@ -24,7 +24,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/opt/pixelcraft-bloom/backend /var/log/pixelcraft /tmp
+ReadWritePaths=/opt/agentsflowai/backend /var/log/pixelcraft /tmp
 CapabilityBoundingSet=
 AmbientCapabilities=
 SystemCallFilter=@system-service

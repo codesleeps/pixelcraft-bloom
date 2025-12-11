@@ -1,6 +1,6 @@
 # Production Readiness Checklist
 
-This document outlines the remaining tasks required before launching the PixelCraft backend to production.
+This document outlines the remaining tasks required before launching the AgentsFlowAI backend to production.
 
 ## ✅ Recently Completed
 

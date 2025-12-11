@@ -12,7 +12,7 @@ See `backend/README.md` for setup, configuration, and usage instructions.
 
 ## AI Model Setup
 
-PixelCraft Bloom leverages local AI models via Ollama for AI-powered features like chat, lead qualification, and content creation. This section guides you through installing, configuring, and managing these models. The system also supports HuggingFace as a cloud fallback for enhanced reliability.
+AgentsFlowAI leverages local AI models via Ollama for AI-powered features like chat, lead qualification, and content creation. This section guides you through installing, configuring, and managing these models. The system also supports HuggingFace as a cloud fallback for enhanced reliability.
 
 ### Installing Ollama
 
@@ -359,7 +359,7 @@ For manual testing of notifications (e.g., during development):
 
 There are several ways of editing your application.
 
-Simply visit the [GitHub Project](https://github.com/codesleeps/pixelcraft-bloom) and start editing
+Simply visit the [GitHub Project](https://github.com/codesleeps/agentsflowai) and start editing
 
 ### Use your preferred IDE
 
@@ -433,13 +433,13 @@ docker build -t agentsflowai-backend:dev -f backend/Dockerfile .
 Run the development container (reads `.env` from repository root):
 
 ```bash
-docker run --rm -p 8000:8000 --env-file .env pixelcraft-bloom-backend:dev
+docker run --rm -p 8000:8000 --env-file .env agentsflowai-backend:dev
 ```
 
 Run without `--reload` for production (override CMD):
 
 ```bash
-docker run --rm -p 8000:8000 --env-file .env pixelcraft-bloom-backend:dev uvicorn app.main:app --host 0.0.0.0 --port 8000
+docker run --rm -p 8000:8000 --env-file .env agentsflowai-backend:dev uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 If you use Docker Compose, point the backend service's environment to the values in `.env` and ensure services named `db`, `redis`, and `ollama` are reachable on the network (the included `.env` template uses those hostnames).

@@ -65,7 +65,7 @@ class AuditLogger:
         self.logger.info(f"Audit: {event_type}", extra=log_data)
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
-    logger = logging.getLogger(name or "pixelcraft")
+    logger = logging.getLogger(name or "agentsflowai")
     
     if not logger.handlers:
         logger.setLevel(logging.INFO)
@@ -77,13 +77,13 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
         logger.addHandler(console_handler)
         
         # File Handler (Rotating)
-        log_dir = "/var/log/pixelcraft"
+        log_dir = "/var/log/agentsflowai"
         # Ensure log directory exists or fallback to /tmp if permission denied (for dev)
         if not os.path.exists(log_dir):
             try:
                 os.makedirs(log_dir, exist_ok=True)
             except OSError:
-                log_dir = "/tmp/pixelcraft_logs"
+                log_dir = "/tmp/agentsflowai_logs"
                 os.makedirs(log_dir, exist_ok=True)
                 
         file_handler = RotatingFileHandler(
@@ -108,7 +108,7 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     return logger
 
 # Global audit logger instance
-audit_logger = AuditLogger(get_logger("pixelcraft.audit"))
+audit_logger = AuditLogger(get_logger("agentsflowai.audit"))
 
 # Global default logger instance
 logger = get_logger()

@@ -25,7 +25,7 @@ from ..utils.redis_client import publish_analytics_event
 from ..utils.notification_service import create_notification, create_notification_for_admins
 from ..models.manager import ModelManager
 
-logger = logging.getLogger("pixelcraft.agents.orchestrator")
+logger = logging.getLogger("agentsflowai.agents.orchestrator")
 
 class AgentOrchestrator:
     """Orchestrates multiple agents, handling routing and workflows."""

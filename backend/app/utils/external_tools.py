@@ -6,7 +6,7 @@ import datetime
 from typing import Optional, Dict, Any, List
 from ..config import settings
   
-logger = logging.getLogger("pixelcraft.external_tools")
+logger = logging.getLogger("agentsflowai.external_tools")
   
   
 async def _make_api_request(

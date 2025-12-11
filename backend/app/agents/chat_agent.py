@@ -1,4 +1,4 @@
-"""ChatAgent implementation for handling PixelCraft digital agency conversations.
+"""ChatAgent implementation for handling AgentsFlowAI digital agency conversations.
 
 This agent is responsible for engaging with potential clients, providing service
 information, scheduling sessions, and qualifying leads.
@@ -16,9 +16,9 @@ from ..utils.supabase_client import get_supabase_client
 from ..models.manager import ModelManager
 from ..utils.external_tools import check_calendar_availability as check_calendar_availability_tool, create_calendar_event, send_email, cancel_calendar_event
 
-logger = logging.getLogger("pixelcraft.agents.chat")
+logger = logging.getLogger("agentsflowai.agents.chat")
 
-# Service information for PixelCraft
+# Service information for AgentsFlowAI
 PIXELCRAFT_SERVICES = {
     "web_development": {
         "name": "Web Development",
@@ -96,7 +96,7 @@ class AppointmentSlot(BaseModel):
     slot_type: str
 
 async def get_services_info() -> Dict[str, Any]:
-    """Tool function to retrieve PixelCraft services information."""
+    """Tool function to retrieve AgentsFlowAI services information."""
     return PIXELCRAFT_SERVICES
 
 async def check_availability(date: str, service_type: str) -> List[AppointmentSlot]:
@@ -155,7 +155,7 @@ async def book_appointment(summary: str, start_time: str, end_time: str, email: 
             start_time=start_time,
             end_time=end_time,
             attendees=[email],
-            description="Scheduled via PixelCraft Chat Assistant"
+            description="Scheduled via AgentsFlowAI Chat Assistant"
         )
         
         # Send confirmation email
@@ -168,11 +168,11 @@ async def book_appointment(summary: str, start_time: str, end_time: str, email: 
                 <p>A calendar invitation has been sent to your email.</p>
                 <br>
                 <p>Best regards,</p>
-                <p>The PixelCraft Team</p>
+                <p>The AgentsFlowAI Team</p>
                 """
                 await send_email(
                     to_email=email,
-                    subject="Appointment Confirmation - PixelCraft",
+                    subject="Appointment Confirmation - AgentsFlowAI",
                     html_content=email_content
                 )
             except Exception as e:
@@ -195,11 +195,11 @@ async def cancel_appointment(event_id: str, email: str) -> Dict[str, Any]:
                 <p>Your appointment (ID: {event_id}) has been cancelled as requested.</p>
                 <br>
                 <p>Best regards,</p>
-                <p>The PixelCraft Team</p>
+                <p>The AgentsFlowAI Team</p>
                 """
                 await send_email(
                     to_email=email,
-                    subject="Appointment Cancellation - PixelCraft",
+                    subject="Appointment Cancellation - AgentsFlowAI",
                     html_content=email_content
                 )
             except Exception as e:
@@ -215,17 +215,17 @@ def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgen
     if model_manager is None:
         logger.warning("ModelManager not provided to ChatAgent, will use fallback responses")
     config = BaseAgentConfig(
-        agent_id="pixelcraft_chat",
-        name="PixelCraft Chat Assistant",
-        description="AI assistant for PixelCraft digital marketing agency",
+        agent_id="agentsflowai_chat",
+        name="AgentsFlowAI Chat Assistant",
+        description="AI assistant for AgentsFlowAI digital marketing agency",
         temperature=0.7,
         max_tokens=1000,
-        system_prompt="""You are PixelCraft's friendly AI assistant, helping potential clients
+        system_prompt="""You are AgentsFlowAI's friendly AI assistant, helping potential clients
         learn about our digital marketing agency services. Focus on understanding client needs,
         providing accurate service information, and guiding them towards appropriate solutions.
         Always be professional, knowledgeable, and solution-oriented.""",
         capabilities=[
-            "Answer questions about PixelCraft services and pricing",
+            "Answer questions about AgentsFlowAI services and pricing",
             "Provide detailed service information and use cases",
             "Schedule discovery calls and strategy sessions",
             "Qualify leads by understanding their needs and budget",
@@ -235,7 +235,7 @@ def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgen
         tools=[
             AgentTool(
                 name="get_services_info",
-                description="Get detailed information about PixelCraft's services",
+                description="Get detailed information about AgentsFlowAI's services",
                 function=get_services_info,
                 parameters={},
                 required_params=[]
@@ -268,7 +268,7 @@ def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgen
     return ChatAgent(config)
 
 class ChatAgent(BaseAgent):
-    """ChatAgent for handling PixelCraft client interactions."""
+    """ChatAgent for handling AgentsFlowAI client interactions."""
 
     async def process_message(
         self,

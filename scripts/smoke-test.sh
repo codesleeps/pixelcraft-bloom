@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PixelCraft Bloom - Smoke Test Script
+# AgentsFlowAI - Smoke Test Script
 # Tests health check, models endpoint, and chat endpoint
 # Run with: ./scripts/smoke-test.sh or bash scripts/smoke-test.sh
 
@@ -18,7 +18,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "=========================================="
-echo "PixelCraft Bloom - Smoke Test"
+echo "AgentsFlowAI - Smoke Test"
 echo "=========================================="
 echo "Base URL: $BASE_URL"
 echo "Timeout: ${TIMEOUT}s per request"

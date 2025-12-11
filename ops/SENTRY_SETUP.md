@@ -1,6 +1,6 @@
 # Sentry Setup and Configuration Guide
 
-This guide provides comprehensive instructions for integrating Sentry error monitoring and performance tracking into the PixelCraft Bloom application. Sentry will help track errors, monitor performance, and provide insights into application health across both backend (FastAPI/Python) and frontend (React/TypeScript) components.
+This guide provides comprehensive instructions for integrating Sentry error monitoring and performance tracking into the AgentsFlowAI application. Sentry will help track errors, monitor performance, and provide insights into application health across both backend (FastAPI/Python) and frontend (React/TypeScript) components.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ This guide provides comprehensive instructions for integrating Sentry error moni
 
 ## Creating Sentry Projects
 
-Sentry organizes monitoring data into projects. For PixelCraft Bloom, create separate projects for the backend and frontend to isolate error tracking and performance data.
+Sentry organizes monitoring data into projects. For AgentsFlowAI, create separate projects for the backend and frontend to isolate error tracking and performance data.
 
 ### Step-by-Step Project Creation
 
@@ -19,15 +19,15 @@ Sentry organizes monitoring data into projects. For PixelCraft Bloom, create sep
 2. Click "Projects" in the left sidebar, then "Create Project".
 3. For the backend:
    - Select "Python" as the platform.
-   - Name the project `pixelcraft-backend` (or similar).
+   - Name the project `agentsflowai-backend` (or similar).
    - Choose a team (create one if needed).
    - Click "Create Project".
 4. For the frontend:
    - Select "React" as the platform.
-   - Name the project `pixelcraft-frontend` (or similar).
+   - Name the project `agentsflowai-frontend` (or similar).
    - Choose the same team as the backend project.
    - Click "Create Project".
-5. Note the project slugs (e.g., `pixelcraft-backend`, `pixelcraft-frontend`) for later use.
+5. Note the project slugs (e.g., `agentsflowai-backend`, `agentsflowai-frontend`) for later use.
 
 Each project will have its own DSN (Data Source Name) for configuration.
 
@@ -58,7 +58,7 @@ SENTRY_DSN=https://your-backend-dsn@sentry.io/project-id  # Get from backend pro
 SENTRY_ENVIRONMENT=development  # development | staging | production
 SENTRY_TRACES_SAMPLE_RATE=0.1  # 0.0 to 1.0, default 0.1 (10% sampling)
 SENTRY_PROFILES_SAMPLE_RATE=0.1  # 0.0 to 1.0, default 0.1 (10% profiling)
-SENTRY_RELEASE=pixelcraft-backend@1.0.0  # Release version, e.g., git commit SHA
+SENTRY_RELEASE=agentsflowai-backend@1.0.0  # Release version, e.g., git commit SHA
 SENTRY_ENABLE_TRACING=true  # Enable performance tracing
 ```
 
@@ -71,7 +71,7 @@ Add these to `/.env` (and copy to `.env.example`):
 VITE_SENTRY_DSN=https://your-frontend-dsn@sentry.io/project-id  # Get from frontend project settings
 VITE_SENTRY_ENVIRONMENT=development  # development | staging | production
 VITE_SENTRY_TRACES_SAMPLE_RATE=0.1  # 0.0 to 1.0
-VITE_SENTRY_RELEASE=pixelcraft-frontend@1.0.0  # Release version
+VITE_SENTRY_RELEASE=agentsflowai-frontend@1.0.0  # Release version
 ```
 
 ### Environment-Specific Configuration
@@ -110,16 +110,16 @@ Release tracking associates errors and performance data with specific code versi
 
 1. **Using Git Commit SHAs** (recommended):
    - Set `SENTRY_RELEASE` to the full git commit SHA: `git rev-parse HEAD`
-   - Example: `SENTRY_RELEASE=pixelcraft-backend@abc123def456`
+   - Example: `SENTRY_RELEASE=agentsflowai-backend@abc123def456`
 
 2. **Using Version Tags**:
    - Tag releases in git: `git tag v1.2.3`
-   - Set `SENTRY_RELEASE` to `pixelcraft-backend@v1.2.3`
+   - Set `SENTRY_RELEASE` to `agentsflowai-backend@v1.2.3`
 
 3. **Dynamic Release Setting**:
    - In CI/CD pipelines, set the release dynamically:
      ```bash
-     export SENTRY_RELEASE="pixelcraft-backend@$(git rev-parse HEAD)"
+     export SENTRY_RELEASE="agentsflowai-backend@$(git rev-parse HEAD)"
      ```
 
 ### CI/CD Integration
@@ -135,7 +135,7 @@ In your deployment workflow (e.g., GitHub Actions), add steps to create and fina
   env:
     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     SENTRY_ORG: your-org-slug
-    SENTRY_PROJECT: pixelcraft-backend
+    SENTRY_PROJECT: agentsflowai-backend
 ```
 
 For frontend source map uploads:
@@ -146,7 +146,7 @@ For frontend source map uploads:
   env:
     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     SENTRY_ORG: your-org-slug
-    SENTRY_PROJECT: pixelcraft-frontend
+    SENTRY_PROJECT: agentsflowai-frontend
 ```
 
 ## Alerting Rules Configuration

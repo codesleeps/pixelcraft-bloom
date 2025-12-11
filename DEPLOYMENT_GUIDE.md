@@ -1,10 +1,10 @@
 # AgentsFlowAI Production Deployment Guide
 
-This comprehensive guide covers the complete deployment process for PixelCraft Bloom, from initial setup to production monitoring.
+This comprehensive guide covers the complete deployment process for AgentsFlowAI, from initial setup to production monitoring.
 
 ## 🎯 Overview
 
-PixelCraft Bloom is now ready for production deployment with:
+AgentsFlowAI is now ready for production deployment with:
 - ✅ **SSL Certificates**: Let's Encrypt with automatic renewal
 - ✅ **Nginx Configuration**: HTTPS with security headers and rate limiting
 - ✅ **Backup System**: Automated daily backups with 30-day retention
@@ -47,19 +47,19 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io docker-compose git nginx certbot python3-certbot-nginx postgresql-client redis-tools gnupg
 
 # Create user
-sudo adduser pixelcraft
-sudo usermod -aG sudo pixelcraft
-sudo usermod -aG docker pixelcraft
+sudo adduser agentsflowai
+sudo usermod -aG sudo agentsflowai
+sudo usermod -aG docker agentsflowai
 
 # Clone repository
-sudo mkdir -p /opt/pixelcraft-bloom
-sudo chown pixelcraft:pixelcraft /opt/pixelcraft-bloom
-git clone https://github.com/your-username/pixelcraft-bloom.git /opt/pixelcraft-bloom
+sudo mkdir -p /opt/agentsflowai
+sudo chown agentsflowai:agentsflowai /opt/agentsflowai
+git clone https://github.com/your-username/agentsflowai.git /opt/agentsflowai
 ```
 
 ### 2. Environment Configuration
 
-Create `/opt/pixelcraft-bloom/backend/.env`:
+Create `/opt/agentsflowai/backend/.env`:
 
 ```env
 # Application
@@ -68,7 +68,7 @@ LOG_LEVEL=INFO
 USE_HTTPS=true
 
 # Database
-SUPABASE__URL=postgresql://postgres:your-password@localhost:5432/pixelcraft
+SUPABASE__URL=postgresql://postgres:your-password@localhost:5432/agentsflowai
 SUPABASE__KEY=your-supabase-service-role-key
 SUPABASE__JWT_SECRET=your-supabase-jwt-secret
 
@@ -96,7 +96,7 @@ SENTRY_ENVIRONMENT=production
 ### 3. Run Deployment Script
 
 ```bash
-cd /opt/pixelcraft-bloom
+cd /opt/agentsflowai
 sudo ./ops/deploy-production.sh
 ```
 
@@ -110,7 +110,7 @@ This script will:
 ### 4. Start Services
 
 ```bash
-cd /opt/pixelcraft-bloom
+cd /opt/agentsflowai
 docker compose up -d
 ```
 
@@ -125,7 +125,7 @@ curl https://api.agentsflow.cloud/health
 curl https://api.agentsflow.cloud/api/models
 
 # Check logs
-tail -f /var/log/pixelcraft/deploy.log
+tail -f /var/log/agentsflowai/deploy.log
 tail -f /var/log/nginx/access.log
 ```
 
@@ -167,20 +167,20 @@ All responses include:
 
 ```bash
 # Run manual backup
-sudo /opt/pixelcraft-bloom/ops/backup.sh
+sudo /opt/agentsflowai/ops/backup.sh
 
 # Check backup logs
-tail -f /var/log/pixelcraft/backup.log
+tail -f /var/log/agentsflowai/backup.log
 ```
 
 ### Restore Process
 
 ```bash
 # List available backups
-ls -la /var/backups/pixelcraft/
+ls -la /var/backups/agentsflowai/
 
 # Restore specific backup
-sudo /opt/pixelcraft-bloom/ops/restore.sh /var/backups/pixelcraft/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
+sudo /opt/agentsflowai/ops/restore.sh /var/backups/agentsflowai/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
 ```
 
 ## 📊 Monitoring and Alerts
@@ -197,10 +197,10 @@ The deployment includes:
 
 ```bash
 # SSL monitoring
-tail -f /var/log/pixelcraft/ssl-monitor.log
+tail -f /var/log/agentsflowai/ssl-monitor.log
 
 # Backup monitoring
-tail -f /var/log/pixelcraft/backup-monitor.log
+tail -f /var/log/agentsflowai/backup-monitor.log
 
 # System logs
 journalctl -u nginx -f
@@ -270,10 +270,10 @@ sudo systemctl status redis-server
 **Issue: Backup failed**
 ```bash
 # Check backup logs
-tail -50 /var/log/pixelcraft/backup.log
+tail -50 /var/log/agentsflowai/backup.log
 
 # Test manual backup
-sudo /opt/pixelcraft-bloom/ops/backup.sh
+sudo /opt/agentsflowai/ops/backup.sh
 
 # Check disk space
 df -h /var/backups
@@ -359,8 +359,8 @@ Your deployment is successful when:
 ✅ **Models endpoint shows `"health": true`** (`curl https://api.agentsflow.cloud/api/models`)
 ✅ **SSL certificate is valid** (lock icon in browser)
 ✅ **Swagger UI is accessible** (`https://api.agentsflow.cloud/docs`)
-✅ **No errors in logs** (`tail -f /var/log/pixelcraft/*.log`)
-✅ **Backups are running** (`ls -la /var/backups/pixelcraft/`)
+✅ **No errors in logs** (`tail -f /var/log/agentsflowai/*.log`)
+✅ **Backups are running** (`ls -la /var/backups/agentsflowai/`)
 ✅ **Monitoring is active** (`crontab -l`)
 
 ## 📚 Additional Resources
@@ -374,7 +374,7 @@ Your deployment is successful when:
 
 For deployment issues:
 
-1. **Check logs** in `/var/log/pixelcraft/`
+1. **Check logs** in `/var/log/agentsflowai/`
 2. **Review documentation** in this guide
 3. **Test components individually** (database, Redis, API)
 4. **Consult error messages** for specific troubleshooting steps
@@ -382,7 +382,7 @@ For deployment issues:
 
 ---
 
-**Congratulations!** 🎉 Your PixelCraft Bloom backend is now deployed and ready for production use.
+**Congratulations!** 🎉 Your AgentsFlowAI backend is now deployed and ready for production use.
 
 **Next Steps:**
 1. Deploy frontend application

@@ -1,11 +1,11 @@
 # SSL Certificate Setup for Custom Domain
 
-This guide covers setting up SSL certificates for PixelCraft Bloom using Let's Encrypt with certbot, configuring nginx as a reverse proxy, and enabling automatic certificate renewal.
+This guide covers setting up SSL certificates for AgentsFlowAI using Let's Encrypt with certbot, configuring nginx as a reverse proxy, and enabling automatic certificate renewal.
 
 ## Prerequisites
 
 - Ubuntu/Debian server with root or sudo access
-- Custom domain (e.g., `pixelcraft-bloom.com`)
+- Custom domain (e.g., `agentsflowai.com`)
 - DNS configured to point to your server IP
 - Nginx installed and configured
 - Firewall allowing ports 80 and 443
@@ -18,15 +18,15 @@ Point your domain to the server IP:
 
 ```bash
 # Example DNS records (replace with your actual IP)
-# A record: pixelcraft-bloom.com -> YOUR_SERVER_IP
-# A record: api.pixelcraft-bloom.com -> YOUR_SERVER_IP
-# A record: www.pixelcraft-bloom.com -> YOUR_SERVER_IP (optional)
+# A record: agentsflowai.com -> YOUR_SERVER_IP
+# A record: api.agentsflowai.com -> YOUR_SERVER_IP
+# A record: www.agentsflowai.com -> YOUR_SERVER_IP (optional)
 ```
 
 Verify DNS propagation:
 ```bash
-nslookup pixelcraft-bloom.com
-nslookup api.pixelcraft-bloom.com
+nslookup agentsflowai.com
+nslookup api.agentsflowai.com
 ```
 
 ## 2. Install Certbot
@@ -51,10 +51,10 @@ certbot --version
 sudo systemctl stop nginx
 
 # Obtain certificate for main domain
-sudo certbot certonly --standalone -d pixelcraft-bloom.com -d www.pixelcraft-bloom.com
+sudo certbot certonly --standalone -d agentsflowai.com -d www.agentsflowai.com
 
 # Obtain certificate for API subdomain
-sudo certbot certonly --standalone -d api.pixelcraft-bloom.com
+sudo certbot certonly --standalone -d api.agentsflowai.com
 
 # Start nginx again
 sudo systemctl start nginx
@@ -66,8 +66,8 @@ If you prefer to configure nginx manually:
 
 ```bash
 # Obtain certificates without nginx integration
-sudo certbot certonly --standalone -d pixelcraft-bloom.com -d www.pixelcraft-bloom.com
-sudo certbot certonly --standalone -d api.pixelcraft-bloom.com
+sudo certbot certonly --standalone -d agentsflowai.com -d www.agentsflowai.com
+sudo certbot certonly --standalone -d api.agentsflowai.com
 ```
 
 ## 4. Configure Nginx for HTTPS
@@ -75,20 +75,20 @@ sudo certbot certonly --standalone -d api.pixelcraft-bloom.com
 Update your nginx configuration to support SSL:
 
 ```nginx
-# /etc/nginx/sites-available/pixelcraft-bloom
+# /etc/nginx/sites-available/agentsflowai
 server {
     listen 80;
-    server_name pixelcraft-bloom.com www.pixelcraft-bloom.com;
+    server_name agentsflowai.com www.agentsflowai.com;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name pixelcraft-bloom.com www.pixelcraft-bloom.com;
+    server_name agentsflowai.com www.agentsflowai.com;
 
     # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/pixelcraft-bloom.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/pixelcraft-bloom.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/agentsflowai.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/agentsflowai.com/privkey.pem;
 
     # SSL Security Settings
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -105,7 +105,7 @@ server {
     add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
     # Frontend static files
-    root /var/www/pixelcraft-bloom;
+    root /var/www/agentsflowai;
     index index.html;
 
     location / {
@@ -140,17 +140,17 @@ server {
 # API Subdomain
 server {
     listen 80;
-    server_name api.pixelcraft-bloom.com;
+    server_name api.agentsflowai.com;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.pixelcraft-bloom.com;
+    server_name api.agentsflowai.com;
 
     # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/api.pixelcraft-bloom.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.pixelcraft-bloom.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.agentsflowai.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.agentsflowai.com/privkey.pem;
 
     # SSL Security Settings (same as above)
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -207,7 +207,7 @@ Enable the site:
 
 ```bash
 # Create symlink
-sudo ln -s /etc/nginx/sites-available/pixelcraft-bloom /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/agentsflowai /etc/nginx/sites-enabled/
 
 # Remove default site
 sudo rm /etc/nginx/sites-enabled/default
@@ -230,14 +230,14 @@ class Settings(BaseSettings):
 
     # HTTPS/SSL settings
     use_https: bool = Field(default=True, env="USE_HTTPS")
-    trusted_hosts: List[str] = Field(default=["pixelcraft-bloom.com", "api.pixelcraft-bloom.com"], env="TRUSTED_HOSTS")
+    trusted_hosts: List[str] = Field(default=["agentsflowai.com", "api.agentsflowai.com"], env="TRUSTED_HOSTS")
 
     # CORS settings for HTTPS
     cors_origins: List[str] = Field(
         default=[
-            "https://pixelcraft-bloom.com",
-            "https://www.pixelcraft-bloom.com",
-            "https://api.pixelcraft-bloom.com"
+            "https://agentsflowai.com",
+            "https://www.agentsflowai.com",
+            "https://api.agentsflowai.com"
         ],
         env="CORS_ORIGINS"
     )
@@ -309,7 +309,7 @@ echo "$(date): SSL certificates renewed and nginx reloaded" >> /var/log/letsencr
 
 # Optional: Send notification
 # curl -X POST -H 'Content-type: application/json' \
-#   --data '{"text":"SSL certificates renewed for pixelcraft-bloom.com"}' \
+#   --data '{"text":"SSL certificates renewed for agentsflowai.com"}' \
 #   YOUR_SLACK_WEBHOOK_URL
 ```
 
@@ -324,13 +324,13 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
 
 ```bash
 #!/bin/bash
-# /opt/pixelcraft/scripts/check-ssl-expiry.sh
+# /opt/agentsflowai/scripts/check-ssl-expiry.sh
 
 WARNING_DAYS=30
 CRITICAL_DAYS=7
 
 # Check certificate expiry
-EXPIRY_DATE=$(openssl s_client -connect pixelcraft-bloom.com:443 -servername pixelcraft-bloom.com 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d'=' -f2)
+EXPIRY_DATE=$(openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d'=' -f2)
 EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s)
 CURRENT_EPOCH=$(date +%s)
 DAYS_LEFT=$(( ($EXPIRY_EPOCH - $CURRENT_EPOCH) / 86400 ))
@@ -352,7 +352,7 @@ fi
 Add to cron for daily checks:
 ```bash
 # /etc/cron.d/ssl-monitoring
-0 9 * * * root /opt/pixelcraft/scripts/check-ssl-expiry.sh
+0 9 * * * root /opt/agentsflowai/scripts/check-ssl-expiry.sh
 ```
 
 ## 8. Troubleshooting
@@ -376,10 +376,10 @@ sudo certbot renew --force-renewal
 #### SSL Handshake Failures
 ```bash
 # Test SSL connection
-openssl s_client -connect pixelcraft-bloom.com:443 -servername pixelcraft-bloom.com
+openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com
 
 # Check certificate chain
-openssl s_client -connect pixelcraft-bloom.com:443 -servername pixelcraft-bloom.com | openssl x509 -text
+openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com | openssl x509 -text
 ```
 
 #### Nginx SSL Errors

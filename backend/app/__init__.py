@@ -1,4 +1,4 @@
-"""PixelCraft AI Backend - app package
+"""AgentsFlowAI AI Backend - app package
 
 This package contains the FastAPI application and submodules.
 """

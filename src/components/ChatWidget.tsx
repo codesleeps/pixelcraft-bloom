@@ -70,7 +70,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         id: crypto.randomUUID(),
         role: 'assistant',
         content:
-          "Hi! I'm the PixelCraft AI assistant. I'm here to help you learn about our services, answer questions, and schedule consultations. How can I assist you today?",
+          "Hi! I'm the AgentsFlowAI AI assistant. I'm here to help you learn about our services, answer questions, and schedule consultations. How can I assist you today?",
         created_at: new Date().toISOString(),
       };
       setMessages([welcomeMessage]);
@@ -182,7 +182,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          <h3 className="font-semibold">PixelCraft Assistant</h3>
+          <h3 className="font-semibold">AgentsFlowAI Assistant</h3>
         </div>
         <div className="flex items-center gap-2">
           <button

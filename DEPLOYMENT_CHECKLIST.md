@@ -21,10 +21,10 @@
 
 - [ ] SSH into VPS: `ssh root@YOUR_VPS_IP`
 - [ ] Update system: `apt update && apt upgrade -y`
-- [ ] Create user: `adduser pixelcraft`
-- [ ] Add to sudo: `usermod -aG sudo pixelcraft`
+- [ ] Create user: `adduser agentsflowai`
+- [ ] Add to sudo: `usermod -aG sudo agentsflowai`
 - [ ] Set up SSH keys (optional but recommended)
-- [ ] Switch to new user: `su - pixelcraft`
+- [ ] Switch to new user: `su - agentsflowai`
 
 ---
 
@@ -52,8 +52,8 @@
 
 ## 🚀 Deploy Application (30 minutes)
 
-- [ ] Clone repo: `git clone https://github.com/YOUR_USERNAME/pixelcraft-bloom.git`
-- [ ] Navigate: `cd pixelcraft-bloom`
+- [ ] Clone repo: `git clone https://github.com/YOUR_USERNAME/agentsflowai.git`
+- [ ] Navigate: `cd agentsflowai`
 - [ ] Copy env: `cp .env.example .env`
 - [ ] Edit env: `nano .env`
   - [ ] Set `APP_ENV=production`
@@ -97,9 +97,9 @@
 - [ ] Test: `nslookup api.yourdomain.com`
 
 ### Nginx Configuration
-- [ ] Create config: `sudo nano /etc/nginx/sites-available/pixelcraft-backend`
+- [ ] Create config: `sudo nano /etc/nginx/sites-available/agentsflowai-backend`
 - [ ] Copy configuration from guide
-- [ ] Enable site: `sudo ln -s /etc/nginx/sites-available/pixelcraft-backend /etc/nginx/sites-enabled/`
+- [ ] Enable site: `sudo ln -s /etc/nginx/sites-available/agentsflowai-backend /etc/nginx/sites-enabled/`
 - [ ] Test config: `sudo nginx -t`
 - [ ] Reload: `sudo systemctl reload nginx`
 
@@ -124,7 +124,7 @@
 - [ ] Make executable: `chmod +x ~/backup.sh`
 - [ ] Test: `~/backup.sh`
 - [ ] Schedule cron: `crontab -e`
-- [ ] Add: `0 2 * * * /home/pixelcraft/backup.sh >> /home/pixelcraft/backup.log 2>&1`
+- [ ] Add: `0 2 * * * /home/agentsflowai/backup.sh >> /home/agentsflowai/backup.log 2>&1`
 
 ---
 
@@ -186,7 +186,7 @@
 VPS Details:
 IP Address: _______________________
 Root Password: _______________________
-User: pixelcraft
+User: agentsflowai
 User Password: _______________________
 
 Domain:
@@ -271,7 +271,7 @@ Your deployment is successful when:
 
 ## 🎉 Congratulations!
 
-Once all items are checked, your PixelCraft backend is live!
+Once all items are checked, your AgentsFlowAI backend is live!
 
 **Your API is now available at:**
 - https://api.yourdomain.com

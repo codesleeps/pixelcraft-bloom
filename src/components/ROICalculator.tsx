@@ -45,7 +45,7 @@ const ROICalculator = () => {
     const currentCustomers = monthlyLeads * (conversionRate / 100);
     const currentMonthlyRevenue = currentCustomers * (monthlyRevenue / monthlyLeads);
 
-    // Calculate potential improvements with PixelCraft
+    // Calculate potential improvements with AgentsFlowAI
     const multiplier = industryMultipliers[industry as keyof typeof industryMultipliers] || 2.0;
 
     const improvedLeads = monthlyLeads * multiplier;
@@ -112,7 +112,7 @@ const ROICalculator = () => {
             Calculate Your <span className="bg-gradient-primary bg-clip-text text-transparent">Potential ROI</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            See how much PixelCraft's AI-powered strategies could increase your revenue.
+            See how much AgentsFlowAI's AI-powered strategies could increase your revenue.
             Based on real results from 500+ clients.
           </p>
         </div>
@@ -295,7 +295,7 @@ const ROICalculator = () => {
                     <Calculator className="w-16 h-16 mx-auto text-gray-400" />
                     <h3 className="text-xl font-semibold">Calculate Your ROI</h3>
                     <p className="text-muted-foreground">
-                      Enter your business metrics above to see your potential growth with PixelCraft.
+                      Enter your business metrics above to see your potential growth with AgentsFlowAI.
                     </p>
                     <div className="grid md:grid-cols-2 gap-4 mt-6">
                       <div className="text-center">

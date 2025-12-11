@@ -75,7 +75,7 @@ const Auth = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link to="/" className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            PixelCraft
+            AgentsFlowAI
           </Link>
           <p className="mt-2 text-muted-foreground">
             Welcome to the future of digital marketing

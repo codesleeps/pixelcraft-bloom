@@ -1,6 +1,6 @@
 # Backup & Restore Procedures
 
-This document outlines the backup and restore procedures for PixelCraft Bloom production environment, covering both database and Redis cache backups.
+This document outlines the backup and restore procedures for AgentsFlowAI production environment, covering both database and Redis cache backups.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The backup strategy includes:
 ## Prerequisites
 
 ### Environment Variables
-Ensure the following variables are set in `/opt/pixelcraft-bloom/backend/.env`:
+Ensure the following variables are set in `/opt/agentsflowai/backend/.env`:
 
 ```bash
 SUPABASE_DB_URL=postgresql://user:password@host:port/database
@@ -50,7 +50,7 @@ crontab -l | grep backup
 sudo ./ops/backup.sh
 
 # Check logs
-tail -f /var/log/pixelcraft/backup.log
+tail -f /var/log/agentsflowai/backup.log
 ```
 
 ### Backup Process Details
@@ -58,7 +58,7 @@ tail -f /var/log/pixelcraft/backup.log
 1. **Database Dump**: Uses `pg_dump` to create a compressed SQL dump
 2. **Compression**: Gzip compression to reduce storage space
 3. **Encryption**: AES256 encryption using GPG
-4. **Storage**: Saves to `/var/backups/pixelcraft/`
+4. **Storage**: Saves to `/var/backups/agentsflowai/`
 5. **Cleanup**: Removes backups older than 30 days
 
 ### Backup File Naming
@@ -92,33 +92,33 @@ appendfilename "appendonly.aof"
 #### RDB Snapshots (Primary)
 ```bash
 # Manual RDB backup
-redis-cli -u "$REDIS_URL" --rdb /var/backups/pixelcraft/redis_$(date +%Y%m%d_%H%M%S).rdb
+redis-cli -u "$REDIS_URL" --rdb /var/backups/agentsflowai/redis_$(date +%Y%m%d_%H%M%S).rdb
 
 # With compression and encryption
-redis-cli -u "$REDIS_URL" --rdb - | gzip | gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --symmetric --cipher-algo AES256 -o /var/backups/pixelcraft/redis_$(date +%Y%m%d_%H%M%S).rdb.gz.gpg -
+redis-cli -u "$REDIS_URL" --rdb - | gzip | gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --symmetric --cipher-algo AES256 -o /var/backups/agentsflowai/redis_$(date +%Y%m%d_%H%M%S).rdb.gz.gpg -
 ```
 
 #### AOF Backup (Secondary)
 ```bash
 # Copy AOF file if enabled
-cp /var/lib/redis/appendonly.aof /var/backups/pixelcraft/redis_aof_$(date +%Y%m%d_%H%M%S).aof
-gzip /var/backups/pixelcraft/redis_aof_$(date +%Y%m%d_%H%M%S).aof
+cp /var/lib/redis/appendonly.aof /var/backups/agentsflowai/redis_aof_$(date +%Y%m%d_%H%M%S).aof
+gzip /var/backups/agentsflowai/redis_aof_$(date +%Y%m%d_%H%M%S).aof
 ```
 
 ### Automated Redis Backup Script
 
-Create `/opt/pixelcraft-bloom/ops/backup-redis.sh`:
+Create `/opt/agentsflowai/ops/backup-redis.sh`:
 
 ```bash
 #!/bin/bash
 set -e
 
-BACKUP_DIR="/var/backups/pixelcraft"
+BACKUP_DIR="/var/backups/agentsflowai"
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="/var/log/pixelcraft/redis-backup.log"
+LOG_FILE="/var/log/agentsflowai/redis-backup.log"
 
 # Load environment
-source "/opt/pixelcraft-bloom/backend/.env"
+source "/opt/agentsflowai/backend/.env"
 
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -145,13 +145,13 @@ log "Redis backup process completed."
 #### Full Database Restore
 ```bash
 # List available backups
-ls -lh /var/backups/pixelcraft/backup_*.sql.gz.gpg
+ls -lh /var/backups/agentsflowai/backup_*.sql.gz.gpg
 
 # Restore from specific backup
-sudo ./ops/restore.sh /var/backups/pixelcraft/backup_20231201_020000.sql.gz.gpg
+sudo ./ops/restore.sh /var/backups/agentsflowai/backup_20231201_020000.sql.gz.gpg
 
 # Check logs
-tail -f /var/log/pixelcraft/restore.log
+tail -f /var/log/agentsflowai/restore.log
 ```
 
 #### Point-in-Time Recovery
@@ -168,7 +168,7 @@ sudo systemctl stop redis-server
 cp /var/lib/redis/dump.rdb /var/lib/redis/dump.rdb.backup
 
 # Decrypt and restore RDB file
-gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/pixelcraft/redis_20231201_020000.rdb.gz.gpg | gunzip > /var/lib/redis/dump.rdb
+gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/agentsflowai/redis_20231201_020000.rdb.gz.gpg | gunzip > /var/lib/redis/dump.rdb
 
 # Set proper permissions
 chown redis:redis /var/lib/redis/dump.rdb
@@ -183,7 +183,7 @@ sudo systemctl start redis-server
 sudo systemctl stop redis-server
 
 # Restore AOF file
-gunzip -c /var/backups/pixelcraft/redis_aof_20231201_020000.aof.gz > /var/lib/redis/appendonly.aof
+gunzip -c /var/backups/agentsflowai/redis_aof_20231201_020000.aof.gz > /var/lib/redis/appendonly.aof
 chown redis:redis /var/lib/redis/appendonly.aof
 
 # Start Redis
@@ -222,10 +222,10 @@ redis-cli -u "$REDIS_URL" get "some:known:key"
 ### Backup Integrity Check
 ```bash
 # Test database backup decryption
-gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/pixelcraft/backup_20231201_020000.sql.gz.gpg | gunzip | head -20
+gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/agentsflowai/backup_20231201_020000.sql.gz.gpg | gunzip | head -20
 
 # Test Redis backup decryption
-gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/pixelcraft/redis_20231201_020000.rdb.gz.gpg | gunzip | head -c 100
+gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/agentsflowai/redis_20231201_020000.rdb.gz.gpg | gunzip | head -c 100
 ```
 
 ## Monitoring & Alerts
@@ -233,23 +233,23 @@ gpg --batch --yes --passphrase "$BACKUP_ENCRYPTION_KEY" --decrypt /var/backups/p
 ### Backup Monitoring
 ```bash
 # Check backup success
-ls -la /var/backups/pixelcraft/ | tail -5
+ls -la /var/backups/agentsflowai/ | tail -5
 
 # Monitor backup logs
-tail -50 /var/log/pixelcraft/backup.log
+tail -50 /var/log/agentsflowai/backup.log
 
 # Check disk space
 df -h /var/backups
 ```
 
 ### Automated Monitoring Script
-Create `/opt/pixelcraft-bloom/ops/monitor-backups.sh`:
+Create `/opt/agentsflowai/ops/monitor-backups.sh`:
 
 ```bash
 #!/bin/bash
 
-BACKUP_DIR="/var/backups/pixelcraft"
-LOG_FILE="/var/log/pixelcraft/backup-monitor.log"
+BACKUP_DIR="/var/backups/agentsflowai"
+LOG_FILE="/var/log/agentsflowai/backup-monitor.log"
 
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -324,8 +324,8 @@ log "Backup monitoring completed."
 **Backup fails with permission error:**
 ```bash
 # Check directory permissions
-ls -ld /var/backups/pixelcraft
-sudo chown -R backupuser:backupuser /var/backups/pixelcraft
+ls -ld /var/backups/agentsflowai
+sudo chown -R backupuser:backupuser /var/backups/agentsflowai
 ```
 
 **Database connection fails:**

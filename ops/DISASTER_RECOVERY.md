@@ -1,6 +1,6 @@
 # Disaster Recovery Runbook
 
-This document outlines the procedures for database backup and recovery for PixelCraft Bloom.
+This document outlines the procedures for database backup and recovery for AgentsFlowAI.
 
 ## Backup Strategy
 
@@ -8,11 +8,11 @@ This document outlines the procedures for database backup and recovery for Pixel
 - **Retention**: 30 days.
 - **Method**: `pg_dump` of the Supabase database.
 - **Security**: Backups are compressed (`gzip`) and symmetrically encrypted (`gpg` AES256) before storage.
-- **Storage**: Local VPS storage at `/var/backups/pixelcraft`. (Recommendation: Sync this directory to S3/R2 for offsite storage).
+- **Storage**: Local VPS storage at `/var/backups/agentsflowai`. (Recommendation: Sync this directory to S3/R2 for offsite storage).
 
 ## Configuration
 
-The following environment variables in `/opt/pixelcraft-bloom/backend/.env` are required:
+The following environment variables in `/opt/agentsflowai/backend/.env` are required:
 
 - `SUPABASE_DB_URL`: The PostgreSQL connection string (Transaction pooler or Session pooler).
 - `BACKUP_ENCRYPTION_KEY`: A strong passphrase used to encrypt the backup files.
@@ -28,7 +28,7 @@ crontab -l
 
 To manually trigger a backup:
 ```bash
-sudo /opt/pixelcraft-bloom/ops/backup.sh
+sudo /opt/agentsflowai/ops/backup.sh
 ```
 
 ## Recovery Procedures
@@ -45,15 +45,15 @@ Since we are using Supabase, PITR is managed by the Supabase platform (if enable
 If you need to restore from one of our daily offsite/local backups (e.g., catastrophic failure of Supabase project or accidental deletion not covered by PITR window):
 
 1. **Locate the Backup**:
-   Find the desired backup file in `/var/backups/pixelcraft`.
+   Find the desired backup file in `/var/backups/agentsflowai`.
    ```bash
-   ls -lh /var/backups/pixelcraft
+   ls -lh /var/backups/agentsflowai
    ```
 
 2. **Run Restore Script**:
    Use the `restore.sh` script. **WARNING**: This will overwrite the current database.
    ```bash
-   sudo /opt/pixelcraft-bloom/ops/restore.sh /var/backups/pixelcraft/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
+   sudo /opt/agentsflowai/ops/restore.sh /var/backups/agentsflowai/backup_YYYYMMDD_HHMMSS.sql.gz.gpg
    ```
 
 3. **Verify Data**:

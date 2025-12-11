@@ -5,7 +5,7 @@ export default function ModelAnalytics() {
   return (
     <>
       <SEOHead 
-        title="Model Analytics | PixelCraft Bloom"
+        title="Model Analytics | AgentsFlowAI Bloom"
         description="Monitor and analyze AI model performance metrics"
       />
       <ModelsDashboard />
