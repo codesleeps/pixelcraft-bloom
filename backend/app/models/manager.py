@@ -5,6 +5,7 @@ import logging
 import os
 import time
 import hashlib
+import psutil  # Added for resource monitoring
 from dotenv import load_dotenv
 from cachetools import TTLCache
 from .config import MODELS, MODEL_PRIORITIES, ModelProvider, ModelConfig, ModelPriority
@@ -27,6 +28,11 @@ class ModelManager:
         self.metrics: Dict[str, Dict[str, Any]] = {}  # model -> {'requests': 0, 'successes': 0, 'total_latency': 0, 'total_tokens': 0}
         self.circuit_breaker: Dict[str, Dict[str, Any]] = {}  # model -> {'failures': 0, 'last_failure': 0, 'state': 'closed'}
         self.rate_limiter = asyncio.Semaphore(10)  # allow 10 concurrent requests
+        self.resource_thresholds = {
+            'low_memory': 4.0,  # GB - below this, avoid large models
+            'critical_memory': 2.0,  # GB - below this, only use tiny models
+            'high_cpu': 80.0  # % - above this, be more conservative
+        }
     
     async def initialize(self):
         """Initialize aiohttp session and run health checks"""
