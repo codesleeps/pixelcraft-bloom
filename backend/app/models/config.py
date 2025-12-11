@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from pydantic import BaseModel, Field
 import os
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ class ModelConfig(BaseModel):
     provider: ModelProvider
     endpoint: str
     api_key: Optional[str] = None
-    parameters: Dict[str, any] = Field(default_factory=dict)
+    parameters: Dict = Field(default_factory=dict)
     timeout: int = 30
     max_tokens: int = 2048
     temperature: float = 0.7
