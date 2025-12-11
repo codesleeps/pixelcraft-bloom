@@ -3,6 +3,7 @@ import asyncio
 import json
 import sentry_sdk
 import uuid
+from typing import Union
 from ..utils.redis_client import subscribe_to_analytics_events
 from ..utils.auth import verify_supabase_token
 from ..utils.logger import logger
@@ -21,7 +22,7 @@ class ConnectionManager:
     def disconnect(self, user_id: str):
         self.active_connections.pop(user_id, None)
 
-    def get_connection(self, user_id: str) -> WebSocket | None:
+    def get_connection(self, user_id: str) -> Union[WebSocket, None]:
         return self.active_connections.get(user_id)
 
 manager = ConnectionManager()
