@@ -7,9 +7,9 @@ VITE_API_URL=http://localhost:8000
 # Backend API base URL
 
 ## Supabase Configuration
-VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_URL=https://ozqpzwwpgyzlxhtekywj.supabase.co
 # Supabase project URL
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96cXB6d3dwZ3l6bHhodGVreXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxMzM2OTQsImV4cCI6MjA3MDcwOTY5NH0.x3hxwdq36n7yfIOv3KUMMvJJyAMJYAwdOG3enbsR-3Q
 # Supabase anonymous key for client-side usage
 
 ## Sentry Error Monitoring (Optional)
@@ -28,3 +28,4 @@ VITE_SENTRY_RELEASE=pixelcraft-frontend@1.0.0
 # 3. Ensure the backend has its own Sentry project with a different DSN (configured in the backend .env file).
 # 4. Set appropriate environment names (development, staging, production) for each deployment.
 # 5. Update the release version to match your application's versioning scheme.
+
