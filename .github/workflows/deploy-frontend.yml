@@ -35,11 +35,8 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.agentsflowai.cloud
           VITE_API_URL: https://api.agentsflowai.cloud
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          # Fallback if secrets aren't set yet (matches local env)
-          # VITE_SUPABASE_URL: https://jufpxjbxakvjluezegbz.supabase.co
-          # VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1ZnB4amJ4YWt2amx1ZXplZ2J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5Mzk2NzQsImV4cCI6MjA4MDUxNTY3NH0.OD-wTBno55_jPkQoasDz17fhN3jVSmRWit065LkuVGk
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://jufpxjbxakvjluezegbz.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1ZnB4amJ4YWt2amx1ZXplZ2J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5Mzk2NzQsImV4cCI6MjA4MDUxNTY3NH0.OD-wTBno55_jPkQoasDz17fhN3jVSmRWit065LkuVGk' }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
