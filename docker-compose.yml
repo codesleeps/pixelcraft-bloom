@@ -21,7 +21,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "8001:5432"
+      - "8002:5432"
 
   # Redis for caching and real-time features
   redis:
@@ -74,13 +74,13 @@ services:
       args:
         - VITE_API_BASE_URL=http://localhost:8000
     ports:
-      - "3001:5173"  # Frontend on port 3001
+      - "3001:5173" # Frontend on port 3001
     depends_on:
       - backend
     restart: unless-stopped
 
 volumes:
   # PostgreSQL data volume (persists database across container restarts)
-  db_data:
-  # Ollama model data volume
+  db_data: # Ollama model data volume
+
   ollama_data:

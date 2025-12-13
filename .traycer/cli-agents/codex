@@ -1,0 +1,2 @@
+#!/bin/bash
+cat "$TRAYCER_PROMPT_TMP_FILE" | /usr/local/bin/codex
