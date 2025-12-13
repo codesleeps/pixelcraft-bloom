@@ -21,7 +21,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-  - "8001:8000"
+      - "8001:5432"
 
   # Redis for caching and real-time features
   redis:
