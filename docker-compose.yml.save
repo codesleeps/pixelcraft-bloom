@@ -1,0 +1,85 @@
+# PixelCraft Bloom - Docker Compose Configuration
+#
+# This file orchestrates all backend services: PostgreSQL, Redis, Backend API, and Ollama.
+# Ensure Docker Desktop has 12GB+ memory allocated.
+#
+# Usage:
+#   docker compose up -d          # Start all services
+#   docker compose logs -f        # Watch logs
+#   docker compose down           # Stop all services
+#   docker compose down -v        # Stop and remove volumes (fresh start)
+
+services:
+  # PostgreSQL database for analytics, subscriptions, and application data
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports: - "8001:8000"
+
+  # Redis for caching and real-time features
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # FastAPI backend for chat, analytics, and API endpoints
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: agentsflowai-backend:dev
+    # Only load root .env for runtime configuration. Do not load example files containing
+    # placeholder secrets (e.g., SENTRY_DSN with 'project-id') which can cause runtime errors.
+    env_file:
+      - .env
+    ports:
+      - "8000:8000" # Backend API exposed on port 8000
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backend:/app
+
+  # Ollama LLM inference engine
+  # Note: If an official Ollama Docker image isn't available for your setup,
+  # run Ollama locally on the host (see README) and remove/disable this service.
+  # Host port remapped to 11435 to avoid conflict with a local Ollama instance
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11435:11434" # Ollama API on port 11435 (avoids localhost conflict)
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 32G # Increased for Mixtral
+        reservations:
+          memory: 16G # Reserved memory guarantee
+
+  # Frontend React Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000
+    ports:
+      - "3001:5173"  # Frontend on port 3001
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  # PostgreSQL data volume (persists database across container restarts)
+  db_data:
+  # Ollama model data volume
+  ollama_data:
