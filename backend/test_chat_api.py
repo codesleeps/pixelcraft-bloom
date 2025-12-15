@@ -19,7 +19,7 @@ class ChatAPITester:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url.rstrip("/")
         self.conversation_id = f"test_{uuid.uuid4().hex[:8]}"
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=200.0)
         
     async def cleanup(self):
         await self.client.aclose()

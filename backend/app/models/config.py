@@ -72,7 +72,7 @@ MODELS = {
             "vision": False
         },
         supports_streaming=False,
-        timeout=60
+        timeout=180
     ),
     "mistral": ModelConfig(
         name="tinyllama:latest",  # Changed from mistral:7b to tinyllama:latest for reliability
@@ -98,7 +98,7 @@ MODELS = {
             "vision": False
         },
         supports_streaming=True,  # Enable streaming support
-        timeout=60  # Reduced from 120 to prevent long hangs
+        timeout=180  # Reduced from 120 to prevent long hangs
     ),
     "glm4": ModelConfig(
         name="tinyllama:latest",  # Changed from glm-4.6:cloud to tinyllama:latest for reliability
@@ -124,7 +124,7 @@ MODELS = {
             "vision": False
         },
         supports_streaming=True,  # Enable streaming support
-        timeout=60  # Reduced from 180 to prevent long hangs
+        timeout=180  # Reduced from 180 to prevent long hangs
     )
 }
 

@@ -171,13 +171,17 @@ def get_ollama_client() -> OllamaClient:
 
 async def test_ollama_connection(timeout: int = 5) -> bool:
     """Async health check for the Ollama service."""
-    client = get_ollama_client()
+    # Create a temporary client for the health check to avoid initializing
+    # the global client's session with a short timeout
+    from ..config import settings
+    temp_client = OllamaClient(
+        host=str(settings.ollama.host),
+        timeout=float(timeout),
+        keep_alive=settings.ollama.keep_alive
+    )
     try:
-        # Temporarily adjust timeout for health check
-        original_timeout = client.timeout
-        client.timeout = aiohttp.ClientTimeout(total=timeout)
-        ready = await client.is_ready(settings.ollama.model)
-        client.timeout = original_timeout
+        async with temp_client:
+            ready = await temp_client.is_ready(settings.ollama.model)
         return ready
     except Exception as exc:
         logger.exception("Ollama health check failed: %s", exc)

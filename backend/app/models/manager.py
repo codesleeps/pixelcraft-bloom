@@ -183,6 +183,8 @@ class ModelManager:
                 except Exception as e:
                     latency = time.time() - start_time
                     logger.error(f"[ModelManager] ✗ Failed with {model_config.name}: {type(e).__name__} (latency={latency:.2f}s)")
+                    import traceback
+                    traceback.print_exc()
                     logger.debug(f"[ModelManager] Error detail: {str(e)}")
                     await self._update_metrics(model_config.name, latency, False)
                     self._record_failure(model_config.name)
@@ -220,11 +222,13 @@ class ModelManager:
                 {"role": "user", "content": prompt}
             ]
             logger.debug(f"[ModelManager] Using /api/chat for {model_config.name} with {len(messages)} messages")
+            # Merge parameters, letting kwargs override model config defaults
+            chat_params = {**model_config.parameters, **kwargs}
+            
             response = await self.ollama_client.chat(
                 model=model_config.name,
                 messages=messages,
-                **model_config.parameters,
-                **kwargs
+                **chat_params
             )
             logger.info(f"[ModelManager] ✓ Chat generation succeeded with {model_config.name}")
         else:
