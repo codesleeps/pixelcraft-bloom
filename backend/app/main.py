@@ -196,7 +196,7 @@ def create_app() -> FastAPI:
             global model_manager_instance
             model_manager_instance = ModelManager()
             await model_manager_instance.initialize()
-            await model_manager_instance.warm_up_models()
+            # await model_manager_instance.warm_up_models()  # Disabled: models load on-demand
             set_model_manager(model_manager_instance)
             logger.info("ModelManager initialized, available models: %s", list(model_manager_instance._health_checks.keys()))
         except Exception as exc:

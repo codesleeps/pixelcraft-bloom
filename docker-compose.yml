@@ -47,6 +47,9 @@ services:
       - redis
     volumes:
       - ./backend:/app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
   # Ollama LLM inference engine
   # Note: If an official Ollama Docker image isn't available for your setup,
@@ -58,7 +61,7 @@ services:
       - "11435:11434" # Ollama API on port 11435 (avoids localhost conflict)
     restart: unless-stopped
     volumes:
-      - ollama_data:/root/.ollama
+      - ~/.ollama:/root/.ollama # Mount local Ollama directory
     deploy:
       resources:
         limits:

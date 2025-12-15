@@ -38,7 +38,7 @@ class ModelManager:
         """Initialize aiohttp session and run health checks"""
         self._session = aiohttp.ClientSession()
         await self._check_model_availability()
-        await self.warm_up_models()
+        # await self.warm_up_models()  # Disabled: models load on-demand
     
     async def cleanup(self):
         """Cleanup resources"""
