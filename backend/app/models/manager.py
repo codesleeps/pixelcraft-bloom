@@ -230,11 +230,13 @@ class ModelManager:
         else:
             # Use generate API for simple completion
             logger.debug(f"[ModelManager] Using /api/generate for {model_config.name}")
+            # Merge parameters, letting kwargs override model config defaults
+            generation_params = {**model_config.parameters, **kwargs}
+            
             response = await self.ollama_client.generate(
                 model=model_config.name,
                 prompt=prompt,
-                **model_config.parameters,
-                **kwargs
+                **generation_params
             )
             logger.info(f"[ModelManager] ✓ Generate succeeded with {model_config.name}")
         return response["message"]["content"]
