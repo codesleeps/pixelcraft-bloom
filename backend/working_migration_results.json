@@ -1,0 +1,6 @@
+{
+  "timestamp": "2025-12-16T10:35:45.392185",
+  "duration_seconds": 0.427706,
+  "success": false,
+  "method": "SQLAlchemy direct connection"
+}

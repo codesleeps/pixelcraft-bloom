@@ -1,0 +1,824 @@
+{
+  "migration_file": "consolidated_migration.sql",
+  "total_statements": 163,
+  "executed_statements": 163,
+  "successful": 0,
+  "failed": 163,
+  "results": [
+    {
+      "statement": "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DO $$ BEGIN\nCREATE TYPE status_enum AS ENUM ('active', 'inactive', 'pending', 'completed', 'failed',...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "EXCEPTION\nWHEN duplicate_object THEN null;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END $$;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DO $$ BEGIN\nCREATE TYPE model_status AS ENUM ('success', 'error', 'processing');",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "EXCEPTION\nWHEN duplicate_object THEN null;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END $$;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DO $$ BEGIN\nCREATE TYPE lead_status AS ENUM ('received', 'contacted', 'qualified', 'converted', 'los...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "EXCEPTION\nWHEN duplicate_object THEN null;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END $$;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DO $$ BEGIN\nCREATE TYPE workflow_status AS ENUM ('pending', 'running', 'completed', 'failed', 'cance...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "EXCEPTION\nWHEN duplicate_object THEN null;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END $$;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE FUNCTION update_updated_at_column()\nRETURNS TRIGGER AS $$\nBEGIN\nNEW.updated_at = N...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RETURN NEW;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "$$ LANGUAGE plpgsql;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE FUNCTION public.handle_new_user()\nRETURNS TRIGGER AS $$\nBEGIN\nINSERT INTO public.p...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RETURN NEW;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "$$ LANGUAGE plpgsql SECURITY DEFINER;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.profiles (\nid UUID REFERENCES auth.users(id) PRIMARY KEY,\nemail TE...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view own profile\" ON public.profiles\nFOR SELECT USING (auth.uid() = id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can update own profile\" ON public.profiles\nFOR UPDATE USING (auth.uid() = id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_profiles_updated_at\nBEFORE UPDATE ON public.profiles\nFOR EACH ROW EXECUTE FUNC...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.conversations (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nco...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_conversation_id ON public.conversations(conversation_id...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON public.conversations(user_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_session_id ON public.conversations(session_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_status ON public.conversations(status);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_channel ON public.conversations(channel);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON public.conversations(created_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_conversations_metadata ON public.conversations USING GIN (metadata);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view own conversations\" ON public.conversations\nFOR SELECT USING (user_id =...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Anyone can insert conversations\" ON public.conversations\nFOR INSERT WITH CHECK (true)...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Admins can view all conversations\" ON public.conversations\nFOR SELECT USING (\nEXISTS ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_conversations_updated_at\nBEFORE UPDATE ON public.conversations\nFOR EACH ROW EX...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.messages (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nconvers...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON public.messages(conversation_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_parent_id ON public.messages(parent_message_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_sender ON public.messages(sender_type, sender_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_status ON public.messages(status);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_messages_metadata ON public.messages USING GIN (metadata);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view messages from their conversations\" ON public.messages\nFOR SELECT USING...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can insert messages\" ON public.messages\nFOR INSERT WITH CHECK (true);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_messages_updated_at\nBEFORE UPDATE ON public.messages\nFOR EACH ROW EXECUTE FUNC...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.leads (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nname TEXT ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_email ON public.leads(email);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_status ON public.leads(status);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_created_at ON public.leads(created_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON public.leads(assigned_to);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_source ON public.leads(source);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_leads_metadata ON public.leads USING GIN (metadata);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Admins can view all leads\" ON public.leads\nFOR SELECT USING (\nEXISTS (\nSELECT 1 FROM ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view assigned leads\" ON public.leads\nFOR SELECT USING (assigned_to = auth.u...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Public can insert leads\" ON public.leads\nFOR INSERT WITH CHECK (true);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Admins can update leads\" ON public.leads\nFOR UPDATE USING (\nEXISTS (\nSELECT 1 FROM pu...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_leads_updated_at\nBEFORE UPDATE ON public.leads\nFOR EACH ROW EXECUTE FUNCTION u...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.workflow_executions (\nid UUID PRIMARY KEY DEFAULT gen_random_uuid(...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_conversation ON public.workflow_executions(conversation_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_type ON public.workflow_executions(workflow_type);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_state ON public.workflow_executions(current_state);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_initiated_by ON public.workflow_executions(initiated_by);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_started_at ON public.workflow_executions(started_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_config ON public.workflow_executions USING GIN (workflow_con...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_workflow_results ON public.workflow_executions USING GIN (results);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.workflow_executions ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Service role full access\" ON public.workflow_executions\nFOR ALL TO service_role USING...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view own workflows\" ON public.workflow_executions\nFOR SELECT USING (initiat...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Authenticated read access\" ON public.workflow_executions\nFOR SELECT TO authenticated ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_workflow_executions_updated_at\nBEFORE UPDATE ON public.workflow_executions\nFOR...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.agent_messages (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nw...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_workflow_id ON public.agent_messages(workflow_executio...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_agent ON public.agent_messages(agent_name);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_type ON public.agent_messages(message_type);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_status ON public.agent_messages(status);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_created_at ON public.agent_messages(created_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_tool_calls ON public.agent_messages USING GIN (tool_ca...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_agent_messages_context ON public.agent_messages USING GIN (context_da...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.agent_messages ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Service role full access\" ON public.agent_messages\nFOR ALL TO service_role USING (tru...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view messages from their workflows\" ON public.agent_messages\nFOR SELECT USI...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_agent_messages_updated_at\nBEFORE UPDATE ON public.agent_messages\nFOR EACH ROW ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.shared_memory (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nco...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_conversation ON public.shared_memory(conversation_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_key ON public.shared_memory(memory_key);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_scope ON public.shared_memory(scope);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_accessed ON public.shared_memory(last_accessed_at DESC)...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_value ON public.shared_memory USING GIN (memory_value);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_metadata ON public.shared_memory USING GIN (metadata);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_conversation_key ON public.shared_memory(conversation_i...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_shared_memory_scope_access ON public.shared_memory(scope, last_access...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.shared_memory ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can manage memory for their conversations\" ON public.shared_memory\nFOR ALL USIN...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_shared_memory_updated_at\nBEFORE UPDATE ON public.shared_memory\nFOR EACH ROW EX...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE FUNCTION update_memory_access()\nRETURNS TRIGGER AS $$\nBEGIN\nNEW.access_count = OLD...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "NEW.last_accessed_at = NOW();",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RETURN NEW;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "$$ LANGUAGE plpgsql;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER update_shared_memory_access\nBEFORE UPDATE ON public.shared_memory\nFOR EACH ROW\nWHEN (...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.model_metrics (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nmo...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_model_metrics_lookup\nON public.model_metrics(model_name, request_time...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_model_metrics_metadata\nON public.model_metrics USING GIN (metadata);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_model_metrics_model_name ON public.model_metrics(model_name);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_model_metrics_task_type ON public.model_metrics(task_type);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_model_metrics_status ON public.model_metrics(status);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.model_metrics ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Service role full access\" ON public.model_metrics\nFOR ALL TO service_role USING (true...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Authenticated read access\" ON public.model_metrics\nFOR SELECT TO authenticated USING ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TABLE IF NOT EXISTS public.notifications (\nid UUID DEFAULT uuid_generate_v4() PRIMARY KEY,\nre...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_notifications_recipient_id ON public.notifications(recipient_id);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_notifications_type ON public.notifications(notification_type);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE INDEX IF NOT EXISTS idx_notifications_severity ON public.notifications(severity);",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can view own notifications\" ON public.notifications\nFOR SELECT USING (recipient...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"Users can update own notifications\" ON public.notifications\nFOR UPDATE USING (recipie...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE POLICY \"System can insert notifications\" ON public.notifications\nFOR INSERT WITH CHECK (true)...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE TRIGGER on_auth_user_created\nAFTER INSERT ON auth.users\nFOR EACH ROW EXECUTE FUNCTION public....",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE VIEW public.lead_funnel AS\nSELECT\nstatus,\nCOUNT(*) as count,\nAVG(lead_score) as av...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE VIEW public.workflow_performance AS\nSELECT\nworkflow_type,\ncurrent_state,\nCOUNT(*) ...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "CREATE OR REPLACE VIEW public.model_performance AS\nSELECT\nmodel_name,\ntask_type,\nCOUNT(*) as total_r...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO service_role;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "DO $$\nDECLARE\ntable_record RECORD;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "column_count INTEGER;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "index_count INTEGER;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "policy_count INTEGER;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "BEGIN\nRAISE NOTICE '=== SUPABASE MIGRATION COMPLETION REPORT ===';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE 'Migration executed successfully!';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "FOR table_record IN\nSELECT table_name\nFROM information_schema.tables\nWHERE table_schema = 'public'\nA...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "SELECT COUNT(*) INTO index_count\nFROM pg_indexes\nWHERE schemaname = 'public' AND tablename = table_r...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "SELECT COUNT(*) INTO policy_count\nFROM pg_policies\nWHERE schemaname = 'public' AND tablename = table...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE 'Table: % - Columns: %, Indexes: %, Policies: %',\ntable_record.table_name, column_count...",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END LOOP;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '=== MIGRATION SUMMARY ===';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 All required tables created/updated';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 Missing columns added to conversations table';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 Indexes created for optimal performance';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 RLS policies configured for security';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 Foreign key constraints established';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '\u2705 Analytics views created';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE 'Next steps:';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '1. Verify the schema using the verification script';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '2. Test the connection from your backend application';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '3. Create your first user via Supabase Auth';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "RAISE NOTICE '4. Update user role to admin if needed';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "END $$;",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    },
+    {
+      "statement": "NOTIFY pgrst, 'reload config';",
+      "success": false,
+      "error": "HTTP 404: {\"error\":\"requested path is invalid\"}"
+    }
+  ]
+}

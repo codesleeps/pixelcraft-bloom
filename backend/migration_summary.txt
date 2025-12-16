@@ -1,0 +1,14 @@
+Supabase Migration Summary
+==========================
+
+Start Time: 2025-12-16 10:17:24.647875
+End Time: 2025-12-16 10:17:41.369728
+Duration: 0:00:16.721853
+
+Overall Success: False
+Final Status: Migration failed
+
+Step Results:
+  Initial Analysis: FAIL
+  Migration Apply: PASS
+  Verification: FAIL
