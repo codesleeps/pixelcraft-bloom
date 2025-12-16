@@ -53,14 +53,14 @@ async def post_message(
         try:
             sb = get_supabase_client()
             # Soft attempt to insert message (table schema to be created in DB)
-            _ = sb.table("conversations").insert({"conversation_id": conversation_id, "role": "user", "content": req.message}).execute()
+            _ = sb.table("conversations").insert({"conversation_id": conversation_id, "session_id": conversation_id, "role": "user", "content": req.message, "user_id": req.user_id}).execute()
             sentry_sdk.add_breadcrumb(category="chat", message="Database insert completed")
             try:
                 publish_analytics_event("analytics:conversations", "message_created", {"conversation_id": conversation_id})
             except Exception:
                 pass
             try:
-                conv = sb.table("conversations").select("user_id").eq("session_id", conversation_id).single().execute()
+                conv = sb.table("conversations").select("user_id").eq("conversation_id", conversation_id).single().execute()
                 user_id = conv.data.get("user_id")
                 if user_id:
                     sentry_sdk.set_user({"id": user_id})
