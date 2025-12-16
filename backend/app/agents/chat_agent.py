@@ -215,7 +215,7 @@ def create_chat_agent(model_manager: Optional[ModelManager] = None) -> 'ChatAgen
     if model_manager is None:
         logger.warning("ModelManager not provided to ChatAgent, will use fallback responses")
     config = BaseAgentConfig(
-        agent_id="agentsflowai_chat",
+        agent_id="chat",
         name="AgentsFlowAI Chat Assistant",
         description="AI assistant for AgentsFlowAI digital marketing agency",
         temperature=0.7,

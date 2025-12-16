@@ -124,9 +124,27 @@ class AgentOrchestrator:
             "execution_plan": execution_plan,
             "started_at": datetime.utcnow().isoformat()
         }
-        result = await supabase.table("workflow_executions").insert(workflow_data).execute()
-        workflow_id = result.data[0]["id"]
+        try:
+            result = await supabase.table("workflow_executions").insert(workflow_data).execute()
+            # If DB insert succeeds, use the returned ID (though specific ID gen might vary, 
+            # usually we want the DB ID. If failing, we might need a local UUID).
+            if result.data:
+                 workflow_id = result.data[0]["id"]
+        except Exception as e:
+            self.logger.error(f"Failed to persist workflow execution to DB: {e}")
+            # If DB fails, we must rely on the generated ID if we had one?
+            # We didn't generate one locally. We need to generate one locally to be safe.
+            pass
 
+        # Ensure we have a workflow_id even if DB failed (if we didn't generate one above)
+        # We need to change the logic to generate ID locally to be robust.
+        
+        # Let's verify if we can generate UUID locally.
+        import uuid
+        if 'workflow_id' not in locals():
+             workflow_id = str(uuid.uuid4())
+             workflow_data['id'] = workflow_id
+        
         self.active_workflows[workflow_id] = workflow_data
 
         publish_analytics_event("analytics:workflows", "workflow_created", {
@@ -160,7 +178,10 @@ class AgentOrchestrator:
         if current_state in ["completed", "failed"]:
             update_data["completed_at"] = datetime.utcnow().isoformat()
 
-        await supabase.table("workflow_executions").update(update_data).eq("id", workflow_execution_id).execute()
+        try:
+            await supabase.table("workflow_executions").update(update_data).eq("id", workflow_execution_id).execute()
+        except Exception as e:
+            self.logger.error(f"Failed to update workflow state in DB: {e}")
 
         if workflow_execution_id in self.active_workflows:
             self.active_workflows[workflow_execution_id].update(update_data)

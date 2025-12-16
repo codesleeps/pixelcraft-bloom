@@ -20,15 +20,6 @@ async def list_agents():
     return AgentListResponse(agents=agents, total=len(agents))
 
 
-@router.get("/{agent_type}", response_model=AgentInfo)
-async def get_agent(agent_type: str):
-    agent = orchestrator.get(agent_type)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    info = AgentInfo(agent_id=agent_type, name=getattr(agent.config, "name", agent_type), type=getattr(agent.config, "agent_id", agent_type), description=getattr(agent.config, "description", ""), capabilities=getattr(agent.config, "capabilities", []), status="active")
-    return info
-
-
 @router.post("/invoke", response_model=AgentResponse, summary="Invoke agent", description="Execute a specific agent with input data and return the processing results.")
 async def invoke_agent(req: AgentRequest):
     start = time.time()
@@ -124,18 +115,43 @@ async def execute_workflow(req: WorkflowExecutionRequest):
         else:
             raise HTTPException(status_code=400, detail="Invalid workflow_type")
         
-        # Fetch workflow details
-        supabase = get_supabase_client()
-        workflow = await supabase.table("workflow_executions").select("*").eq("id", result["workflow_id"]).execute()
-        if not workflow.data:
-            raise HTTPException(status_code=500, detail="Workflow created but not found")
+        # Fetch workflow details (Try DB first, then Memory)
+        wf = None
+        try:
+            supabase = get_supabase_client()
+            workflow = await supabase.table("workflow_executions").select("*").eq("id", result["workflow_id"]).execute()
+            if workflow.data:
+                wf = workflow.data[0]
+        except Exception:
+            # Fallback to in-memory state
+            if result["workflow_id"] in orchestrator.active_workflows:
+                wf = orchestrator.active_workflows[result["workflow_id"]]
+                # Ensure ID is set in dict
+                if "id" not in wf:
+                    wf["id"] = result["workflow_id"]
         
-        wf = workflow.data[0]
+        if not wf:
+             # Even memory failed? Use the result directly to construct minimal response
+             wf = {
+                 "id": result.get("workflow_id"),
+                 "conversation_id": req.conversation_id,
+                 "workflow_type": req.workflow_type,
+                 "current_state": "completed" if "results" in result else "failed",
+                 "current_step": None,
+                 "participating_agents": req.participating_agents,
+                 "results": result.get("results", {}),
+                 "started_at": datetime.utcnow().isoformat(),
+                 "completed_at": datetime.utcnow().isoformat()
+             }
+
         execution_time_ms = None
         if wf.get("completed_at") and wf.get("started_at"):
-            started = datetime.fromisoformat(wf["started_at"].replace('Z', '+00:00'))
-            completed = datetime.fromisoformat(wf["completed_at"].replace('Z', '+00:00'))
-            execution_time_ms = int((completed - started).total_seconds() * 1000)
+            try:
+                started = datetime.fromisoformat(wf["started_at"].replace('Z', '+00:00'))
+                completed = datetime.fromisoformat(wf["completed_at"].replace('Z', '+00:00'))
+                execution_time_ms = int((completed - started).total_seconds() * 1000)
+            except:
+                pass
         
         return WorkflowExecutionResponse(
             workflow_id=wf["id"],
@@ -346,10 +362,30 @@ async def list_workflows(
         query = query.lte("started_at", end_date)
     
     query = query.range(offset, offset + limit - 1)
-    workflows = await query.execute()
+    
+    workflows_data = []
+    try:
+        workflows = await query.execute()
+        workflows_data = workflows.data
+    except Exception:
+        # Fallback to in-memory active workflows (filtered manually)
+        # This is a basic fallback for demo purposes
+        for _, wf in orchestrator.active_workflows.items():
+            # Apply basic filters locally
+            if conversation_id and wf.get("conversation_id") != conversation_id: continue
+            if workflow_type and wf.get("workflow_type") != workflow_type: continue
+            
+            # Ensure ID is present
+            if "id" not in wf:
+                wf["id"] = _  # Key is ID in dict
+                
+            workflows_data.append(wf)
+        
+        # Approximate pagination
+        workflows_data = workflows_data[offset:offset+limit]
     
     result = []
-    for wf in workflows.data:
+    for wf in workflows_data:
         execution_time_ms = None
         if wf.get("completed_at") and wf.get("started_at"):
             started = datetime.fromisoformat(wf["started_at"].replace('Z', '+00:00'))
@@ -371,3 +407,12 @@ async def list_workflows(
         ))
     
     return result
+
+
+@router.get("/{agent_type}", response_model=AgentInfo)
+async def get_agent(agent_type: str):
+    agent = orchestrator.get(agent_type)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    info = AgentInfo(agent_id=agent_type, name=getattr(agent.config, "name", agent_type), type=getattr(agent.config, "agent_id", agent_type), description=getattr(agent.config, "description", ""), capabilities=getattr(agent.config, "capabilities", []), status="active")
+    return info

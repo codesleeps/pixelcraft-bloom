@@ -111,6 +111,22 @@ class WrappedQuery:
                 self._query = result
         return self
     
+    def range(self, *args, **kwargs):
+        self._operation = "range"
+        if hasattr(self._query, "range"):
+            result = self._query.range(*args, **kwargs)
+            if result is not None:
+                self._query = result
+        return self
+
+    def single(self, *args, **kwargs):
+        self._operation = "single"
+        if hasattr(self._query, "single"):
+            result = self._query.single(*args, **kwargs)
+            if result is not None:
+                self._query = result
+        return self
+    
     def execute(self):
         wrapped_execute = instrument_supabase_query(
             self._query.execute,
