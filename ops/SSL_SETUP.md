@@ -14,19 +14,18 @@ This guide covers setting up SSL certificates for AgentsFlowAI using Let's Encry
 
 ### DNS Configuration
 
-Point your domain to the server IP:
+Point your API domain to the server IP. The main domain can point to GitHub Pages or another provider.
 
 ```bash
 # Example DNS records (replace with your actual IP)
-# A record: agentsflowai.com -> YOUR_SERVER_IP
-# A record: api.agentsflowai.com -> YOUR_SERVER_IP
-# A record: www.agentsflowai.com -> YOUR_SERVER_IP (optional)
+# A record: api.agentsflowai.cloud -> YOUR_SERVER_IP
+# A record: agentsflowai.cloud -> GITHUB_PAGES_IP (if using GitHub Pages)
 ```
 
 Verify DNS propagation:
+
 ```bash
-nslookup agentsflowai.com
-nslookup api.agentsflowai.com
+nslookup api.agentsflowai.cloud
 ```
 
 ## 2. Install Certbot
@@ -50,11 +49,8 @@ certbot --version
 # Stop nginx temporarily (certbot will restart it)
 sudo systemctl stop nginx
 
-# Obtain certificate for main domain
-sudo certbot certonly --standalone -d agentsflowai.com -d www.agentsflowai.com
-
 # Obtain certificate for API subdomain
-sudo certbot certonly --standalone -d api.agentsflowai.com
+sudo certbot certonly --standalone -d api.agentsflowai.cloud
 
 # Start nginx again
 sudo systemctl start nginx
@@ -66,8 +62,7 @@ If you prefer to configure nginx manually:
 
 ```bash
 # Obtain certificates without nginx integration
-sudo certbot certonly --standalone -d agentsflowai.com -d www.agentsflowai.com
-sudo certbot certonly --standalone -d api.agentsflowai.com
+sudo certbot certonly --standalone -d api.agentsflowai.cloud
 ```
 
 ## 4. Configure Nginx for HTTPS
@@ -76,81 +71,24 @@ Update your nginx configuration to support SSL:
 
 ```nginx
 # /etc/nginx/sites-available/agentsflowai
-server {
-    listen 80;
-    server_name agentsflowai.com www.agentsflowai.com;
-    return 301 https://$server_name$request_uri;
-}
 
-server {
-    listen 443 ssl http2;
-    server_name agentsflowai.com www.agentsflowai.com;
-
-    # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/agentsflowai.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/agentsflowai.com/privkey.pem;
-
-    # SSL Security Settings
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384;
-    ssl_prefer_server_ciphers off;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-
-    # Security headers
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    add_header X-Content-Type-Options nosniff always;
-    add_header X-Frame-Options SAMEORIGIN always;
-    add_header Referrer-Policy strict-origin-when-cross-origin always;
-    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
-
-    # Frontend static files
-    root /var/www/agentsflowai;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-        add_header Pragma "no-cache";
-        add_header Expires "0";
-    }
-
-    # API proxy to backend
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-
-        # WebSocket support
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-    # Health check
-    location /health {
-        proxy_pass http://127.0.0.1:8000/health;
-        access_log off;
-    }
-}
+# Note: Main domain (agentsflowai.cloud) is hosted on GitHub Pages.
+# This configuration only handles the API subdomain.
 
 # API Subdomain
 server {
     listen 80;
-    server_name api.agentsflowai.com;
+    server_name api.agentsflowai.cloud;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.agentsflowai.com;
+    server_name api.agentsflowai.cloud;
 
     # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/api.agentsflowai.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.agentsflowai.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.agentsflowai.cloud/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.agentsflowai.cloud/privkey.pem;
 
     # SSL Security Settings (same as above)
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -235,9 +173,9 @@ class Settings(BaseSettings):
     # CORS settings for HTTPS
     cors_origins: List[str] = Field(
         default=[
-            "https://agentsflowai.com",
-            "https://www.agentsflowai.com",
-            "https://api.agentsflowai.com"
+            "https://agentsflowai.cloud",
+            "https://www.agentsflowai.cloud",
+            "https://api.agentsflowai.cloud"
         ],
         env="CORS_ORIGINS"
     )
@@ -314,6 +252,7 @@ echo "$(date): SSL certificates renewed and nginx reloaded" >> /var/log/letsencr
 ```
 
 Make it executable:
+
 ```bash
 sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
 ```
@@ -330,7 +269,7 @@ WARNING_DAYS=30
 CRITICAL_DAYS=7
 
 # Check certificate expiry
-EXPIRY_DATE=$(openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d'=' -f2)
+EXPIRY_DATE=$(openssl s_client -connect agentsflowai.cloud:443 -servername agentsflowai.cloud 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d'=' -f2)
 EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s)
 CURRENT_EPOCH=$(date +%s)
 DAYS_LEFT=$(( ($EXPIRY_EPOCH - $CURRENT_EPOCH) / 86400 ))
@@ -350,6 +289,7 @@ fi
 ```
 
 Add to cron for daily checks:
+
 ```bash
 # /etc/cron.d/ssl-monitoring
 0 9 * * * root /opt/agentsflowai/scripts/check-ssl-expiry.sh
@@ -360,6 +300,7 @@ Add to cron for daily checks:
 ### Common Issues
 
 #### Certificate Not Renewing
+
 ```bash
 # Check certbot logs
 sudo journalctl -u certbot
@@ -369,20 +310,23 @@ sudo certbot renew --force-renewal
 ```
 
 #### Mixed Content Warnings
+
 - Ensure all internal links use HTTPS
 - Update API_BASE_URL in frontend config
 - Check for hardcoded HTTP URLs in code
 
 #### SSL Handshake Failures
+
 ```bash
 # Test SSL connection
-openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com
+openssl s_client -connect agentsflowai.cloud:443 -servername agentsflowai.cloud
 
 # Check certificate chain
-openssl s_client -connect agentsflowai.com:443 -servername agentsflowai.com | openssl x509 -text
+openssl s_client -connect agentsflowai.cloud:443 -servername agentsflowai.cloud | openssl x509 -text
 ```
 
 #### Nginx SSL Errors
+
 ```bash
 # Check nginx error logs
 sudo tail -f /var/log/nginx/error.log
@@ -395,18 +339,21 @@ sudo systemctl reload nginx
 ## 9. Security Best Practices
 
 ### SSL/TLS Configuration
+
 - Use only TLS 1.2 and 1.3
 - Disable weak ciphers
 - Enable HSTS header
 - Use secure session resumption
 
 ### Certificate Management
+
 - Store certificates with restricted permissions
 - Regularly rotate certificates
 - Monitor certificate expiry
 - Use certificate pinning if required
 
 ### Additional Security Headers
+
 ```nginx
 # In nginx server block
 add_header X-Content-Type-Options nosniff always;
@@ -430,5 +377,5 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
 ---
 
-*Last updated: $(date)*
-*SSL Setup Version: 1.0*
+_Last updated: $(date)_
+_SSL Setup Version: 1.0_

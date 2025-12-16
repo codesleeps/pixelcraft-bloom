@@ -2,9 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from .config import settings
 
+import os
+
 # Create SQLAlchemy engine with connection pooling for Supabase/PostgreSQL
 engine = create_engine(
-    str(settings.supabase.url),  # Convert AnyHttpUrl to string
+    os.getenv("DATABASE_URL"),  # Use DATABASE_URL from environment
     pool_size=20,  # Maximum number of persistent connections in the pool
     max_overflow=10,  # Maximum number of connections that can be created beyond pool_size
     pool_pre_ping=True,  # Enable connection health checks

@@ -5,6 +5,7 @@ This comprehensive guide covers the complete deployment process for AgentsFlowAI
 ## 🎯 Overview
 
 AgentsFlowAI is now ready for production deployment with:
+
 - ✅ **SSL Certificates**: Let's Encrypt with automatic renewal
 - ✅ **Nginx Configuration**: HTTPS with security headers and rate limiting
 - ✅ **Backup System**: Automated daily backups with 30-day retention
@@ -15,9 +16,11 @@ AgentsFlowAI is now ready for production deployment with:
 
 ### Pre-Deployment Preparation
 
-- [ ] Secure domain name (agentsflow.cloud)
+- [ ] Secure domain name (agentsflowai.cloud)
 - [ ] Set up production server (Ubuntu 22.04 LTS recommended)
-- [ ] Configure DNS records for agentsflow.cloud and api.agentsflow.cloud
+- [ ] Configure DNS records:
+  - `api.agentsflowai.cloud` -> Your VPS IP
+  - `agentsflowai.cloud` -> GitHub Pages (or other frontend host)
 - [ ] Set up Supabase production database
 - [ ] Configure Redis server
 - [ ] Install required dependencies on server
@@ -31,6 +34,59 @@ AgentsFlowAI is now ready for production deployment with:
 5. **Monitoring** - Configure health checks and alerts
 6. **CI/CD Pipeline** - Set up automated deployment
 7. **Final Verification** - Test all systems
+
+## 🌐 Split Architecture Configuration
+
+Since the frontend is hosted on GitHub Pages and the backend on a VPS, follow these specific configuration steps:
+
+### 1. DNS Configuration
+
+Based on your provided configuration, your DNS records should look like this:
+
+| Type  | Name  | Value                  | Notes                             |
+| ----- | ----- | ---------------------- | --------------------------------- |
+| A     | `api` | `72.61.16.111`         | Points to your VPS (Backend)      |
+| CNAME | `www` | `codesleeps.github.io` | Points to GitHub Pages (Frontend) |
+| A     | `@`   | `185.199.108.153`      | GitHub Pages IP                   |
+| A     | `@`   | `185.199.109.153`      | GitHub Pages IP                   |
+| A     | `@`   | `185.199.110.153`      | GitHub Pages IP                   |
+| A     | `@`   | `185.199.111.153`      | GitHub Pages IP                   |
+
+**⚠️ Important Note on Email:**
+Your MX record points to `agentsflowai.cloud`, which resolves to GitHub Pages IPs. GitHub Pages does not handle email. If you need to receive email at `@agentsflowai.cloud`, you should point your MX record to a mail provider (like Google Workspace, Zoho, etc.) instead of your root domain.
+
+### 2. Clone Repository
+
+First, ensure the repository is on your VPS:
+
+```bash
+ssh root@72.61.16.111
+
+# Create necessary directories
+sudo mkdir -p /opt/agentsflowai
+sudo chown $USER:$USER /opt/agentsflowai
+
+# Clone the repository (replace with your actual repository URL)
+git clone https://github.com/your-username/agentsflowai.git /opt/agentsflowai
+```
+
+### 3. Run the Script
+
+Execute the deployment script on your VPS:
+
+```bash
+cd /opt/agentsflowai
+sudo chmod +x ./ops/deploy-production.sh
+sudo ./ops/deploy-production.sh
+```
+
+It should now proceed without errors, generating the SSL certificate **only for the API domain** and configuring Nginx accordingly.
+
+### 3. Frontend Config
+
+Ensure your frontend application on GitHub Pages is configured to make API calls to the correct backend URL:
+
+- **API URL**: `https://api.agentsflowai.cloud`
 
 ## 🚀 Step-by-Step Deployment
 
@@ -76,7 +132,7 @@ SUPABASE__JWT_SECRET=your-supabase-jwt-secret
 REDIS_URL=redis://localhost:6379/0
 
 # Security
-CORS_ORIGINS=https://agentsflow.cloud,https://www.agentsflow.cloud,https://api.agentsflow.cloud
+CORS_ORIGINS=https://agentsflowai.cloud,https://www.agentsflowai.cloud,https://api.agentsflowai.cloud
 JWT_SECRET=your-strong-jwt-secret-here
 JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=60
@@ -101,6 +157,7 @@ sudo ./ops/deploy-production.sh
 ```
 
 This script will:
+
 - Set up SSL certificates with Let's Encrypt
 - Configure Nginx for HTTPS
 - Set up automated backups
@@ -121,8 +178,8 @@ docker compose up -d
 docker compose ps
 
 # Test API endpoints
-curl https://api.agentsflow.cloud/health
-curl https://api.agentsflow.cloud/api/models
+curl https://api.agentsflowai.cloud/health
+curl https://api.agentsflowai.cloud/api/models
 
 # Check logs
 tail -f /var/log/agentsflowai/deploy.log
@@ -134,6 +191,7 @@ tail -f /var/log/nginx/access.log
 ### SSL/TLS Security
 
 The deployment includes:
+
 - **TLS 1.2 and 1.3** only
 - **Strong cipher suites**
 - **HSTS header** (Strict-Transport-Security)
@@ -142,6 +200,7 @@ The deployment includes:
 ### Security Headers
 
 All responses include:
+
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
@@ -188,6 +247,7 @@ sudo /opt/agentsflowai/ops/restore.sh /var/backups/agentsflowai/backup_YYYYMMDD_
 ### Monitoring Setup
 
 The deployment includes:
+
 - **SSL certificate expiry monitoring** (daily)
 - **Backup health monitoring** (every 6 hours)
 - **Disk space monitoring**
@@ -237,6 +297,7 @@ git push origin main
 ### Common Issues
 
 **Issue: SSL certificate not working**
+
 ```bash
 # Check certificate status
 sudo certbot certificates
@@ -250,6 +311,7 @@ sudo systemctl reload nginx
 ```
 
 **Issue: Database connection failed**
+
 ```bash
 # Test database connection
 psql "postgresql://user:password@host:port/database" -c "SELECT 1;"
@@ -259,6 +321,7 @@ python -c "from backend.app.database import engine; print(engine.pool.status())"
 ```
 
 **Issue: Redis connection failed**
+
 ```bash
 # Test Redis connection
 redis-cli -u "redis://localhost:6379/0" ping
@@ -268,6 +331,7 @@ sudo systemctl status redis-server
 ```
 
 **Issue: Backup failed**
+
 ```bash
 # Check backup logs
 tail -50 /var/log/agentsflowai/backup.log
@@ -310,7 +374,7 @@ async def get_popular_models():
 pip install locust
 
 # Run load test
-locust -f backend/tests/load/locustfile.py --host=https://api.agentsflow.cloud
+locust -f backend/tests/load/locustfile.py --host=https://api.agentsflowai.cloud
 ```
 
 ## 🔄 Rollback Procedure
@@ -327,24 +391,27 @@ sudo ./ops/deploy-production.sh
 docker compose up -d
 
 # Verify rollback
-curl https://api.agentsflow.cloud/health
+curl https://api.agentsflowai.cloud/health
 ```
 
 ## 📋 Maintenance Checklist
 
 ### Daily Tasks
+
 - [ ] Check health endpoints
 - [ ] Review error logs
 - [ ] Monitor rate limit hits
 - [ ] Verify backup completion
 
 ### Weekly Tasks
+
 - [ ] Review performance metrics
 - [ ] Check disk space usage
 - [ ] Update dependencies
 - [ ] Test backup restore procedure
 
 ### Monthly Tasks
+
 - [ ] Full disaster recovery drill
 - [ ] Security audit
 - [ ] Performance optimization review
@@ -355,10 +422,10 @@ curl https://api.agentsflow.cloud/health
 Your deployment is successful when:
 
 ✅ **All Docker containers are running** (`docker compose ps`)
-✅ **Health endpoint returns 200 OK** (`curl https://api.agentsflow.cloud/health`)
-✅ **Models endpoint shows `"health": true`** (`curl https://api.agentsflow.cloud/api/models`)
+✅ **Health endpoint returns 200 OK** (`curl https://api.agentsflowai.cloud/health`)
+✅ **Models endpoint shows `"health": true`** (`curl https://api.agentsflowai.cloud/api/models`)
 ✅ **SSL certificate is valid** (lock icon in browser)
-✅ **Swagger UI is accessible** (`https://api.agentsflow.cloud/docs`)
+✅ **Swagger UI is accessible** (`https://api.agentsflowai.cloud/docs`)
 ✅ **No errors in logs** (`tail -f /var/log/agentsflowai/*.log`)
 ✅ **Backups are running** (`ls -la /var/backups/agentsflowai/`)
 ✅ **Monitoring is active** (`crontab -l`)
@@ -385,12 +452,13 @@ For deployment issues:
 **Congratulations!** 🎉 Your AgentsFlowAI backend is now deployed and ready for production use.
 
 **Next Steps:**
+
 1. Deploy frontend application
-2. Update frontend API URLs to use `https://api.agentsflow.cloud`
+2. Update frontend API URLs to use `https://api.agentsflowai.cloud`
 3. Test complete application end-to-end
 4. Monitor performance and optimize as needed
 5. Set up user analytics and error tracking
 
-**Production URL:** https://api.agentsflow.cloud
-**Documentation:** https://api.agentsflow.cloud/docs
-**Health Check:** https://api.agentsflow.cloud/health
+**Production URL:** https://api.agentsflowai.cloud
+**Documentation:** https://api.agentsflowai.cloud/docs
+**Health Check:** https://api.agentsflowai.cloud/health
