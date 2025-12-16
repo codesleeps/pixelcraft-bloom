@@ -46,13 +46,13 @@ async def get_model_metrics(
             
             # Fetch raw metrics from Supabase
             # Note: In a production env with many records, this should be an RPC call
-            start_ts = time_range.start_date.timestamp()
-            end_ts = time_range.end_date.timestamp()
+            start_iso = time_range.start_date.isoformat()
+            end_iso = time_range.end_date.isoformat()
             
             result = sb.table("model_metrics") \
                 .select("*") \
-                .gte("timestamp", start_ts) \
-                .lte("timestamp", end_ts) \
+                .gte("created_at", start_iso) \
+                .lte("created_at", end_iso) \
                 .execute()
                 
         if not result.data:
@@ -70,9 +70,10 @@ async def get_model_metrics(
         for row in result.data:
             m = metrics[row["model_name"]]
             m["total_requests"] += 1
-            m["total_latency"] += row["latency"]
-            m["total_tokens"] += row.get("token_usage", 0)
-            if row["success"]:
+            # Convert ms to seconds for consistency with previous behavior
+            m["total_latency"] += row.get("latency_ms", 0) / 1000.0
+            m["total_tokens"] += row.get("tokens_in", 0) + row.get("tokens_out", 0)
+            if row.get("status") == "success":
                 m["success_count"] += 1
             else:
                 m["error_count"] += 1

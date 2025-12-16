@@ -137,10 +137,11 @@ class ModelManager:
         try:
             await self.supabase.table('model_metrics').insert({
                 'model_name': model_name,
-                'latency': latency,
-                'success': success,
-                'token_usage': token_usage,
-                'timestamp': time.time()
+                'latency_ms': int(latency * 1000),
+                'status': 'success' if success else 'error',
+                'tokens_out': token_usage,
+                'tokens_in': 0,  # We currently don't track input tokens here
+                # 'created_at' will be set automatically by default
             }).execute()
         except Exception as e:
             logger.error(f"Failed to persist metrics: {e}")

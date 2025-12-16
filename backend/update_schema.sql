@@ -30,8 +30,10 @@ ON model_metrics USING GIN (metadata);
 ALTER TABLE model_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Drop generic policies if they exist to avoid confusion
+-- Drop any existing policies to avoid conflicts (safely)
 DROP POLICY IF EXISTS "Enable all for service role" ON model_metrics;
 DROP POLICY IF EXISTS "Service role full access" ON model_metrics;
+DROP POLICY IF EXISTS "Authenticated read access" ON model_metrics;
 
 -- Secure Policy: Service Role Full Access (Backend use)
 CREATE POLICY "Service role full access" 
@@ -49,3 +51,43 @@ USING (true);
 
 -- Ensure channel column exists on conversations (from previous fix)
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS channel TEXT DEFAULT 'chat';
+
+-- Create workflow_executions table if it doesn't exist
+CREATE TABLE IF NOT EXISTS workflow_executions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id VARCHAR(255) NOT NULL,
+    workflow_type VARCHAR(50) NOT NULL,
+    current_state VARCHAR(50) NOT NULL DEFAULT 'pending',
+    current_step VARCHAR(50),
+    participating_agents TEXT[],
+    workflow_config JSONB DEFAULT '{}',
+    execution_plan JSONB DEFAULT '{}',
+    results JSONB DEFAULT '{}',
+    error_message TEXT,
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for querying
+CREATE INDEX IF NOT EXISTS idx_workflow_conversation ON workflow_executions(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_workflow_type ON workflow_executions(workflow_type);
+
+-- RLS Policies
+ALTER TABLE workflow_executions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role full access" 
+ON workflow_executions 
+TO service_role 
+USING (true) 
+WITH CHECK (true);
+
+CREATE POLICY "Authenticated read access" 
+ON workflow_executions 
+FOR SELECT 
+TO authenticated 
+USING (true);
+
+-- Notify PostgREST to reload schema
+NOTIFY pgrst, 'reload config';
