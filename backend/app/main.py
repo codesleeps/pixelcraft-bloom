@@ -149,6 +149,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         logger.info("Starting AgentsFlowAI AI Backend (env=%s)", settings.app_env)
+        logger.info(f"DEBUG: OLLAMA_HOST={settings.ollama.host}")
 
         # Initialize and validate Ollama (with retries for slower startup)
         try:

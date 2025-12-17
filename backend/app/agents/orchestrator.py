@@ -364,13 +364,19 @@ class AgentOrchestrator:
         )
         await self.update_workflow_state(workflow_id, "running", "chat")
 
+        # Prepare metadata from input_data + workflow context
+        base_metadata = {k: v for k, v in input_data.items() if k != "message"}
+        base_metadata["workflow_execution_id"] = workflow_id
+
         try:
             # Step 1: Chat interaction
             if run_chat:
                 self.logger.info(f"Running chat agent for conversation {conversation_id}")
                 await self.update_workflow_state(workflow_id, "running", "chat")
                 chat_agent = self.get("chat")
-                chat_response = await chat_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
+                # Use deep copy or new dict to avoid side effects if agents modify it (optional but safer)
+                chat_metadata = base_metadata.copy()
+                chat_response = await chat_agent.process_message(conversation_id, message, chat_metadata)
                 results["chat"] = chat_response.to_dict()
                 await chat_agent.set_shared_memory(conversation_id, "chat_result", chat_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
@@ -379,7 +385,8 @@ class AgentOrchestrator:
                 self.logger.info(f"Running recommendation agent for conversation {conversation_id}")
                 await self.update_workflow_state(workflow_id, "running", "service_recommendation")
                 rec_agent = self.get("service_recommendation")
-                rec_response = await rec_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
+                rec_metadata = base_metadata.copy()
+                rec_response = await rec_agent.process_message(conversation_id, message, rec_metadata)
                 results["recommendations"] = rec_response.to_dict()
                 await rec_agent.set_shared_memory(conversation_id, "recommendations_result", rec_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
@@ -388,7 +395,8 @@ class AgentOrchestrator:
                 self.logger.info(f"Running lead qualification for conversation {conversation_id}")
                 await self.update_workflow_state(workflow_id, "running", "lead_qualification")
                 lead_agent = self.get("lead_qualification")
-                lead_response = await lead_agent.process_message(conversation_id, message, {"workflow_execution_id": workflow_id})
+                lead_metadata = base_metadata.copy()
+                lead_response = await lead_agent.process_message(conversation_id, message, lead_metadata)
                 results["lead_qualification"] = lead_response.to_dict()
                 await lead_agent.set_shared_memory(conversation_id, "lead_qualification_result", lead_response.to_dict(), scope="workflow", workflow_execution_id=workflow_id)
 
