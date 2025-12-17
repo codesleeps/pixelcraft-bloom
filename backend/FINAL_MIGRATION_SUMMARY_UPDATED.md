@@ -2,6 +2,8 @@
 
 ## ⚠️ IMPORTANT: Use Correct Files!
 
+       CHECK THE EXTENSION TO BE SURE
+
 **DO NOT run Python scripts as SQL!**
 
 The error `syntax error at or near "#!/"` occurs when trying to execute .py files as SQL.
